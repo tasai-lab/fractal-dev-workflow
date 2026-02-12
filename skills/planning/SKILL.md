@@ -53,9 +53,8 @@ Task(subagent_type="Plan"):
 
 **Codex parallel plan (when available):**
 ```bash
-scripts/codex-wrapper.sh exec "$PROJECT_DIR" \
-  "以下の要件に基づいて実装計画を策定: [requirements and investigation]" \
-  --model codex-5.3 --reasoning xhigh
+CODEX_REASONING=xhigh scripts/codex-wrapper.sh exec "$PROJECT_DIR" \
+  "以下の要件に基づいて実装計画を策定: [requirements and investigation]"
 ```
 
 ### Step 2: Plan Integration

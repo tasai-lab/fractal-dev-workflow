@@ -60,9 +60,8 @@ Task(subagent_type="Explore", model="haiku"):
 
 **Codex parallel investigation (when available):**
 ```bash
-scripts/codex-wrapper.sh exec "$PROJECT_DIR" \
-  "以下の調査を行ってください: [investigation content]" \
-  --model codex-5.3 --reasoning xhigh
+CODEX_REASONING=xhigh scripts/codex-wrapper.sh exec "$PROJECT_DIR" \
+  "以下の調査を行ってください: [investigation content]"
 ```
 
 ### Step 3: Existing Implementation Inventory (MANDATORY)

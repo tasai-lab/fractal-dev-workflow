@@ -101,14 +101,14 @@ Recommend using spec-reviewer agent as fallback.
 
 ## Custom Model/Reasoning
 
-Override defaults when needed:
-```bash
-scripts/codex-wrapper.sh exec . "prompt" --model codex-5.3 --reasoning xhigh
-```
-
-Or via environment:
+Override defaults via environment variables:
 ```bash
 CODEX_MODEL=codex-5.3 CODEX_REASONING=xhigh scripts/codex-wrapper.sh exec . "prompt"
+```
+
+Or directly with codex CLI:
+```bash
+CODEX_REASONING_EFFORT=xhigh codex exec "prompt"
 ```
 
 ## Important
