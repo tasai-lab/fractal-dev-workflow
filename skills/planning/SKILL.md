@@ -181,3 +181,9 @@ Present the plan and wait for:
 - [ ] Risks and mitigations identified
 - [ ] **Test strategy includes mock methods for external APIs**
 - [ ] **User approval received**
+
+## Related Skills
+
+- `testing` - Detailed test type selection and creation guidance
+- `investigation` - For existing implementation inventory
+- `codex-review` - For plan review before approval
