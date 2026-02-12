@@ -535,6 +535,38 @@ If you catch yourself thinking:
 | "Review is overkill" | External review catches 2-3x more issues |
 | "Tests can come later" | Later tests catch fewer bugs |
 
+## Agent Roles（Asai-Spec Protocol）
+
+各フェーズには担当エージェントがいる。**ユーザーは指揮官、エージェントは執行者。**
+
+| Phase | 担当 Agent | 役割 | Model |
+|-------|------------|------|-------|
+| 1-3 | **Architect** | 設計参謀：要件を仕様書に変換 | sonnet |
+| 4 | **Codex** | 批判的レビュー（codex-delegate経由） | codex |
+| 5 | **TechLead** → **Coder** | 技術分解 → TDD実装 | sonnet |
+| 6 | **QA** | 品質憲兵：検証のみ、編集禁止 | sonnet |
+| 7 | **Architect** | 運用設計 | sonnet |
+
+### Agent 使い分け
+
+```
+@Architect   → 設計・仕様作成（docs/prd.md, docs/api_spec.yaml）
+@TechLead    → タスク分解（docs/tasks.md）
+@Coder       → TDD実装（テスト先行）
+@QA          → 品質監査（編集禁止、指摘のみ）
+```
+
+### トラブルシューティング
+
+| ケース | 原因 | 対処 |
+|--------|------|------|
+| AIが仕様を変える | コンテキスト汚染 | **Architect を再起動**して docs/prd.md を再読込 |
+| 実装が沼にハマる | アプローチ固執 | **Architect に代替案を提示**させる |
+| テスト通らないのに完了主張 | テスト改竄 | **QA にテストコード自体を監査**させる |
+| コンテキストがボケる | 会話長すぎ | **`/compact` でリフレッシュ** |
+
+---
+
 ## Integration
 
 **Required skills:**
@@ -546,8 +578,17 @@ If you catch yourself thinking:
 - verification - Phase 6
 - completion - Phase 7
 
+**Required agents:**
+- architect - Phase 1-3, 7
+- tech-lead - Phase 5 (task decomposition)
+- coder - Phase 5 (TDD implementation)
+- qa - Phase 6 (read-only verification)
+- codex-delegate - Phase 4 (critical review)
+- investigator - Phase 2 (codebase exploration)
+
 **Optional skills:**
 - testing - Detailed test creation guidance
 - parallel-implementation - For parallel subagent execution
 - context-circulation - For commit-based context sharing
 - failure-memory - For learning from failures
+- project-setup - Project initialization with templates
