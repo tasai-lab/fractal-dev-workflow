@@ -15,6 +15,8 @@ description: 調査完了後、実装に入る前の計画策定時に使用。O
 
 ```
 NO IMPLEMENTATION WITHOUT A REVIEWED PLAN FIRST
+NO "NEW FILE" WITHOUT CONFIRMING IT DOESN'T EXIST
+ALL CHANGES MUST REFERENCE EXISTING CODE (path:line)
 ```
 
 ## The Process
@@ -35,7 +37,8 @@ digraph planning {
     "Present options to user" -> "User selects approach";
     "User selects approach" -> "Create unified plan";
     "Differences found?" -> "Create unified plan" [label="no"];
-    "Create unified plan" -> "Structure the plan";
+    "Create unified plan" -> "Validate against investigation";
+    "Validate against investigation" -> "Structure the plan";
     "Structure the plan" -> "Request user approval" [style=dashed];
 }
 ```
@@ -51,7 +54,8 @@ Task(subagent_type="Plan"):
 **Codex parallel plan (when available):**
 ```bash
 scripts/codex-wrapper.sh exec "$PROJECT_DIR" \
-  "以下の要件に基づいて実装計画を策定: [requirements and investigation]"
+  "以下の要件に基づいて実装計画を策定: [requirements and investigation]" \
+  --model codex-5.3 --reasoning xhigh
 ```
 
 ### Step 2: Plan Integration
@@ -68,15 +72,30 @@ AskUserQuestion:
       description: "両方の良い部分を組み合わせる"
 ```
 
-### Step 3: Plan Structure
+### Step 3: Plan Validation Against Investigation
+
+**MANDATORY CHECK before finalizing:**
+
+For each file in the plan:
+- If "New": Verify file does NOT exist in investigation inventory
+- If "Modify": Reference exact location (path:line) from investigation
+- If "Extend": Document what exists vs what's being added
+
+**Red Flags - STOP if you see:**
+- "Create contacts/create.ts" without checking if it exists → INVESTIGATE FIRST
+- "Add function X" without referencing existing code → ADD CODE REFERENCE
+- Generic file operations without specific line numbers → BE SPECIFIC
+
+### Step 4: Plan Structure
 
 Final plan must include:
 1. **目的**: What to achieve
 2. **アプローチ**: How to implement
-3. **ファイル変更一覧**: Files to create/modify
-4. **依存関係**: Task dependencies
-5. **リスク**: Foreseen risks and mitigations
-6. **テスト戦略**: Verification methods
+3. **既存実装との差分** (REQUIRED): What exists vs what changes
+4. **ファイル変更一覧**: Files to create/modify with existing code references
+5. **依存関係**: Task dependencies
+6. **リスク**: Foreseen risks and mitigations
+7. **テスト戦略**: Detailed verification methods
 
 ## Plan Template
 
@@ -89,11 +108,27 @@ Final plan must include:
 ## アプローチ
 [Implementation method overview]
 
+## 既存実装との差分 (REQUIRED)
+
+| Capability | Current State | Planned Change | Reference |
+|------------|--------------|----------------|-----------|
+| OCR extraction | Exists (pkg/ocr.ts:L20) | Extend for PDF | Extract.ts:L45 |
+| Upload | Exists (pkg/upload.ts) | No change | - |
+| New feature X | Does NOT exist | New file | Verified: not in codebase |
+
 ## ファイル変更一覧
-| File | Operation | Description |
-|------|-----------|-------------|
-| src/foo.ts | New | [description] |
-| src/bar.ts | Modify | [description] |
+
+| File | Type | Description | Existing Reference |
+|------|------|-------------|-------------------|
+| src/foo.ts | New | [description] | Verified: does not exist |
+| src/bar.ts | Extend | Add PDF support | bar.ts:L50-80 (current impl) |
+| src/baz.ts | Modify | Fix edge case | baz.ts:L120 (bug location) |
+
+**Type definitions:**
+- **New**: File does not exist (MUST verify with investigation)
+- **Extend**: Add functionality to existing file (MUST reference current code)
+- **Modify**: Change existing behavior (MUST reference specific lines)
+- **Migrate**: Move from app-specific to shared (MUST reference both locations)
 
 ## タスク分解
 1. [Task 1] - No dependencies
@@ -105,10 +140,26 @@ Final plan must include:
 |------|--------|------------|
 | [risk] | High/Med/Low | [mitigation] |
 
-## テスト戦略
-- Unit tests: [targets]
-- Integration tests: [targets]
-- Manual verification: [steps]
+## テスト戦略 (REQUIRED DETAIL)
+
+### Unit Tests
+| Target | Test File | Mock Strategy |
+|--------|-----------|---------------|
+| createFoo() | foo.test.ts | Mock DB with Prisma mock |
+
+### External API Mocking
+| API | Mock Method | Test Data |
+|-----|-------------|-----------|
+| Gemini OCR | vi.mock('@google/ai') | fixtures/ocr-response.json |
+| Places API | MSW handler | fixtures/places.json |
+
+### Integration Tests
+- [ ] E2E flow: [description]
+- [ ] Error handling: [scenarios]
+
+### Manual Verification
+1. [Step 1]
+2. [Step 2]
 ```
 
 ## Approval Required
@@ -123,7 +174,10 @@ Present the plan and wait for:
 ## Completion Criteria
 
 - [ ] Implementation plan is structured
-- [ ] File change list is clear
+- [ ] **既存実装との差分が明記されている**
+- [ ] **各ファイル変更に既存コード参照（path:line）がある**
+- [ ] **"New"タイプのファイルは存在しないことを確認済み**
+- [ ] File change list is clear with types (New/Extend/Modify/Migrate)
 - [ ] Risks and mitigations identified
-- [ ] Test strategy defined
+- [ ] **Test strategy includes mock methods for external APIs**
 - [ ] **User approval received**
