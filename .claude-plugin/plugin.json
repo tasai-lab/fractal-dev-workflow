@@ -1,27 +1,13 @@
 {
-	"name": "fractal-dev-workflow",
-	"version": "0.1.0",
-	"description": "フェーズ単位承認型の自律開発支援プラグイン。6フェーズワークフロー、チーム駆動実装、Codexレビュー統合を提供。",
-	"author": "fractal",
-	"skills": [
-		"skills/dev-workflow",
-		"skills/questioning",
-		"skills/investigation",
-		"skills/planning",
-		"skills/codex-review",
-		"skills/implementation",
-		"skills/failure-memory",
-		"skills/using-workflow",
-		"skills/parallel-implementation",
-		"skills/context-circulation"
-	],
-	"agents": [
-		"agents/spec-reviewer.md",
-		"agents/code-reviewer.md",
-		"agents/investigator.md",
-		"agents/implementer.md",
-		"agents/codex-delegate.md",
-		"agents/staff-reviewer.md"
-	],
-	"hooks": "hooks/hooks.json"
+  "name": "fractal-dev-workflow",
+  "description": "フェーズ単位承認型の自律開発支援プラグイン。6フェーズワークフロー、チーム駆動実装、Codexレビュー統合を提供。",
+  "version": "0.1.0",
+  "author": {
+    "name": "fractal",
+    "email": "fractal@example.com"
+  },
+  "homepage": "https://github.com/tasai-lab/fractal-dev-workflow",
+  "repository": "https://github.com/tasai-lab/fractal-dev-workflow",
+  "license": "MIT",
+  "keywords": ["workflow", "development", "codex", "review", "approval"]
 }
