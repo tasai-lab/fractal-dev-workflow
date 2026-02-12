@@ -34,8 +34,8 @@ scripts/codex-wrapper.sh check
 
 ### Execute with prompt
 ```bash
-scripts/codex-wrapper.sh exec "$PROJECT_DIR" "prompt here" [output_file]
-# Options: --model <model> --reasoning <level>
+scripts/codex-wrapper.sh exec "$PROJECT_DIR" "prompt here"
+# Environment: CODEX_MODEL, CODEX_REASONING
 ```
 
 ### Run code review
