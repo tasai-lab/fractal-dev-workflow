@@ -96,36 +96,18 @@ codex_exec() {
 
     local safe_prompt
     safe_prompt=$(filter_secrets "$prompt")
-    local temp_dir
-    temp_dir=$(create_temp_dir)
-    local result_file="$temp_dir/result.txt"
 
-    local cmd="codex exec"
-    cmd+=" -C '$project_dir'"
-    cmd+=" --model '$CODEX_MODEL'"
-    cmd+=" --reasoning '$CODEX_REASONING'"
-    cmd+=" --skip-git-repo-check"
-    cmd+=" --full-auto"
-    cmd+=" --sandbox read-only"
+    # 環境変数でモデルと思考レベルを設定
+    export CODEX_MODEL="$CODEX_MODEL"
+    export CODEX_REASONING_EFFORT="$CODEX_REASONING"
 
-    if [[ -n "$output_file" ]]; then
-        cmd+=" -o '$output_file'"
-    else
-        cmd+=" -o '$result_file'"
-    fi
+    echo "Using model: $CODEX_MODEL, reasoning: $CODEX_REASONING_EFFORT" >&2
 
-    cmd+=" '$safe_prompt'"
-
-    echo "Using model: $CODEX_MODEL, reasoning: $CODEX_REASONING" >&2
+    local cmd="cd '$project_dir' && codex exec --full-auto '$safe_prompt'"
 
     if run_with_retry "$cmd"; then
-        if [[ -z "$output_file" ]] && [[ -f "$result_file" ]]; then
-            cat "$result_file"
-        fi
-        rm -rf "$temp_dir"
         return 0
     else
-        rm -rf "$temp_dir"
         return 1
     fi
 }
@@ -134,23 +116,26 @@ codex_exec() {
 codex_review() {
     local project_dir="${1:-.}"
     local review_type="${2:-uncommitted}"
-    local output_file="${3:-}"
 
-    local prompt="以下の観点でコードをレビューしてください:
-- コード品質と可読性
-- セキュリティ（OWASP Top 10）
-- パフォーマンス
-- エラーハンドリング
-- テストカバレッジ"
+    # 環境変数でモデルと思考レベルを設定
+    export CODEX_MODEL="$CODEX_MODEL"
+    export CODEX_REASONING_EFFORT="$CODEX_REASONING"
 
-    codex_exec "$project_dir" "$prompt" "$output_file"
+    echo "Using model: $CODEX_MODEL, reasoning: $CODEX_REASONING_EFFORT" >&2
+
+    local cmd="cd '$project_dir' && codex review"
+
+    if run_with_retry "$cmd"; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 # 既存実装照合レビュー
 codex_review_spec() {
     local project_dir="${1:-.}"
     local plan_content="$2"
-    local output_file="${3:-}"
 
     local prompt="## 既存実装照合レビュー
 
@@ -178,7 +163,7 @@ $plan_content
 ### Verdict
 [APPROVED / NEEDS CHANGES]"
 
-    codex_exec "$project_dir" "$prompt" "$output_file"
+    codex_exec "$project_dir" "$prompt"
 }
 
 # 要件カバレッジレビュー
@@ -186,7 +171,6 @@ codex_review_requirements() {
     local project_dir="${1:-.}"
     local plan_content="$2"
     local requirements="$3"
-    local output_file="${4:-}"
 
     local prompt="## 要件カバレッジレビュー
 
@@ -221,7 +205,7 @@ $plan_content
 ### Verdict
 [APPROVED / NEEDS CHANGES]"
 
-    codex_exec "$project_dir" "$prompt" "$output_file"
+    codex_exec "$project_dir" "$prompt"
 }
 
 # フォールバック通知
@@ -239,32 +223,29 @@ EOF
 # ヘルプ表示
 show_help() {
     cat <<EOF
-Usage: codex-wrapper.sh [command] [args...] [options]
+Usage: codex-wrapper.sh [command] [args...]
 
 Commands:
-  check                                    Check if Codex CLI is available
-  exec <dir> <prompt> [out]                Execute Codex with prompt
-  review <dir> [type] [out]                Run code review
-  review-spec <dir> <plan> [out]           Run existing implementation review
-  review-requirements <dir> <plan> <reqs> [out]  Run requirements coverage review
-  help                                     Show this help
+  check                              Check if Codex CLI is available
+  exec <dir> <prompt>                Execute Codex with prompt
+  review <dir> [type]                Run code review
+  review-spec <dir> <plan>           Run existing implementation review
+  review-requirements <dir> <plan> <reqs>  Run requirements coverage review
+  help                               Show this help
 
-Options:
-  --model <model>       Codex model (default: codex-5.3)
-  --reasoning <level>   Reasoning level: low/medium/high/xhigh (default: xhigh)
-
-Environment:
-  CODEX_TIMEOUT    Timeout in seconds (default: 300)
-  MAX_RETRIES      Max retry attempts (default: 2)
-  CODEX_MODEL      Default model (default: codex-5.3)
-  CODEX_REASONING  Default reasoning level (default: xhigh)
+Environment Variables:
+  CODEX_TIMEOUT           Timeout in seconds (default: 300)
+  MAX_RETRIES             Max retry attempts (default: 2)
+  CODEX_MODEL             Default model (default: codex-5.3)
+  CODEX_REASONING         Default reasoning level (default: xhigh)
+  CODEX_REASONING_EFFORT  Passed to codex CLI (set from CODEX_REASONING)
 
 Examples:
   codex-wrapper.sh check
   codex-wrapper.sh exec . "Review this code"
-  codex-wrapper.sh exec . "Review this code" --model codex-5.3 --reasoning xhigh
-  codex-wrapper.sh review . uncommitted output.txt
-  codex-wrapper.sh review-spec . "\$(cat plan.md)" output.txt
+  CODEX_REASONING=xhigh codex-wrapper.sh exec . "Review this code"
+  codex-wrapper.sh review .
+  codex-wrapper.sh review-spec . "\$(cat plan.md)"
   codex-wrapper.sh review-requirements . "\$(cat plan.md)" "\$(cat requirements.md)"
 EOF
 }
@@ -296,7 +277,7 @@ case "${1:-help}" in
         args=$(parse_options "$@")
         eval "set -- $args"
         if check_codex; then
-            codex_review "${1:-.}" "${2:-uncommitted}" "${3:-}"
+            codex_review "${1:-.}" "${2:-uncommitted}"
         else
             notify_fallback
             exit 1
@@ -307,7 +288,7 @@ case "${1:-help}" in
         args=$(parse_options "$@")
         eval "set -- $args"
         if check_codex; then
-            codex_review_spec "${1:-.}" "${2:-}" "${3:-}"
+            codex_review_spec "${1:-.}" "${2:-}"
         else
             notify_fallback
             exit 1
@@ -318,7 +299,7 @@ case "${1:-help}" in
         args=$(parse_options "$@")
         eval "set -- $args"
         if check_codex; then
-            codex_review_requirements "${1:-.}" "${2:-}" "${3:-}" "${4:-}"
+            codex_review_requirements "${1:-.}" "${2:-}" "${3:-}"
         else
             notify_fallback
             exit 1
