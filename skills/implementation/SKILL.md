@@ -1,234 +1,431 @@
 ---
 name: implementation
-description: 計画承認後、実際のコード実装を開始する時に使用。サブエージェント駆動のチーム開発で品質を担保する。
+description: 計画承認後、実際のコード実装を開始する時に使用。サブエージェント駆動のチーム開発で効率と品質を両立。
 ---
 
 # Implementation Phase
 
 ## Overview
 
-承認された計画に基づいてコードを実装する。サブエージェント駆動で品質を担保。
+承認された計画に基づいてコードを実装する。
+**サブエージェントを駆使した並列実装**で効率を最大化し、品質を担保。
 
-**Core principle:** Execute plan with fresh subagents per task, TDD-first, two-stage review after each.
+**Core principle:** 縦スライスで最短で動かす。独立タスクは並列化。
 
 ## The Iron Law
 
 ```
 NO IMPLEMENTATION WITHOUT TEST FIRST (TDD)
-NO TASK COMPLETION WITHOUT SPEC + CODE REVIEW
+PARALLELIZE INDEPENDENT TASKS
+SERIALIZE DEPENDENT TASKS
+NO TASK COMPLETION WITHOUT REVIEW
 ```
 
-## The Process
+---
+
+## 実装戦略の選択
 
 ```dot
-digraph implementation {
-    "Plan approved" -> "Create task list";
-    "Create task list" -> "For each task";
-
-    subgraph cluster_per_task {
-        label="Per Task";
-        "Design test cases" [shape=box];
-        "Write failing tests (RED)" [shape=box];
-        "Implement to pass (GREEN)" [shape=box];
-        "Refactor (REFACTOR)" [shape=box];
-        "Dispatch spec-reviewer" [shape=box];
-        "Spec compliant?" [shape=diamond];
-        "Fix spec gaps" [shape=box];
-        "Dispatch code-reviewer" [shape=box];
-        "Code approved?" [shape=diamond];
-        "Fix quality issues" [shape=box];
-        "Run all tests" [shape=box];
-        "Commit task" [shape=box];
-    }
-
-    "For each task" -> "Design test cases";
-    "Design test cases" -> "Write failing tests (RED)";
-    "Write failing tests (RED)" -> "Implement to pass (GREEN)";
-    "Implement to pass (GREEN)" -> "Refactor (REFACTOR)";
-    "Refactor (REFACTOR)" -> "Dispatch spec-reviewer";
-    "Dispatch spec-reviewer" -> "Spec compliant?";
-    "Spec compliant?" -> "Fix spec gaps" [label="no"];
-    "Fix spec gaps" -> "Dispatch spec-reviewer";
-    "Spec compliant?" -> "Dispatch code-reviewer" [label="yes"];
-    "Dispatch code-reviewer" -> "Code approved?";
-    "Code approved?" -> "Fix quality issues" [label="no"];
-    "Fix quality issues" -> "Dispatch code-reviewer";
-    "Code approved?" -> "Run all tests" [label="yes"];
-    "Run all tests" -> "Commit task";
-    "Commit task" -> "More tasks?" [shape=diamond];
-    "More tasks?" -> "Design test cases" [label="yes"];
-    "More tasks?" -> "Final review" [label="no"];
-    "Final review" -> "Request user approval" [style=dashed];
+digraph strategy {
+    "タスク数は?" -> "1-2個" [label="少"];
+    "タスク数は?" -> "3個以上" [label="多"];
+    "1-2個" -> "Sequential Implementation";
+    "3個以上" -> "依存関係は?";
+    "依存関係は?" -> "Parallel Implementation" [label="独立"];
+    "依存関係は?" -> "Team Implementation" [label="複雑"];
 }
 ```
 
-## Task Execution
+| タスク数 | 依存関係 | 戦略 |
+|---------|---------|------|
+| 1-2 | - | Sequential（順次実装） |
+| 3+ | 独立 | Parallel（並列サブエージェント） |
+| 3+ | 複雑 | Team（チーム編成） |
 
-### 1. Task List Creation
-Convert plan to TaskCreate entries:
+---
+
+## Strategy A: Sequential Implementation（順次実装）
+
+### 使用条件
+- タスクが1-2個
+- または強い依存関係がある
+
+### フロー
 ```
-TaskCreate:
-  subject: "[verb] [target] [purpose]"
-  description: |
-    ## Overview
-    [what to do]
-
-    ## Completion Criteria
-    - [ ] [criterion 1]
-    - [ ] [criterion 2]
-
-    ## Test Requirements
-    - [ ] Unit: [what to unit test]
-    - [ ] Integration: [what to integration test]
-
-    ## Related Files
-    - [file paths]
-  activeForm: "[verb]ing [target]"
+Task 1 → Review → Commit → Task 2 → Review → Commit → ...
 ```
 
-### 2. Per-Task Workflow
+### 実行パターン
+```
+Task(subagent_type="implementer"):
+  Implement Task 1 with TDD
 
-#### Step 1: Test Case Design (using testing skill)
+[Wait for completion]
 
-Refer to `testing` skill for detailed guidance.
+Task(subagent_type="code-reviewer"):
+  Review Task 1
+
+[Commit Task 1]
+
+Task(subagent_type="implementer"):
+  Implement Task 2 with TDD
+
+...
+```
+
+---
+
+## Strategy B: Parallel Implementation（並列サブエージェント）
+
+### 使用条件
+- 3個以上の独立タスク
+- タスク間でファイル競合なし
+
+### 依存関係分析
 
 ```markdown
-## テストケース設計: [タスク名]
+## 依存関係分析
 
-### テスト種類判定
-| 質問 | 判定 |
-|------|------|
-| 純粋ロジック? | → Unit Test |
-| DB/API境界? | → Integration Test |
-| 主要導線? | → E2E Test |
+### タスク一覧
+1. 型定義を作成
+2. テストフィクスチャを作成
+3. ユーティリティ関数を作成
+4. API ハンドラを作成（1, 3 に依存）
+5. UI コンポーネントを作成（1 に依存）
+6. E2E テストを作成（4, 5 に依存）
 
-### Unit Tests
-| ケース | 入力 | 期待出力 |
-|--------|------|---------|
-| 正常系 | ... | ... |
-| 境界値 | 0, null | ... |
-| 異常系 | invalid | throw |
-
-### Integration Tests (if needed)
-| ケース | 前提 | 検証 |
-|--------|------|------|
-| ... | ... | ... |
+### 依存グラフ
+```
+1 ──┬──▶ 4 ──┐
+    │        │
+3 ──┘        ├──▶ 6
+             │
+2 ──▶ 5 ────┘
 ```
 
-#### Step 2: TDD Cycle
-
-**RED - 失敗するテストを書く:**
-```
-Task(subagent_type="implementer"):
-  - Write test cases first (they should FAIL)
-  - Run tests to confirm failure
-```
-
-**GREEN - 最小限のコードで通す:**
-```
-Task(subagent_type="implementer"):
-  - Write minimum code to pass tests
-  - Run tests to confirm pass
+### 並列グループ
+| Group | Tasks | 依存 |
+|-------|-------|------|
+| A | 1, 2, 3 | なし |
+| B | 4, 5 | Group A |
+| C | 6 | Group B |
 ```
 
-**REFACTOR - 綺麗にする:**
+### 実行パターン
 ```
-Task(subagent_type="implementer"):
-  - Clean up code while keeping tests green
-  - Run tests after each refactor
+# === Group A: 並列実行 ===
+Task(subagent_type="implementer", run_in_background=true, name="impl-types"):
+  Task 1: 型定義を作成
+
+Task(subagent_type="implementer", run_in_background=true, name="impl-fixtures"):
+  Task 2: テストフィクスチャを作成
+
+Task(subagent_type="implementer", run_in_background=true, name="impl-utils"):
+  Task 3: ユーティリティ関数を作成
+
+# === Group A 完了待ち ===
+[Monitor background tasks until all complete]
+[Each task commits independently]
+
+# === Group B: 並列実行 ===
+Task(subagent_type="implementer", run_in_background=true, name="impl-api"):
+  Task 4: API ハンドラを作成
+  Context: Task 1, 3 のコミットを参照
+
+Task(subagent_type="implementer", run_in_background=true, name="impl-ui"):
+  Task 5: UI コンポーネントを作成
+  Context: Task 1, 2 のコミットを参照
+
+# === Group B 完了待ち ===
+...
 ```
 
-#### Step 3: Reviews
+### 進捗監視
+```bash
+# バックグラウンドタスクの出力を確認
+Read(output_file_path)
 
-**Spec reviewer:**
-```
-Task(subagent_type="spec-reviewer"):
-  - Verify implementation matches spec
-  - Verify test coverage matches requirements
-  - Check nothing extra added
-  - Check nothing missing
+# または
+Bash: tail -f [output_file_path]
 ```
 
-**Code reviewer:**
+---
+
+## Strategy C: Team Implementation（チーム編成）
+
+### 使用条件
+- 複雑な依存関係
+- 長期間の実装
+- 役割分担が必要
+
+### チーム構成
+
+```
+TeamCreate:
+  team_name: "feature-implementation"
+  description: "[機能名]の実装チーム"
+
+# チームメンバー
+┌─────────────────────────────────────────────────┐
+│  Team Lead (You)                                │
+│  - タスク割り当て                               │
+│  - 進捗監視                                     │
+│  - コンテキスト共有                             │
+├─────────────────────────────────────────────────┤
+│  Implementer A        Implementer B             │
+│  - Backend tasks      - Frontend tasks          │
+│                                                 │
+│  Implementer C        Code Reviewer             │
+│  - Test tasks         - 品質チェック            │
+└─────────────────────────────────────────────────┘
+```
+
+### チーム実行パターン
+```
+# 1. チーム作成
+TeamCreate:
+  team_name: "impl-[feature]"
+  description: "[feature] implementation team"
+
+# 2. タスク作成（TaskCreate で全タスクを登録）
+TaskCreate: Task 1 - 型定義
+TaskCreate: Task 2 - API実装
+TaskCreate: Task 3 - UI実装
+TaskCreate: Task 4 - テスト
+
+# 3. 依存関係設定
+TaskUpdate: Task 2 blockedBy: [Task 1]
+TaskUpdate: Task 3 blockedBy: [Task 1]
+TaskUpdate: Task 4 blockedBy: [Task 2, Task 3]
+
+# 4. チームメンバー起動
+Task(subagent_type="implementer", team_name="impl-[feature]", name="backend-dev"):
+  あなたは Backend 担当です。
+  TaskList でタスクを確認し、backend 関連のタスクを担当してください。
+
+Task(subagent_type="implementer", team_name="impl-[feature]", name="frontend-dev"):
+  あなたは Frontend 担当です。
+  TaskList でタスクを確認し、frontend 関連のタスクを担当してください。
+
+# 5. 進捗監視
+SendMessage:
+  type: "broadcast"
+  content: "進捗を報告してください"
+
+# 6. 完了後チーム解散
+SendMessage:
+  type: "shutdown_request"
+  recipient: "backend-dev"
+
+TeamDelete
+```
+
+### コンテキスト共有（Git Commit 経由）
+
+```markdown
+## コンテキスト循環パターン
+
+1. Implementer A がタスク完了
+   → git commit（変更内容を記録）
+
+2. Team Lead がコミットを確認
+   → Implementer B に共有
+
+3. Implementer B が続行
+   → git log で前のコミットを参照
+   → 最新のコードで作業
+
+**利点:**
+- サブエージェントはコンテキストが短い
+- Git がコンテキストの永続化を担う
+- いつでも最新状態を取得可能
+```
+
+---
+
+## 縦スライス実装
+
+### 原則
+**水平に全部やらず、1機能を端から端まで通す。**
+
+```
+❌ 水平スライス（避ける）
+┌─────────────────────────────────┐
+│ 全部の型定義                      │
+├─────────────────────────────────┤
+│ 全部のAPI                        │
+├─────────────────────────────────┤
+│ 全部のUI                         │
+└─────────────────────────────────┘
+
+✅ 縦スライス（推奨）
+┌─────┐ ┌─────┐ ┌─────┐
+│ 型  │ │ 型  │ │ 型  │
+│ API │ │ API │ │ API │
+│ UI  │ │ UI  │ │ UI  │
+│機能1│ │機能2│ │機能3│
+└─────┘ └─────┘ └─────┘
+   ↓       ↓       ↓
+ 動く！   動く！   動く！
+```
+
+### 縦スライスの切り方
+```markdown
+## 縦スライス設計: [機能名]
+
+### Slice 1: 最小動作版（MVP）
+- [ ] 基本データ型
+- [ ] 最小API（1エンドポイント）
+- [ ] 最小UI（1画面）
+- [ ] 正常系テスト
+→ ここで一度動かす
+
+### Slice 2: エラーハンドリング
+- [ ] エラー型追加
+- [ ] APIエラーレスポンス
+- [ ] UIエラー表示
+- [ ] 異常系テスト
+
+### Slice 3: エッジケース
+- [ ] 境界値対応
+- [ ] 空データ対応
+- [ ] 大量データ対応
+```
+
+---
+
+## TDD サイクル（各タスク）
+
+```
+┌─────────────────────────────────────────┐
+│  RED: 失敗するテストを書く              │
+│  ─────────────────────────────────────  │
+│  テストを実行 → 失敗を確認              │
+└─────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────┐
+│  GREEN: 最小限のコードで通す            │
+│  ─────────────────────────────────────  │
+│  テストを実行 → 成功を確認              │
+└─────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────┐
+│  REFACTOR: 綺麗にする                   │
+│  ─────────────────────────────────────  │
+│  テストを実行 → 成功を維持              │
+└─────────────────────────────────────────┘
+```
+
+---
+
+## レビュー戦略
+
+### タスク単位レビュー
 ```
 Task(subagent_type="code-reviewer"):
-  - Review code quality
-  - Review test quality (not just code)
-  - Check security (OWASP)
-  - Verify test coverage metrics
+  Review the following changes:
+  - Files: [list of changed files]
+  - Tests: [test file locations]
+
+  Check:
+  - [ ] Code quality
+  - [ ] Test coverage
+  - [ ] Security (OWASP)
+  - [ ] Spec compliance
 ```
 
-### 3. Test Execution
+### 並列レビュー（複数タスク完了時）
+```
+# 複数タスクを並列レビュー
+Task(subagent_type="code-reviewer", run_in_background=true):
+  Review Task 1 changes
 
-Before commit, run all tests:
-```bash
-# Unit tests
-npm run test:unit
+Task(subagent_type="code-reviewer", run_in_background=true):
+  Review Task 2 changes
 
-# Integration tests (if applicable)
-npm run test:integration
-
-# All tests
-npm run test
+Task(subagent_type="code-reviewer", run_in_background=true):
+  Review Task 3 changes
 ```
 
-### 4. Commit Strategy
+---
 
-Each task completion = one commit (implementation + tests together):
+## コミット戦略
+
+### タスク単位コミット
 ```bash
-git add [specific files including tests]
-git commit -m "[type]: [subject]
+# 1タスク = 1コミット（実装 + テスト）
+git add src/feature.ts src/feature.test.ts
+git commit -m "feat(feature): implement [description]
 
-[body]
-
-Tests: [summary of test coverage]
+- Added [what]
+- Tests: unit tests for [coverage]
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ```
 
-## Test Type Priority (per task)
-
-| 優先度 | テスト種類 | 作成タイミング |
-|--------|----------|---------------|
-| 1 | Unit Test | 全タスクで必須 |
-| 2 | Integration Test | DB/API境界タスクで必須 |
-| 3 | Contract Test | API変更タスクで推奨 |
-| 4 | E2E Test | 主要導線の最終確認のみ |
-
-## Parallel Implementation
-
-When tasks are independent:
+### 並列タスクのコミット
 ```
-Task(subagent_type="implementer", run_in_background=true):
-  Task A - no dependencies (include tests)
-
-Task(subagent_type="implementer", run_in_background=true):
-  Task B - no dependencies (include tests)
+各サブエージェントが独立してコミット
+→ ファイル競合がなければ問題なし
+→ 競合した場合は Team Lead が解決
 ```
 
-## Approval Required
+---
 
-**This phase requires user approval after all tasks complete.**
+## 進捗レポート
 
-Present:
-- Summary of implemented changes
-- **Test results with coverage**
-- **Test types created (Unit/Integration/E2E)**
-- Final code review results
+### テンプレート
+```markdown
+## 実装進捗: [機能名]
 
-Wait for explicit approval before Phase 6.
+### 完了タスク
+| Task | Implementer | Status | Commit |
+|------|-------------|--------|--------|
+| 型定義 | impl-types | ✅ Done | abc123 |
+| API | impl-api | ✅ Done | def456 |
+| UI | impl-ui | 🔄 In Progress | - |
 
-## Completion Criteria
+### テスト結果
+- Unit: 45/45 Pass
+- Integration: 12/12 Pass
+- Coverage: 85%
 
-- [ ] All tasks completed
-- [ ] **Each task has corresponding tests**
-- [ ] **All tests passing**
-- [ ] **Test coverage meets target (if defined)**
-- [ ] Spec review passed for each task
-- [ ] Code review passed for each task
-- [ ] **User approval received**
+### 残タスク
+- [ ] UI コンポーネント完了
+- [ ] E2E テスト
+
+### ブロッカー
+- なし
+```
+
+---
+
+## Completion Criteria（★ユーザー承認必須）
+
+- [ ] 全タスク完了
+- [ ] 各タスクにテスト
+- [ ] 全テスト Pass
+- [ ] カバレッジ目標達成
+- [ ] コードレビュー完了
+- [ ] **ユーザー承認**
+
+---
+
+## Red Flags
+
+| Thought | Reality |
+|---------|---------|
+| "依存関係は多分ない" | 明示的に確認する |
+| "同じファイルだけど大丈夫" | 並列化できない |
+| "レビューは最後にまとめて" | タスク単位でやる |
+| "テストは後で" | TDDファースト |
+| "縦スライスは面倒" | 水平は動かない期間が長い |
+
+---
 
 ## Related Skills
 
-- `testing` - Detailed test creation guidance
-- `systematic-debugging` - When tests fail unexpectedly
+- `testing` - テスト作成ガイダンス
+- `parallel-implementation` - 並列実装の詳細
+- `context-circulation` - コンテキスト共有
+- `verification` - 実装後の検証
