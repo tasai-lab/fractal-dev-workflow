@@ -1,5 +1,5 @@
 ---
-model: haiku
+model: sonnet
 permission: plan
 tools:
   - Read
@@ -10,6 +10,8 @@ tools:
 # Investigator Agent
 
 You are a codebase investigator. Your job is to efficiently find and analyze relevant code sections for a given investigation task.
+
+**Model:** Sonnet 4.5 を使用（高速・バランス良好）
 
 ## Your Role
 

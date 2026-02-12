@@ -8,18 +8,38 @@ description: 計画承認後、実際のコード実装を開始する時に使�
 ## Overview
 
 承認された計画に基づいてコードを実装する。
-**サブエージェントを駆使した並列実装**で効率を最大化し、品質を担保。
+**サブエージェント（Sonnet 4.5）を駆使した並列実装**で効率を最大化し、品質を担保。
 
-**Core principle:** 縦スライスで最短で動かす。独立タスクは並列化。
+**Core principles:**
+- 縦スライスで最短で動かす
+- 独立タスクは並列化
+- **共通化できるものはコンポーネントにする**
 
 ## The Iron Law
 
 ```
 NO IMPLEMENTATION WITHOUT TEST FIRST (TDD)
-PARALLELIZE INDEPENDENT TASKS
+PARALLELIZE INDEPENDENT TASKS (with Sonnet 4.5)
 SERIALIZE DEPENDENT TASKS
+COMPONENTIZE REUSABLE CODE
 NO TASK COMPLETION WITHOUT REVIEW
 ```
+
+## Subagent Model Configuration
+
+**Sonnet 4.5 を積極的に使用する：**
+
+```
+Task(subagent_type="implementer", model="sonnet"):
+  ...
+```
+
+| 用途 | モデル | 理由 |
+|------|--------|------|
+| 実装 | **sonnet** | 高速・バランス良好 |
+| 調査・探索 | **sonnet** | コスト効率 |
+| コードレビュー | **sonnet** | 十分な品質 |
+| 複雑な設計判断 | opus | 深い推論が必要な場合のみ |
 
 ---
 
@@ -57,17 +77,17 @@ Task 1 → Review → Commit → Task 2 → Review → Commit → ...
 
 ### 実行パターン
 ```
-Task(subagent_type="implementer"):
+Task(subagent_type="implementer", model="sonnet"):
   Implement Task 1 with TDD
 
 [Wait for completion]
 
-Task(subagent_type="code-reviewer"):
+Task(subagent_type="code-reviewer", model="sonnet"):
   Review Task 1
 
 [Commit Task 1]
 
-Task(subagent_type="implementer"):
+Task(subagent_type="implementer", model="sonnet"):
   Implement Task 2 with TDD
 
 ...
@@ -113,26 +133,26 @@ Task(subagent_type="implementer"):
 
 ### 実行パターン
 ```
-# === Group A: 並列実行 ===
-Task(subagent_type="implementer", run_in_background=true, name="impl-types"):
+# === Group A: 並列実行（Sonnet 4.5）===
+Task(subagent_type="implementer", model="sonnet", run_in_background=true, name="impl-types"):
   Task 1: 型定義を作成
 
-Task(subagent_type="implementer", run_in_background=true, name="impl-fixtures"):
+Task(subagent_type="implementer", model="sonnet", run_in_background=true, name="impl-fixtures"):
   Task 2: テストフィクスチャを作成
 
-Task(subagent_type="implementer", run_in_background=true, name="impl-utils"):
+Task(subagent_type="implementer", model="sonnet", run_in_background=true, name="impl-utils"):
   Task 3: ユーティリティ関数を作成
 
 # === Group A 完了待ち ===
 [Monitor background tasks until all complete]
 [Each task commits independently]
 
-# === Group B: 並列実行 ===
-Task(subagent_type="implementer", run_in_background=true, name="impl-api"):
+# === Group B: 並列実行（Sonnet 4.5）===
+Task(subagent_type="implementer", model="sonnet", run_in_background=true, name="impl-api"):
   Task 4: API ハンドラを作成
   Context: Task 1, 3 のコミットを参照
 
-Task(subagent_type="implementer", run_in_background=true, name="impl-ui"):
+Task(subagent_type="implementer", model="sonnet", run_in_background=true, name="impl-ui"):
   Task 5: UI コンポーネントを作成
   Context: Task 1, 2 のコミットを参照
 
@@ -315,6 +335,65 @@ TeamDelete
 │  テストを実行 → 成功を維持              │
 └─────────────────────────────────────────┘
 ```
+
+---
+
+## コンポーネント化
+
+### 原則
+**共通使用する可能性がある機能やページはコンポーネントにする。**
+
+### 判断基準
+
+| 条件 | アクション |
+|------|-----------|
+| 2箇所以上で使用 | **共通化必須** |
+| 将来的に再利用の可能性大 | 共通化推奨 |
+| アプリ固有のロジック | 共通化しない |
+
+### 共通化の配置先
+
+```
+packages/
+├── ui/                    # 共通UIコンポーネント
+│   └── src/components/
+│       ├── business-card-scanner/
+│       ├── place-autocomplete/
+│       └── contact-form/
+├── action-utils/          # 共通Server Actionsロジック
+│   └── src/
+│       ├── contacts/
+│       ├── organizations/
+│       └── business-card/
+└── types/                 # 共通型定義
+    └── src/
+```
+
+### 共通化チェックリスト
+
+```markdown
+## コンポーネント化対象
+
+### 共通化すべき（2箇所以上で使用）
+| コンポーネント | 使用箇所 | 配置先 |
+|---------------|---------|--------|
+| BusinessCardScanner | sales, nursing, calls | @fractal/ui |
+| PlaceAutocomplete | organization作成, 検索 | @fractal/ui |
+| createContactCore | 全アプリ | @fractal/action-utils |
+
+### 共通化しない（アプリ固有）
+| コンポーネント | 使用箇所 | 理由 |
+|---------------|---------|------|
+| SalesDashboard | sales のみ | 営業固有のUI |
+| NursingReport | nursing のみ | 介護固有のロジック |
+```
+
+### コンポーネント作成時の注意
+
+1. **Props は汎用的に**: アプリ固有のロジックを入れない
+2. **Composition 優先**: 継承より合成
+3. **テストも共通化**: コンポーネントと一緒にテストも移動
+4. **破壊的変更は慎重に**: 複数アプリに影響
 
 ---
 
