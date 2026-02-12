@@ -40,17 +40,17 @@ scripts/codex-wrapper.sh exec "$PROJECT_DIR" "prompt here"
 
 ### Run code review
 ```bash
-scripts/codex-wrapper.sh review "$PROJECT_DIR" uncommitted [output_file]
+scripts/codex-wrapper.sh review "$PROJECT_DIR" uncommitted
 ```
 
 ### Run existing implementation review (Review 1)
 ```bash
-scripts/codex-wrapper.sh review-spec "$PROJECT_DIR" "$(cat plan.md)" [output_file]
+scripts/codex-wrapper.sh review-spec "$PROJECT_DIR" "$(cat plan.md)"
 ```
 
 ### Run requirements coverage review (Review 2)
 ```bash
-scripts/codex-wrapper.sh review-requirements "$PROJECT_DIR" "$(cat plan.md)" "$(cat requirements.md)" [output_file]
+scripts/codex-wrapper.sh review-requirements "$PROJECT_DIR" "$(cat plan.md)" "$(cat requirements.md)"
 ```
 
 ## Execution Process
