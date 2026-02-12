@@ -13,13 +13,30 @@
 ## インストール
 
 ```bash
-# Claude Codeのプラグインディレクトリにクローン
-cd ~/.claude/plugins
-git clone https://github.com/your-org/fractal-dev-workflow.git
+# Claude Codeのプラグインマネージャーからインストール
+/plugin install fractal-dev-workflow
 
-# または、Claude Codeのプラグインマネージャーから
-/install fractal-dev-workflow
+# または、手動でクローン
+cd ~/.claude/plugins
+git clone https://github.com/tasai-lab/fractal-dev-workflow.git
 ```
+
+### セットアップ（初回のみ）
+
+Codex レビュー機能を使用するには、`scripts/codex-wrapper.sh` の実行権限が必要です。
+プロジェクトの `.claude/settings.local.json` に以下を追加してください:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(scripts/codex-wrapper.sh:*)"
+    ]
+  }
+}
+```
+
+**注意**: 相対パス `scripts/codex-wrapper.sh` はプラグインディレクトリからの相対パスです。
 
 ## 使用方法
 
