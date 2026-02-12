@@ -1,0 +1,17 @@
+{
+	"hooks": [
+		{
+			"event": "SessionStart",
+			"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/session-init.sh",
+			"description": "Initialize workflow state on session start"
+		},
+		{
+			"event": "PreToolUse",
+			"matcher": {
+				"tool_name": ["Write", "Edit"]
+			},
+			"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/check-approval.sh",
+			"description": "Block Write/Edit if implementation phase not approved"
+		}
+	]
+}
