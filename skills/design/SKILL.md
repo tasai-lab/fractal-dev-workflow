@@ -282,6 +282,163 @@ ADD COLUMN "businessCardBackUrl" TEXT;
 
 ---
 
+## D. タスク分解（ファイル単位）
+
+### 目的
+ユーザーの指示/提案を**ファイル単位**に分解し、実装漏れを防ぐ。
+「一つのプロンプトに詰め込む」傾向を排除する。
+
+### 分解の鉄則
+
+```
+1タスク = 1ファイル（または密結合した数ファイル）
+```
+
+### 分解ルール
+
+| ルール | 説明 | 例 |
+|--------|------|-----|
+| 1ファイル1タスク | 基本は1ファイル = 1タスク | `types/contact.ts` → Task 1 |
+| 密結合は同一タスク | 実装+テスト など密結合なら同一タスク | `foo.ts` + `foo.test.ts` → 同一タスク |
+| 独立性優先 | 依存関係がない場合は別タスクに分離 | 型定義 と UI は別タスク |
+| レイヤー分離 | 型/API/UI は原則別タスク | 並列化のため |
+
+### 分解プロセス
+
+```dot
+digraph decompose {
+    "ユーザー指示" -> "変更対象ファイルを列挙";
+    "変更対象ファイルを列挙" -> "依存関係を分析";
+    "依存関係を分析" -> "タスクグループを特定";
+    "タスクグループを特定" -> "タスク一覧を作成";
+    "タスク一覧を作成" -> "TaskCreate で登録";
+}
+```
+
+### タスク分解テンプレート
+
+```markdown
+## タスク分解: [機能名]
+
+### 変更対象ファイル
+1. types/contact.ts - 型定義
+2. types/contact.test.ts - 型テスト
+3. api/contacts/route.ts - APIハンドラ
+4. api/contacts/route.test.ts - APIテスト
+5. components/ContactForm.tsx - UIコンポーネント
+6. components/ContactForm.test.tsx - UIテスト
+
+### タスク一覧
+
+| # | タスク | ファイル | 依存 | グループ |
+|---|--------|---------|------|----------|
+| 1 | 型定義 | types/contact.ts, types/contact.test.ts | - | A |
+| 2 | API実装 | api/contacts/route.ts, api/contacts/route.test.ts | 1 | B |
+| 3 | UI実装 | components/ContactForm.tsx, components/ContactForm.test.ts | 1 | C |
+
+### 依存グラフ
+
+```
+Task 1 (型定義)
+   ├── Task 2 (API)
+   └── Task 3 (UI)
+```
+
+### 並列グループ
+- **Group A**: Task 1（依存なし）
+- **Group B**: Task 2, 3（Task 1 完了後、並列実行可）
+```
+
+### 分解時のチェックリスト
+
+- [ ] 全ての変更対象ファイルが列挙されている
+- [ ] 各タスクは1ファイル単位（または密結合ファイル群）
+- [ ] 依存関係が明示されている
+- [ ] 並列実行可能なグループが特定されている
+- [ ] TaskCreate で全タスクが登録される
+
+---
+
+## E. worktree計画
+
+### 目的
+依存関係のないタスクグループを**Git worktree で分離**し、並列開発を可能にする。
+
+### worktree の利点
+
+| 利点 | 説明 |
+|------|------|
+| 完全な隔離 | ファイル競合なし |
+| 並列コミット | 各worktreeで独立してコミット |
+| サブエージェント活用 | 各worktreeに別のサブエージェントを割り当て |
+
+### worktree配置ルール
+
+| ルール | 説明 |
+|--------|------|
+| グループ単位 | 依存関係のないタスクグループごとにworktree |
+| ベースディレクトリ | プロジェクト外の共通ディレクトリ |
+| 命名規則 | `{project}-{feature}-{group}` |
+| ブランチ命名 | `feature/{feature}-{group}` |
+
+### worktree計画テンプレート
+
+```markdown
+## worktree計画: [機能名]
+
+### ベースディレクトリ
+/Users/t.asai/code/fractal-worktrees
+
+### worktree一覧
+
+| # | worktree名 | ブランチ | タスク | 担当 |
+|---|-----------|---------|--------|------|
+| A | project-feature-types | feature/contact-types | #1 | impl-types |
+| B | project-feature-api | feature/contact-api | #2 | impl-api |
+| C | project-feature-ui | feature/contact-ui | #3 | impl-ui |
+
+### 作成コマンド
+
+```bash
+# worktree A
+git worktree add ../fractal-worktrees/project-feature-types -b feature/contact-types
+
+# worktree B
+git worktree add ../fractal-worktrees/project-feature-api -b feature/contact-api
+
+# worktree C
+git worktree add ../fractal-worktrees/project-feature-ui -b feature/contact-ui
+```
+
+### マージ順序
+
+```
+feature/contact-types (A)
+        ↓
+    main にマージ
+        ↓
+feature/contact-api (B) ──┬── main にマージ
+feature/contact-ui (C) ───┘
+```
+
+### クリーンアップ
+
+```bash
+git worktree remove ../fractal-worktrees/project-feature-types
+git worktree remove ../fractal-worktrees/project-feature-api
+git worktree remove ../fractal-worktrees/project-feature-ui
+```
+```
+
+### worktree計画時のチェックリスト
+
+- [ ] 各タスクグループにworktreeが割り当てられている
+- [ ] ブランチ命名が一貫している
+- [ ] マージ順序が依存関係を反映している
+- [ ] クリーンアップ手順が記載されている
+
+---
+
 ## 統合: 設計書テンプレート
 
 ```markdown
@@ -332,6 +489,24 @@ ADD COLUMN "businessCardBackUrl" TEXT;
 ### モック戦略
 | 依存 | モック方法 |
 |------|----------|
+
+## D. タスク分解
+
+### タスク一覧
+| # | タスク | ファイル | 依存 | グループ |
+|---|--------|---------|------|----------|
+
+### 依存グラフ
+[テキストまたは図]
+
+## E. worktree計画
+
+### worktree一覧
+| # | worktree名 | ブランチ | タスク | 担当 |
+|---|-----------|---------|--------|------|
+
+### マージ順序
+[依存関係に基づくマージ順]
 ```
 
 ---
@@ -353,6 +528,15 @@ ADD COLUMN "businessCardBackUrl" TEXT;
   - [ ] 境界値
   - [ ] 外部依存モック
   - [ ] 同時実行
+- [ ] **タスク分解完了**
+  - [ ] 全変更対象ファイルが列挙
+  - [ ] 各タスクが1ファイル単位
+  - [ ] 依存関係が明示
+  - [ ] TaskCreate で全タスク登録
+- [ ] **worktree計画完了**
+  - [ ] タスクグループにworktree割り当て
+  - [ ] マージ順序が依存関係を反映
+  - [ ] クリーンアップ手順記載
 - [ ] **ユーザー承認**
 
 ---
