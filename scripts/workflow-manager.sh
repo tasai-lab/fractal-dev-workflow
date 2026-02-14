@@ -19,10 +19,23 @@ validate_workflow_id() {
 # ファイルロック取得
 acquire_lock() {
     local workflow_id="$1"
-    local lock="$WORKFLOW_DIR/$workflow_id.lock"
+    local lock_dir="$WORKFLOW_DIR/$workflow_id.lock"
     mkdir -p "$WORKFLOW_DIR"
-    exec 200>"$lock"
-    flock -n 200 || { echo "ERROR: Workflow $workflow_id is locked" >&2; exit 1; }
+
+    # macOS互換: mkdirをアトミックロックとして使用
+    local max_attempts=10
+    local attempt=0
+    while ! mkdir "$lock_dir" 2>/dev/null; do
+        attempt=$((attempt + 1))
+        if [[ $attempt -ge $max_attempts ]]; then
+            echo "ERROR: Workflow $workflow_id is locked" >&2
+            exit 1
+        fi
+        sleep 0.1
+    done
+
+    # クリーンアップ用のトラップ設定
+    trap "rm -rf '$lock_dir'" EXIT
 }
 
 # ワークフロー状態読み取り
