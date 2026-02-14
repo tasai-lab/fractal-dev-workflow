@@ -12,6 +12,34 @@ Codex CLI (codex-5.3, reasoning: xhigh) を使用して計画とコードの批�
 
 **Core principle:** PREFER Codex for all critical reviews. Fresh context catches more issues.
 
+## Phase 4 起動条件（計画レビュー）
+
+**TRIGGER**: Phase 3（契約設計）完了後、以下を実行：
+
+```
+Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
+  ## Phase 4: Codex計画レビュー
+
+  計画ファイル: {design artifact path}
+  要件ファイル: {requirements artifact path}
+
+  手順:
+  1. scripts/codex-wrapper.sh check
+  2. review-spec → review-requirements を順次実行
+  3. 結果をVerdictと共に報告
+```
+
+## Phase 6 起動条件（コードレビュー）
+
+**TRIGGER**: Phase 5（実装）完了後、以下を実行：
+
+```
+Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
+  ## Phase 6: Codexコードレビュー
+
+  scripts/codex-wrapper.sh review . uncommitted を実行
+```
+
 ## The Iron Law
 
 ```

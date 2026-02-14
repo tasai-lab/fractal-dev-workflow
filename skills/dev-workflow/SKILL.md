@@ -564,6 +564,69 @@ Task(subagent_type="implementer", model="sonnet", run_in_background=true):
 
 ---
 
+## Phase Transition Flow（自動遷移ロジック）
+
+**CRITICAL: 各フェーズ完了時は以下のトリガーを実行する**
+
+### Phase 3 → Phase 4 遷移（計画レビュー）
+
+Phase 3（契約設計）完了後、**必ず** codex-delegate を起動してPhase 4を開始：
+
+```
+# Phase 3 完了確認後
+Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
+  ## Phase 4: Codex計画レビュー
+
+  計画ファイル: [design artifact path]
+  要件ファイル: [requirements artifact path]
+
+  以下の手順でレビューを実行してください:
+  1. scripts/codex-wrapper.sh check でCodex可用性を確認
+  2. 利用可能な場合: review-spec と review-requirements を順次実行
+  3. 利用不可の場合: fallback を報告
+
+  結果を以下の形式で報告:
+  - Review 1 (既存実装照合): [結果]
+  - Review 2 (要件カバレッジ): [結果]
+  - Verdict: [APPROVED / NEEDS CHANGES]
+```
+
+### Phase 5 → Phase 6 遷移（コードレビュー）
+
+Phase 5（実装）完了後、**必ず** codex-delegate を起動してPhase 6を開始：
+
+```
+# Phase 5 完了確認後
+Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
+  ## Phase 6: Codexコードレビュー
+
+  実装コミット: [latest commits]
+
+  scripts/codex-wrapper.sh review . uncommitted を実行し、
+  コード品質・テストカバレッジ・セキュリティを評価してください。
+```
+
+### 遷移フローチャート
+
+```
+Phase 1 完了 → Phase 2 開始（自動）
+Phase 2 完了 → Phase 3 開始（自動）
+Phase 3 完了 → ★Phase 4 開始（codex-delegate 起動必須）
+Phase 4 承認 → Phase 5 開始（ユーザー承認後）
+Phase 5 完了 → ★Phase 6 開始（codex-delegate 起動必須）
+Phase 6 承認 → Phase 7 開始（ユーザー承認後）
+Phase 7 完了 → Phase 8 開始（自動）
+```
+
+### トリガーチェックリスト
+
+フェーズ完了時に確認:
+- [ ] 完了条件をすべて満たしているか
+- [ ] 状態ファイルを更新したか (`~/.claude/fractal-workflow/{id}.json`)
+- [ ] 次フェーズのトリガーを実行したか（Phase 4, 6 は codex-delegate 必須）
+
+---
+
 ## Workflow State Management
 
 State is stored in `~/.claude/fractal-workflow/{workflow-id}.json`:

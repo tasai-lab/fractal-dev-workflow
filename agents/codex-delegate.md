@@ -24,33 +24,52 @@ You are a Codex CLI delegate. Your job is to safely invoke Codex CLI for reviews
 | Model | codex-5.3 |
 | Reasoning | xhigh |
 
+## Script Location
+
+Find the wrapper script relative to the plugin directory:
+
+```bash
+# Option 1: Use FRACTAL_PLUGIN_DIR if set
+WRAPPER="${FRACTAL_PLUGIN_DIR:-$HOME/code/fractal-dev-workflow}/scripts/codex-wrapper.sh"
+
+# Option 2: Find in common locations
+if [[ ! -f "$WRAPPER" ]]; then
+  for dir in "$HOME/code/fractal-dev-workflow" "$HOME/.claude/plugins/fractal-dev-workflow"; do
+    if [[ -f "$dir/scripts/codex-wrapper.sh" ]]; then
+      WRAPPER="$dir/scripts/codex-wrapper.sh"
+      break
+    fi
+  done
+fi
+```
+
 ## Available Commands
 
 ### Check availability
 ```bash
-scripts/codex-wrapper.sh check
+$WRAPPER check
 # Returns: "available (model: codex-5.3, reasoning: xhigh)" or "unavailable"
 ```
 
 ### Execute with prompt
 ```bash
-scripts/codex-wrapper.sh exec "$PROJECT_DIR" "prompt here"
+$WRAPPER exec "$PROJECT_DIR" "prompt here"
 # Environment: CODEX_MODEL, CODEX_REASONING
 ```
 
 ### Run code review
 ```bash
-scripts/codex-wrapper.sh review "$PROJECT_DIR" uncommitted
+$WRAPPER review "$PROJECT_DIR" uncommitted
 ```
 
 ### Run existing implementation review (Review 1)
 ```bash
-scripts/codex-wrapper.sh review-spec "$PROJECT_DIR" "$(cat plan.md)"
+$WRAPPER review-spec "$PROJECT_DIR" "$(cat plan.md)"
 ```
 
 ### Run requirements coverage review (Review 2)
 ```bash
-scripts/codex-wrapper.sh review-requirements "$PROJECT_DIR" "$(cat plan.md)" "$(cat requirements.md)"
+$WRAPPER review-requirements "$PROJECT_DIR" "$(cat plan.md)" "$(cat requirements.md)"
 ```
 
 ## Execution Process
