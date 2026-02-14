@@ -1,13 +1,13 @@
 ---
 name: dev-workflow
-description: 開発タスクを受けた時、機能実装・バグ修正・リファクタリングの前に使用。7フェーズを自動で進行させるメインオーケストレーター。
+description: 開発タスクを受けた時、機能実装・バグ修正・リファクタリングの前に使用。8フェーズを自動で進行させるメインオーケストレーター。
 ---
 
 # Development Workflow Orchestrator
 
 ## Overview
 
-開発タスクを7つのフェーズで体系的に進行させるオーケストレーター。
+開発タスクを8つのフェーズで体系的に進行させるオーケストレーター。
 **事故りにくい順序**で、堅実な実装を実現する。
 
 **Core principles:**
@@ -27,6 +27,23 @@ NO DOMAIN MODEL WITHOUT REQUIREMENTS FIRST
 NO MERGE WITHOUT VERIFICATION
 ```
 
+## 必須原則（Additional Iron Rules）
+
+### 調査はサブエージェント駆動
+Phase 2（調査）は必ずサブエージェントで実行する。
+Task(subagent_type="fractal-dev-workflow:investigator")
+理由: 親エージェントのコンテキストを汚さない
+
+### トークン消費削減
+- 各サブエージェントは独立したコンテキストで作業
+- 結果のみを親エージェントに返す
+- コンテキスト循環: コミット経由で引継ぎ
+
+### 実装時はworktree必須
+Phase 5（実装）は必ずworktreeで作業する。
+git worktree add /path/to/worktrees/<branch-name>
+理由: 変更の分離、並列作業、安全なロールバック
+
 ## Subagent Configuration
 
 サブエージェントは **Sonnet 4.5** を積極的に使用する：
@@ -42,7 +59,7 @@ Task(subagent_type="implementer", model="sonnet"):
 | 実装 | sonnet | バランス良好 |
 | 複雑な設計判断 | opus | 深い推論が必要な場合のみ |
 
-## The Seven Phases（事故りにくい順）
+## The Eight Phases（事故りにくい順）
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -64,28 +81,35 @@ Task(subagent_type="implementer", model="sonnet"):
 │  API仕様 → DBスキーマ → エラー形式 → リトライ/冪等性方針      │
 │  これでフロント・バック・QAが並列化可能になる                 │
 └─────────────────────────────────────────────────────────────┘
-                              ↓ ★ユーザー承認
+                              ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  Phase 4: レビュー   計画を批判的に検証                      │
+│  Phase 4: Codex計画レビュー   計画を批判的に検証             │
 │  ─────────────────────────────────────────────────────────  │
 │  既存実装照合 → 要件カバレッジ → 契約の整合性                 │
 └─────────────────────────────────────────────────────────────┘
-                              ↓
+                              ↓ ★Codex承認 → ★ユーザー承認
 ┌─────────────────────────────────────────────────────────────┐
 │  Phase 5: 縦切りで実装（薄く通して太くする）                  │
 │  ─────────────────────────────────────────────────────────  │
 │  1機能をUI→API→ドメイン→DBまで最小で通す → 肉付け            │
 │  TDD (RED→GREEN→REFACTOR) + コンポーネント化                 │
+│  ★worktree必須: git worktree add /path/to/worktrees/<branch> │
 └─────────────────────────────────────────────────────────────┘
-                              ↓ ★ユーザー承認
+                              ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  Phase 6: 検証（テストピラミッド）                           │
+│  Phase 6: Codexコードレビュー                                │
+│  ─────────────────────────────────────────────────────────  │
+│  実装コードの批判的レビュー + 承認                            │
+└─────────────────────────────────────────────────────────────┘
+                              ↓ ★Codex承認 → ★ユーザー承認
+┌─────────────────────────────────────────────────────────────┐
+│  Phase 7: 検証（テストピラミッド）                           │
 │  ─────────────────────────────────────────────────────────  │
 │  Unit(多) → Integration(中) → E2E(少) → Contract → 負荷     │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  Phase 7: 運用・リリース設計                                 │
+│  Phase 8: 運用設計                                          │
 │  ─────────────────────────────────────────────────────────  │
 │  マイグレーション → ロールバック → Feature Flag → アラート   │
 └─────────────────────────────────────────────────────────────┘
@@ -98,10 +122,11 @@ Task(subagent_type="implementer", model="sonnet"):
 | 1 | 質問 + 要件定義 | questioning → requirements | Auto | MVP境界、受け入れ条件、「やらない」リスト |
 | 2 | 調査+ドメイン | investigation | Auto | 用語統一、ビジネスルール、境界責務 |
 | 3 | 契約設計 | design | **Required** | API仕様、DBスキーマ、エラー形式 |
-| 4 | レビュー | codex-review | Auto | レビュー結果（Codex 5.3 + xhigh） |
+| 4 | Codex計画レビュー | codex-review | **Codex→User** | レビュー結果（Codex 5.3 + xhigh） |
 | 5 | 実装 | implementation | **Required** | 動作するコード + テスト + コンポーネント |
-| 6 | 検証 | verification | Auto | テストピラミッド結果、検証レポート |
-| 7 | 運用設計 | completion | Auto | ロールバック手順、監視、Feature Flag |
+| 6 | Codexコードレビュー | codex-review | **Codex→User** | コードレビュー結果 + 承認 |
+| 7 | 検証 | verification | Auto | テストピラミッド結果、検証レポート |
+| 8 | 運用設計 | completion | Auto | ロールバック手順、監視、Feature Flag |
 
 ---
 
@@ -319,7 +344,7 @@ questioning の流れ:
 
 ---
 
-## Phase 4: レビュー（計画を批判的に検証）
+## Phase 4: Codex計画レビュー（計画を批判的に検証）
 
 ### 目的
 Codexによる2観点の批判的レビューで品質を保証。
@@ -331,10 +356,12 @@ Codexによる2観点の批判的レビューで品質を保証。
 ### 成果物
 → `codex-review` スキル参照
 
-### 完了条件
+### 完了条件（★Codex承認→ユーザー承認必須）
 - [ ] 既存実装照合レビュー完了
 - [ ] 要件カバレッジレビュー完了
 - [ ] 指摘事項を修正
+- [ ] ★Codex承認取得
+- [ ] ★ユーザー承認取得
 
 ---
 
@@ -349,6 +376,20 @@ Codexによる2観点の批判的レビューで品質を保証。
 - **薄く通す**: まず最小動作、後から肉付け
 - **TDD**: RED→GREEN→REFACTOR
 - **コンポーネント化**: 2箇所以上で使うものは共通化
+
+### worktree必須
+
+実装は必ずworktreeで作業する:
+
+```bash
+git worktree add /path/to/worktrees/<branch-name>
+cd /path/to/worktrees/<branch-name>
+```
+
+理由:
+- 変更の分離（メインブランチを汚さない）
+- 並列作業の安全性
+- 安全なロールバック
 
 ### 縦切り実装の順序
 
@@ -396,7 +437,31 @@ Task(subagent_type="implementer", model="sonnet", run_in_background=true):
 
 ---
 
-## Phase 6: 検証（テストピラミッド）
+## Phase 6: Codexコードレビュー
+
+### 目的
+実装されたコードに対するCodexによる批判的レビューと承認。
+
+### レビュー観点
+1. **コード品質**: 可読性、保守性、パフォーマンス
+2. **テストカバレッジ**: ユニット・統合テストの充実度
+3. **セキュリティ**: 脆弱性の有無
+4. **ベストプラクティス**: 既存コードとの整合性
+
+### 成果物
+→ `codex-review` スキル参照
+
+### 完了条件（★Codex承認→ユーザー承認必須）
+- [ ] コード品質レビュー完了
+- [ ] テストカバレッジ確認完了
+- [ ] セキュリティチェック完了
+- [ ] 指摘事項を修正
+- [ ] ★Codex承認取得
+- [ ] ★ユーザー承認取得
+
+---
+
+## Phase 7: 検証（テストピラミッド）
 
 ### 目的
 テストピラミッドに従い、ROI順でテストを実施。
@@ -446,7 +511,7 @@ Task(subagent_type="implementer", model="sonnet", run_in_background=true):
 
 ---
 
-## Phase 7: 運用・リリース設計
+## Phase 8: 運用設計
 
 ### 目的
 **後回しにすると炎上する**運用設計を完了させる。
@@ -516,7 +581,8 @@ State is stored in `~/.claude/fractal-workflow/{workflow-id}.json`:
     "4": {"status": "pending"},
     "5": {"status": "pending"},
     "6": {"status": "pending"},
-    "7": {"status": "pending"}
+    "7": {"status": "pending"},
+    "8": {"status": "pending"}
   },
   "artifacts": {
     "requirements": "path/to/requirements.md",
@@ -564,10 +630,11 @@ If you catch yourself thinking:
 | Phase | 担当 Agent | 役割 | Model |
 |-------|------------|------|-------|
 | 1-3 | **Architect** | 設計参謀：要件を仕様書に変換 | sonnet |
-| 4 | **Codex** | 批判的レビュー（codex-delegate経由） | codex |
+| 4 | **Codex** | 計画の批判的レビュー（codex-delegate経由） | codex |
 | 5 | **TechLead** → **Coder** | 技術分解 → TDD実装 | sonnet |
-| 6 | **QA** | 品質憲兵：検証のみ、編集禁止 | sonnet |
-| 7 | **Architect** | 運用設計 | sonnet |
+| 6 | **Codex** | コードレビュー + 承認（codex-delegate経由） | codex |
+| 7 | **QA** | 品質憲兵：検証のみ、編集禁止 | sonnet |
+| 8 | **Architect** | 運用設計 | sonnet |
 
 ### Agent 使い分け
 
@@ -596,17 +663,17 @@ If you catch yourself thinking:
 - requirements - Phase 1 (要件定義)
 - investigation - Phase 2
 - design - Phase 3
-- codex-review - Phase 4
+- codex-review - Phase 4 & 6
 - implementation - Phase 5
-- verification - Phase 6
-- completion - Phase 7
+- verification - Phase 7
+- completion - Phase 8
 
 **Required agents:**
-- architect - Phase 1-3, 7
+- architect - Phase 1-3, 8
 - tech-lead - Phase 5 (task decomposition)
 - coder - Phase 5 (TDD implementation)
-- qa - Phase 6 (read-only verification)
-- codex-delegate - Phase 4 (critical review)
+- qa - Phase 7 (read-only verification)
+- codex-delegate - Phase 4 & 6 (critical review)
 - investigator - Phase 2 (codebase exploration)
 
 **Optional skills:**
