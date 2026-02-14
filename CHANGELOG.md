@@ -23,7 +23,7 @@
   - Phase 5: 実装
   - Phase 6: コードレビュー (新規)
   - Phase 7: テスト (新規)
-  - Phase 8: 完了 (旧: Phase 6)
+  - Phase 8: 運用設計 (旧: Phase 6)
 - `record_approval` 関数を `approve` に名称変更 (後方互換性維持)
 - 承認フィールド名の変更
   - 旧: `approvedAt`

@@ -18,7 +18,13 @@ fi
 
 # ワークフロー状態を読み取り
 state=$(cat "$active_wf")
-current_phase=$(echo "$state" | jq -r '.currentPhase // 0')
+current_phase=$(echo "$state" | jq -r '.currentPhase // 0 | tonumber')
+
+# currentPhase の型チェック
+if ! [[ "$current_phase" =~ ^[0-9]+$ ]]; then
+    echo '{"status": "error", "message": "Invalid currentPhase value"}'
+    exit 1
+fi
 
 # Phase 5（実装）未満で Write/Edit を試みている場合
 if [[ $current_phase -lt 5 ]]; then
@@ -40,8 +46,8 @@ EOF
 
     # Phase 4（計画レビュー）の2段階承認チェック
     if [[ $current_phase -eq 4 ]]; then
-        phase4_codex=$(echo "$state" | jq -r '.phases["4"].codexApprovedAt // empty')
-        phase4_user=$(echo "$state" | jq -r '.phases["4"].userApprovedAt // empty')
+        phase4_codex=$(echo "$state" | jq --arg p "4" -r '.phases[$p].codexApprovedAt // empty')
+        phase4_user=$(echo "$state" | jq --arg p "4" -r '.phases[$p].userApprovedAt // empty')
         if [[ -z "$phase4_codex" ]] || [[ -z "$phase4_user" ]]; then
             cat <<EOF
 {
@@ -56,8 +62,8 @@ fi
 
 # Phase 7以降は Phase 6（コードレビュー）の2段階承認が必要
 if [[ $current_phase -ge 7 ]]; then
-    phase6_codex=$(echo "$state" | jq -r '.phases["6"].codexApprovedAt // empty')
-    phase6_user=$(echo "$state" | jq -r '.phases["6"].userApprovedAt // empty')
+    phase6_codex=$(echo "$state" | jq --arg p "6" -r '.phases[$p].codexApprovedAt // empty')
+    phase6_user=$(echo "$state" | jq --arg p "6" -r '.phases[$p].userApprovedAt // empty')
     if [[ -z "$phase6_codex" ]] || [[ -z "$phase6_user" ]]; then
         cat <<EOF
 {

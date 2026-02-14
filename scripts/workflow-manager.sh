@@ -6,6 +6,16 @@ set -euo pipefail
 
 WORKFLOW_DIR="${WORKFLOW_DIR:-$HOME/.claude/fractal-workflow}"
 
+# workflow_id のフォーマット検証
+validate_workflow_id() {
+    local workflow_id="$1"
+    if ! [[ "$workflow_id" =~ ^wf-[0-9]{8}-[0-9]{3}$ ]]; then
+        echo "ERROR: Invalid workflow_id format: $workflow_id" >&2
+        echo "Expected format: wf-YYYYMMDD-NNN" >&2
+        exit 1
+    fi
+}
+
 # ファイルロック取得
 acquire_lock() {
     local workflow_id="$1"
@@ -18,6 +28,7 @@ acquire_lock() {
 # ワークフロー状態読み取り
 get_state() {
     local workflow_id="$1"
+    validate_workflow_id "$workflow_id"
     local state_file="$WORKFLOW_DIR/$workflow_id.json"
     if [[ -f "$state_file" ]]; then
         cat "$state_file"
@@ -44,8 +55,33 @@ get_phase() {
 # フェーズ更新
 set_phase() {
     local workflow_id="$1"
+    validate_workflow_id "$workflow_id"
     local phase="$2"
+
+    acquire_lock "$workflow_id"
     local current=$(get_state "$workflow_id")
+    local current_phase=$(echo "$current" | jq -r '.currentPhase // 0')
+
+    # Phase 5への遷移: Phase 4の2段階承認が必要
+    if [[ "$phase" -ge 5 ]] && [[ "$current_phase" -lt 5 ]]; then
+        local p4_codex=$(echo "$current" | jq -r '.phases["4"].codexApprovedAt // empty')
+        local p4_user=$(echo "$current" | jq -r '.phases["4"].userApprovedAt // empty')
+        if [[ -z "$p4_codex" ]] || [[ -z "$p4_user" ]]; then
+            echo "ERROR: Phase 4の承認が完了していません" >&2
+            exit 1
+        fi
+    fi
+
+    # Phase 7への遷移: Phase 6の2段階承認が必要
+    if [[ "$phase" -ge 7 ]] && [[ "$current_phase" -lt 7 ]]; then
+        local p6_codex=$(echo "$current" | jq -r '.phases["6"].codexApprovedAt // empty')
+        local p6_user=$(echo "$current" | jq -r '.phases["6"].userApprovedAt // empty')
+        if [[ -z "$p6_codex" ]] || [[ -z "$p6_user" ]]; then
+            echo "ERROR: Phase 6の承認が完了していません" >&2
+            exit 1
+        fi
+    fi
+
     local updated=$(echo "$current" | jq --arg p "$phase" '.currentPhase = ($p | tonumber)')
     set_state "$workflow_id" "$updated"
 }
@@ -55,13 +91,14 @@ is_approved() {
     local workflow_id="$1"
     local phase="$2"
     local state=$(get_state "$workflow_id")
-    local approved=$(echo "$state" | jq -r ".phases[\"$phase\"].approvedAt // empty")
+    local approved=$(echo "$state" | jq -r ".phases[\"$phase\"].userApprovedAt // empty")
     [[ -n "$approved" ]]
 }
 
 # 承認を記録（タイプ: codex または user）
 approve() {
     local workflow_id="$1"
+    validate_workflow_id "$workflow_id"
     local phase="$2"
     local approver="${3:-user}"  # デフォルトはuser
 
@@ -105,7 +142,7 @@ create_workflow() {
         "5": {"name": "実装", "status": "pending"},
         "6": {"name": "コードレビュー", "status": "pending"},
         "7": {"name": "テスト", "status": "pending"},
-        "8": {"name": "完了", "status": "pending"}
+        "8": {"name": "運用設計", "status": "pending"}
     },
     "createdAt": "$timestamp"
 }
@@ -155,7 +192,7 @@ case "${1:-help}" in
     phase) get_phase "${2:-}" ;;
     set-phase) set_phase "${2:-}" "${3:-}" ;;
     is-approved) is_approved "${2:-}" "${3:-}" && echo "true" || echo "false" ;;
-    approve) record_approval "${2:-}" "${3:-}" ;;
+    approve) approve "${2:-}" "${3:-}" "${4:-user}" ;;
     lock) acquire_lock "${2:-}" ;;
     list) list_active ;;
     help|--help|-h) show_help ;;
