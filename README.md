@@ -4,8 +4,8 @@
 
 ## 特徴
 
-- **6フェーズワークフロー**: 質問→調査→計画→批判的レビュー→実装→完了
-- **承認ゲート**: Phase 3（計画）とPhase 5（実装）で必須承認
+- **8フェーズワークフロー**: 質問→調査→設計→計画レビュー→実装→コードレビュー→テスト→完了
+- **2段階承認ゲート**: Phase 4（計画レビュー）とPhase 6（コードレビュー）で Codex承認→ユーザー承認の2段階チェック
 - **Codexレビュー統合**: 外部の批判的視点で品質保証
 - **チーム駆動実装**: サブエージェントによる並列実装
 - **失敗パターン学習**: 同じ失敗を繰り返さない
@@ -56,13 +56,17 @@ Phase 1: 質問 (Questioning)
     ↓ 自動
 Phase 2: 調査 (Investigation)
     ↓ 自動
-Phase 3: 計画 (Planning)
+Phase 3: 設計 (Design)
     ↓ ★ユーザー承認必須★
-Phase 4: 批判的レビュー (Critical Review)
-    ↓ 自動
+Phase 4: 計画レビュー (Plan Review)
+    ↓ ★Codex承認→ユーザー承認★ (2段階)
 Phase 5: 実装 (Implementation)
-    ↓ ★ユーザー承認必須★
-Phase 6: 完了 (Completion)
+    ↓ 自動
+Phase 6: コードレビュー (Code Review)
+    ↓ ★Codex承認→ユーザー承認★ (2段階)
+Phase 7: テスト (Testing)
+    ↓ 自動
+Phase 8: 完了 (Completion)
 ```
 
 ## スキル一覧

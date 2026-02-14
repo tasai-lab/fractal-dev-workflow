@@ -18,16 +18,18 @@ description: 会話開始時に使用 - ワークフロースキルの検索・�
 | `/dev status` | Show current workflow state |
 | `/dev cancel` | Cancel active workflow |
 
-## The Six Phases
+## The Eight Phases
 
 | Phase | Name | Auto/Approval |
 |-------|------|---------------|
 | 1 | 質問 (Questioning) | Auto |
 | 2 | 調査 (Investigation) | Auto |
-| 3 | 計画 (Planning) | **Approval Required** |
-| 4 | 批判的レビュー (Critical Review) | Auto |
-| 5 | 実装 (Implementation) | **Approval Required** |
-| 6 | 完了 (Completion) | - |
+| 3 | 設計 (Design) | Auto |
+| 4 | 計画レビュー (Plan Review) | **Approval Required (2-stage)** |
+| 5 | 実装 (Implementation) | Auto |
+| 6 | コードレビュー (Code Review) | **Approval Required (2-stage)** |
+| 7 | テスト (Testing) | Auto |
+| 8 | 運用設計 (Operations) | - |
 
 ## Skill Invocation
 
@@ -37,9 +39,12 @@ description: 会話開始時に使用 - ワークフロースキルの検索・�
 - `dev-workflow` - Main orchestrator
 - `questioning` - Phase 1
 - `investigation` - Phase 2
-- `planning` - Phase 3
-- `codex-review` - Phase 4
+- `design` - Phase 3
+- `plan-review` - Phase 4
 - `implementation` - Phase 5
+- `code-review` - Phase 6
+- `testing` - Phase 7
+- `operations` - Phase 8
 
 ### Support Skills
 - `failure-memory` - Learn from failures
@@ -51,7 +56,7 @@ description: 会話開始時に使用 - ワークフロースキルの検索・�
 1. Receive development task
 2. Invoke `dev-workflow` skill
 3. Follow phase progression
-4. Wait for approvals at Phases 3 and 5
+4. Wait for approvals at Phases 4 and 6 (2-stage: Codex + User)
 5. Complete workflow
 
 ## Red Flags

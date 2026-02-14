@@ -140,13 +140,24 @@ The spec-reviewer agent provides:
 - [ ] Test strategy covers all requirements
 - [ ] No scope creep (features not in requirements)
 
-### Code Review
-- [ ] OWASP Top 10 vulnerabilities
-- [ ] Error handling
-- [ ] Type safety
-- [ ] Code readability
-- [ ] Test coverage
-- [ ] Performance
+### Code Review（3観点）
+- [ ] **セキュリティ**
+  - [ ] OWASP Top 10 vulnerabilities
+  - [ ] 入力バリデーション
+  - [ ] 認証・認可の適切な実装
+
+- [ ] **品質**
+  - [ ] Error handling
+  - [ ] Type safety
+  - [ ] Code readability
+  - [ ] Test coverage
+  - [ ] Performance
+
+- [ ] **設計整合性**
+  - [ ] Phase 3契約設計との一貫性
+  - [ ] 既存アーキテクチャとの整合性
+  - [ ] 命名規則の統一
+  - [ ] 共通コンポーネントの適切な利用
 
 ## Completion Criteria
 
