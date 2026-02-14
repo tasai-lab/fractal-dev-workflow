@@ -24,18 +24,48 @@ current_phase=$(echo "$state" | jq -r '.currentPhase // 0')
 if [[ $current_phase -lt 5 ]]; then
     phase_name=$(echo "$state" | jq -r ".phases[\"$current_phase\"].name // \"unknown\"")
 
-    # 計画フェーズ（Phase 3）が承認されていない場合はブロック
+    # 設計フェーズ（Phase 3）が承認されていない場合はブロック
     if [[ $current_phase -le 3 ]]; then
-        phase3_approved=$(echo "$state" | jq -r '.phases["3"].approvedAt // empty')
+        phase3_approved=$(echo "$state" | jq -r '.phases["3"].userApprovedAt // empty')
         if [[ -z "$phase3_approved" ]]; then
             cat <<EOF
 {
     "status": "error",
-    "message": "Implementation blocked: Planning phase (Phase 3) not yet approved. Current phase: $current_phase ($phase_name). Complete phases 1-3 and get approval before implementing."
+    "message": "Implementation blocked: Design phase (Phase 3) not yet approved. Current phase: $current_phase ($phase_name). Complete phases 1-3 and get approval before implementing."
 }
 EOF
             exit 1
         fi
+    fi
+
+    # Phase 4（計画レビュー）の2段階承認チェック
+    if [[ $current_phase -eq 4 ]]; then
+        phase4_codex=$(echo "$state" | jq -r '.phases["4"].codexApprovedAt // empty')
+        phase4_user=$(echo "$state" | jq -r '.phases["4"].userApprovedAt // empty')
+        if [[ -z "$phase4_codex" ]] || [[ -z "$phase4_user" ]]; then
+            cat <<EOF
+{
+    "status": "error",
+    "message": "Implementation blocked: Phase 4 (計画レビュー) のCodex承認とユーザー承認が必要です。Current approvals - Codex: $(if [[ -n "$phase4_codex" ]]; then echo "✓"; else echo "✗"; fi), User: $(if [[ -n "$phase4_user" ]]; then echo "✓"; else echo "✗"; fi)"
+}
+EOF
+            exit 1
+        fi
+    fi
+fi
+
+# Phase 7以降は Phase 6（コードレビュー）の2段階承認が必要
+if [[ $current_phase -ge 7 ]]; then
+    phase6_codex=$(echo "$state" | jq -r '.phases["6"].codexApprovedAt // empty')
+    phase6_user=$(echo "$state" | jq -r '.phases["6"].userApprovedAt // empty')
+    if [[ -z "$phase6_codex" ]] || [[ -z "$phase6_user" ]]; then
+        cat <<EOF
+{
+    "status": "error",
+    "message": "Implementation blocked: Phase 6 (コードレビュー) のCodex承認とユーザー承認が必要です。Current approvals - Codex: $(if [[ -n "$phase6_codex" ]]; then echo "✓"; else echo "✗"; fi), User: $(if [[ -n "$phase6_user" ]]; then echo "✓"; else echo "✗"; fi)"
+}
+EOF
+        exit 1
     fi
 fi
 

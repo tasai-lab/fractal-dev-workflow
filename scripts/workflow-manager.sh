@@ -59,15 +59,30 @@ is_approved() {
     [[ -n "$approved" ]]
 }
 
-# 承認記録
-record_approval() {
+# 承認を記録（タイプ: codex または user）
+approve() {
     local workflow_id="$1"
     local phase="$2"
+    local approver="${3:-user}"  # デフォルトはuser
+
+    acquire_lock "$workflow_id"
+    local state=$(get_state "$workflow_id")
     local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-    local current=$(get_state "$workflow_id")
-    local updated=$(echo "$current" | jq --arg p "$phase" --arg t "$timestamp" \
-        '.phases[$p].approvedAt = $t | .phases[$p].status = "completed"')
+
+    if [[ "$approver" == "codex" ]]; then
+        local updated=$(echo "$state" | jq --arg p "$phase" --arg t "$timestamp" \
+            '.phases[$p].codexApprovedAt = $t')
+    else
+        local updated=$(echo "$state" | jq --arg p "$phase" --arg t "$timestamp" \
+            '.phases[$p].userApprovedAt = $t | .phases[$p].status = "completed"')
+    fi
+
     set_state "$workflow_id" "$updated"
+}
+
+# 後方互換性のため、record_approval は approve のエイリアスとする
+record_approval() {
+    approve "$@"
 }
 
 # 新規ワークフロー作成
@@ -85,10 +100,12 @@ create_workflow() {
     "phases": {
         "1": {"name": "質問", "status": "pending"},
         "2": {"name": "調査", "status": "pending"},
-        "3": {"name": "計画", "status": "pending"},
-        "4": {"name": "批判的レビュー", "status": "pending"},
+        "3": {"name": "設計", "status": "pending"},
+        "4": {"name": "計画レビュー", "status": "pending"},
         "5": {"name": "実装", "status": "pending"},
-        "6": {"name": "完了", "status": "pending"}
+        "6": {"name": "コードレビュー", "status": "pending"},
+        "7": {"name": "テスト", "status": "pending"},
+        "8": {"name": "完了", "status": "pending"}
     },
     "createdAt": "$timestamp"
 }
