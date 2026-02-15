@@ -70,7 +70,7 @@ Identify areas to investigate:
 
 **Subagent investigations (max 3 parallel):**
 ```
-Task(subagent_type="Explore", model="haiku"):
+Task(subagent_type="fractal-dev-workflow:investigator", model="haiku"):
   - Investigation 1: Identify related existing code
   - Investigation 2: Analyze dependencies and impact
   - Investigation 3: Find test patterns and utilities

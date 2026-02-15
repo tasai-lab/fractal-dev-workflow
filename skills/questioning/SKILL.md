@@ -41,6 +41,8 @@ digraph questioning {
 
 ### Step 0: Mode Selection Question (FIRST)
 
+**注意:** workflow stateに既に `mode` が設定されている場合は、このステップをスキップする。
+
 タスクを受けたら、最初にモード判定を行う:
 
 ```
@@ -87,7 +89,7 @@ From user's task description, identify:
 
 ### Step 3: Handle Ambiguous Answers
 When user's answer is unclear:
-1. Use Explore subagent to investigate codebase
+1. Use fractal-dev-workflow:investigator subagent to investigate codebase
 2. Present concrete information from investigation
 3. Re-ask with more specific options
 

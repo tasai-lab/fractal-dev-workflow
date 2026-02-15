@@ -187,7 +187,7 @@ AskUserQuestion:
 questioning の流れ:
 1. タスク説明から曖昧な点を特定
 2. AskUserQuestion で 2-4 個のオプションを提示
-3. 回答が曖昧なら Explore エージェントで調査してから再質問
+3. 回答が曖昧なら fractal-dev-workflow:investigator エージェントで調査してから再質問
 4. 全ての曖昧さが解消されたら要件定義へ
 ```
 
