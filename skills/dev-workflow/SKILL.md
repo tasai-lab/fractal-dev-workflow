@@ -146,9 +146,7 @@ Task(subagent_type="implementer", model="sonnet"):
 
 ## Mode Selection (Phase 1 開始時)
 
-### Step 1: モード判定質問
-
-タスク受領後、まず以下の質問でモードを判定する:
+タスク受領後、**Phase 1の最初のステップ**として以下の質問でモードを判定する:
 
 ```
 AskUserQuestion:
@@ -161,13 +159,9 @@ AskUserQuestion:
       description: "既存コード調査重視。影響範囲分析が必要"
 ```
 
-### Step 2: モード保存
-
 回答を workflow state の `mode` フィールドに保存:
 - "新規作成" → mode: "new-creation"
 - "既存修正" → mode: "existing-modification"
-
-### Step 3: モード別ワークフロー分岐
 
 以降のフェーズでモードに応じた実行内容を適用。
 
@@ -179,7 +173,7 @@ AskUserQuestion:
 実装に入る前に「何を作るか」と「何をやらないか」を完全に明確にする。
 **ここが曖昧だと、後工程が全部"宗教戦争"になる。**
 
-### Step 0: 質問フェーズ（最初に実行）
+### Step 1: 質問フェーズ（モード選択後に実行）
 
 **全ての要件定義の前に、曖昧さを徹底的に排除する。**
 
@@ -414,7 +408,7 @@ questioning の流れ:
 - [ ] テストケース設計
 - [ ] コンポーネント化候補リスト
 - [ ] 重要な設計判断の記録（ADR）
-- [ ] モード別の承認取得（Mode Selection参照）
+- [ ] 承認フロー → **Phase Transition Rules 参照**
 
 ---
 
@@ -430,12 +424,11 @@ Codexによる2観点の批判的レビューで品質を保証。
 ### 成果物
 → `codex-review` スキル参照
 
-### 完了条件（★Codex承認→ユーザー承認必須）
+### 完了条件
 - [ ] 既存実装照合レビュー完了
 - [ ] 要件カバレッジレビュー完了
 - [ ] 指摘事項を修正
-- [ ] ★Codex承認取得
-- [ ] ★ユーザー承認取得
+- [ ] 承認フロー → **Phase Transition Rules 参照**
 
 ---
 
@@ -502,12 +495,12 @@ Task(subagent_type="implementer", model="sonnet", run_in_background=true):
 ### 成果物
 → `implementation` スキル参照
 
-### 完了条件（★ユーザー承認必須）
+### 完了条件
 - [ ] 全タスク完了（縦スライス単位）
 - [ ] 各タスクにテスト（TDDで作成）
 - [ ] 共通コンポーネントを抽出
 - [ ] 全テスト Pass
-- [ ] コードレビュー完了
+- [ ] 実装完了コミット
 
 ---
 
@@ -525,13 +518,12 @@ Task(subagent_type="implementer", model="sonnet", run_in_background=true):
 ### 成果物
 → `codex-review` スキル参照
 
-### 完了条件（★Codex承認→ユーザー承認必須）
+### 完了条件
 - [ ] コード品質レビュー完了
 - [ ] テストカバレッジ確認完了
 - [ ] セキュリティチェック完了
 - [ ] 指摘事項を修正
-- [ ] ★Codex承認取得
-- [ ] ★ユーザー承認取得
+- [ ] 承認フロー → **Phase Transition Rules 参照**
 
 ---
 
@@ -654,15 +646,15 @@ Task(subagent_type="implementer", model="sonnet", run_in_background=true):
 #### Phase 4 → Phase 5
 
 **条件:**
-- codex_available AND codex_critical_issues == true → ★ユーザー承認必須
-- codex_available AND codex_critical_issues == false → 自動遷移
+- codex_available AND has_critical_issues == true → ★ユーザー承認必須
+- codex_available AND has_critical_issues == false → 自動遷移
 - codex_unavailable → 自動遷移
 
 #### Phase 6 → Phase 7
 
 **条件:**
-- codex_available AND codex_critical_issues == true → ★ユーザー承認必須
-- codex_available AND codex_critical_issues == false → 自動遷移
+- codex_available AND has_critical_issues == true → ★ユーザー承認必須
+- codex_available AND has_critical_issues == false → 自動遷移
 - codex_unavailable → 自動遷移
 
 ---
@@ -847,7 +839,11 @@ State is stored in `~/.claude/fractal-workflow/{workflow-id}.json`:
   "phases": {
     "1": {"status": "completed", "completedAt": "..."},
     "2": {"status": "completed", "completedAt": "..."},
-    "3": {"status": "in_progress", "startedAt": "..."},
+    "3": {
+      "status": "in_progress",
+      "startedAt": "...",
+      "has_breaking_changes": false
+    },
     "4": {"status": "pending"},
     "5": {"status": "pending"},
     "6": {"status": "pending"},
@@ -864,6 +860,16 @@ State is stored in `~/.claude/fractal-workflow/{workflow-id}.json`:
       "reason": "new-creation mode | breaking changes detected | critical issues found"
     }
   ],
+  "codexReviews": {
+    "4": {
+      "critical_issues_count": 0,
+      "has_critical_issues": false
+    },
+    "6": {
+      "critical_issues_count": 0,
+      "has_critical_issues": false
+    }
+  },
   "artifacts": {
     "requirements": "path/to/requirements.md",
     "design": "path/to/design.md",
