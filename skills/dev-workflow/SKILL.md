@@ -627,6 +627,91 @@ Phase 7 完了 → Phase 8 開始（自動）
 
 ---
 
+## Memory Recording（Phase終了時の学び記録）
+
+### 目的
+各フェーズ完了時に学びを記録し、次回以降のワークフローで活用する。
+
+### 記録タイミング
+- 各Phase完了時
+- 失敗パターン検出時（failure-memory連携）
+- 重要な決定事項発生時
+
+### 記録先
+- `~/.claude/projects/{project-path}/memory/MEMORY.md` - 主要な学び
+- `~/.claude/projects/{project-path}/memory/*.md` - 詳細トピック別
+
+### Phase終了時の記録項目
+
+| Phase | 記録内容 |
+|-------|---------|
+| 1 | 要件の曖昧さパターン、よくある質問 |
+| 2 | コードベースの重要な発見、再利用パターン |
+| 3 | 契約設計の決定事項とその理由 |
+| 4 | Codexレビューで指摘された問題パターン |
+| 5 | 実装時の技術的課題と解決策 |
+| 6 | コードレビューの指摘パターン |
+| 7 | テストで発見した問題と対策 |
+| 8 | 運用設計のベストプラクティス |
+
+### 記録フォーマット
+```markdown
+## [YYYY-MM-DD] Phase X 完了
+
+### 学び
+- [具体的な学び1]
+- [具体的な学び2]
+
+### 次回への申し送り
+- [注意点1]
+- [注意点2]
+```
+
+### failure-memory連携
+2回以上同じパターンの失敗が発生した場合:
+1. failure-memoryスキルを呼び出し
+2. `~/.claude/fractal-workflow/failure-memory.json` に記録
+3. memoryにも要約を追記
+
+---
+
+## Commit Context Preservation（コミット時のコンテキスト保存）
+
+### 目的
+compact後のコンテキスト再注入用に、コミットを具体的で再開可能な資料にする。
+
+### コミットメッセージテンプレート
+
+```
+feat(scope): 簡潔な説明
+
+## 作業状態
+- 現在のフェーズ: Phase X
+- 完了したタスク: [リスト]
+- 次のタスク: [リスト]
+
+## 重要な決定事項
+- [決定1]: [理由]
+
+## 再開時の注意点
+- [注意点1]
+
+## 関連ファイル
+- path/to/file1: [変更概要]
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+### 必須項目
+- 作業状態（Phase、完了/未完了タスク）
+- 重要な決定事項とその理由
+- 再開時の注意点
+
+### context-preservationスキル連携
+詳細な資料作成が必要な場合は context-preservation スキルを使用。
+
+---
+
 ## Workflow State Management
 
 State is stored in `~/.claude/fractal-workflow/{workflow-id}.json`:
