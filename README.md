@@ -82,6 +82,7 @@ Phase 8: 完了 (Completion)
 | `failure-memory` | 失敗パターンの記録・学習 |
 | `parallel-implementation` | 並列実装設計 |
 | `context-circulation` | コミットによるコンテキスト共有 |
+| `context-preservation` | compact後のコンテキスト保存・復元 |
 | `using-workflow` | 使用ガイド |
 
 ## エージェント一覧
@@ -94,6 +95,7 @@ Phase 8: 完了 (Completion)
 | `implementer` | Sonnet | コード実装 |
 | `codex-delegate` | Haiku | Codex CLI呼び出し |
 | `staff-reviewer` | Opus | Codexフォールバック |
+| `doc-reviewer` | Sonnet | ドキュメント品質レビュー |
 
 ## 依存関係
 
