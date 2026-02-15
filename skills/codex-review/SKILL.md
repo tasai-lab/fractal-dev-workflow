@@ -47,7 +47,7 @@ PREFER EXTERNAL CRITICAL REVIEW FOR ALL PLANS AND CODE
 TWO-PERSPECTIVE REVIEW: EXISTING IMPLEMENTATION + REQUIREMENTS COVERAGE
 ```
 
-Codex is preferred but not required. Use staff-reviewer as fallback.
+Codex is preferred but not required. Use qa as fallback.
 
 ## Codex Configuration
 
@@ -133,16 +133,16 @@ scripts/codex-wrapper.sh review "$PROJECT_DIR" uncommitted
 | Multiple approaches | Ask user via AskUserQuestion |
 | Design-level issue | Consider returning to planning phase |
 
-## Fallback: staff-reviewer (spec-reviewer)
+## Fallback: qa
 
 When Codex CLI is unavailable:
 
 ```
-Task(subagent_type="fractal-dev-workflow:spec-reviewer"):
+Task(subagent_type="fractal-dev-workflow:qa"):
   Perform existing implementation review equivalent to Codex
 ```
 
-The spec-reviewer agent provides:
+The qa agent provides:
 - Same review perspectives as Codex review-spec
 - Fresh context (new subagent)
 - Detailed critical feedback on existing code conflicts
@@ -226,23 +226,55 @@ The spec-reviewer agent provides:
 
 ## Verdict Decision Logic
 
-### APPROVED_AUTO（自動遷移）
+### APPROVED（`has_critical_issues=false`）
 - 指摘なし
-- 軽微な指摘のみ
+- 軽微な指摘のみ（minor_issues_count > 0可）
+- **dev-workflow:** 自動遷移
 
-### APPROVED_WITH_CHANGES（ユーザー承認必須）
-- 重大な指摘あり
-- 対応必須だが、対応後に承認可能
+### APPROVED（`has_critical_issues=true`）
+- 重大な指摘あり（critical_issues_count > 0）
+- 対応推奨だが、対応後に承認可能
+- **dev-workflow:** ユーザー承認必須
 
-### REJECTED（ユーザー承認必須 + 再レビュー）
+### NEEDS CHANGES（`has_critical_issues=true`）
 - セキュリティ脆弱性（重大）
 - アーキテクチャ上の問題
 - 要件との不一致
+- **dev-workflow:** ユーザー承認必須 + 再レビュー推奨
 
 ## Review Result Format
 
+### Output Specification (dev-workflow互換)
+
+レビュー結果は以下の形式で出力し、dev-workflowの遷移条件で使用:
+
+```json
+{
+  "verdict": "APPROVED" | "NEEDS CHANGES",
+  "critical_issues_count": number,
+  "has_critical_issues": boolean,
+  "minor_issues_count": number
+}
+```
+
+**dev-workflowマッピング:**
+
+| Verdict | has_critical_issues | critical_issues_count | dev-workflow遷移 |
+|---------|---------------------|----------------------|------------------|
+| APPROVED | false | 0 | 自動遷移（Phase 5 or 7） |
+| APPROVED | true | > 0 | ユーザー承認必須（軽微な指摘あり） |
+| NEEDS CHANGES | true | > 0 | ユーザー承認必須（Critical Issues対応後） |
+
+**変数仕様:**
+- `verdict`: 総合判定（"APPROVED" | "NEEDS CHANGES"）
+- `critical_issues_count`: 重大な指摘の数
+- `has_critical_issues`: 重大な指摘があるか（= critical_issues_count > 0）
+- `minor_issues_count`: 軽微な指摘の数
+
+dev-workflowは `has_critical_issues` を遷移条件に使用する。
+
 ### Summary
-- Verdict: [APPROVED_AUTO | APPROVED_WITH_CHANGES | REJECTED]
+- Verdict: [APPROVED | NEEDS CHANGES]
 - Critical Issues: [数]
 - Minor Issues: [数]
 
