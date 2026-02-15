@@ -320,6 +320,16 @@ src/components/{feature}/
 - [ ] Yes → ユーザー承認必須
 - [ ] No → 自動遷移可能
 
+### 記録パス
+整合性チェック結果は以下のパスに保存:
+- `docs/design/{workflow-id}-consistency.md`
+
+### dev-workflowへの連携
+結果ファイルは workflow state の artifacts に記録:
+```
+artifacts.consistencyCheck: "docs/design/{workflow-id}-consistency.md"
+```
+
 ### 使用ルール
 - **existing-modification モードのみ**必須
 - new-creation モードでは基本不要（新規機能のため）

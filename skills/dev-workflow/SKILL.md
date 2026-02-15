@@ -667,6 +667,27 @@ Task(subagent_type="implementer", model="sonnet", run_in_background=true):
 
 ---
 
+### NEEDS_CHANGES時の再レビューフロー
+
+Phase 4またはPhase 6でCodexが`NEEDS_CHANGES`を返した場合:
+
+1. **指摘事項を修正**
+   - Critical Issuesをすべて修正
+   - 修正内容をコミット
+
+2. **再レビュー実行**
+   - codex-delegateを再度起動
+   - 修正後のコードをレビュー
+
+3. **判定**
+   - APPROVED_AUTO → 次Phaseへ自動遷移
+   - APPROVED_WITH_CHANGES → ユーザー承認後、次Phaseへ
+   - NEEDS_CHANGES（再び） → Step 1に戻る
+
+最大3回の再レビューまで。それ以上はユーザー判断を仰ぐ。
+
+---
+
 ### Phase 3 → Phase 4 遷移（計画レビュー）
 
 Phase 3（契約設計）完了後、**必ず** codex-delegate を起動してPhase 4を開始：

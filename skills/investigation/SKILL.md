@@ -192,7 +192,21 @@ path/to/file.ts (関数A)
 | yyy.test.ts | なし | 追加検討 |
 ```
 
-### Step 6: Results Integration
+### Step 6: 整合性チェックリストへの活用
+
+Impact Mapの結果は、Phase 3（design）の整合性チェックリストで活用する:
+
+| Impact Map項目 | 整合性チェックリスト項目 |
+|---------------|----------------------|
+| 変更対象ファイル | API整合性 → 変更対象API |
+| 依存関係グラフ | DBスキーマ整合性 → 影響テーブル |
+| 既存テスト | テスト整合性 → 更新必須テスト |
+| 影響範囲 | 破壊的変更判定 → 影響アプリ |
+
+この結果を `docs/investigation/{workflow-id}-impact.md` に保存し、
+Phase 3で参照する。
+
+### Step 7: Results Integration
 - Document investigation results
 - Identify reusable code/patterns
 - Decide: componentize vs standalone implementation
