@@ -11,6 +11,24 @@ description: 要件確定後、計画策定の前にコードベースと外部�
 
 **Core principle:** NEVER plan without evidence-based investigation first.
 
+## Investigation Scope by Mode
+
+### new-creation モード
+**調査観点:**
+- 既存実装の棚卸し（再利用可能コード）
+- 用語統一
+- ビジネスルール
+- 共通化可能なコンポーネント候補
+
+### existing-modification モード（★強化）
+**調査観点:**
+- **変更対象ファイルの完全読み込み（必須）**
+- **依存関係分析（呼び出し元/呼び出し先）（必須）**
+- **影響範囲マップ（必須）**
+- 既存テストの棚卸し
+- 用語統一
+- ビジネスルール確認
+
 ## The Iron Law
 
 ```
@@ -107,7 +125,74 @@ When multiple implementations exist:
 - **Needs migration**: Custom implementation that should migrate to shared
 - **App-specific**: Intentionally different per app (document why)
 
-### Step 5: Results Integration
+### Step 5: Dependency Analysis (for existing-modification)
+
+**This step is REQUIRED for existing-modification mode.**
+
+#### Procedure:
+
+**Step 1: 変更対象ファイルの特定**
+```bash
+# Grep/Glob で変更対象を特定
+Grep pattern="function_name|class_name"
+```
+
+**Step 2: 呼び出し元の特定**
+```bash
+# 変更対象の関数/クラスがどこで使用されているか
+Grep pattern="import.*{function_name}" output_mode="files_with_matches"
+Grep pattern="function_name\(" output_mode="content"
+```
+
+**Step 3: 呼び出し先の特定**
+```
+# 変更対象ファイルをReadして、import文から呼び出し先を特定
+Read: [target file]
+# import文を解析して依存先をリストアップ
+```
+
+**Step 4: テストの特定**
+```bash
+# 関連テストを検索
+Glob pattern="**/*.test.{ts,tsx}"
+Grep pattern="function_name|class_name" glob="**/*.test.{ts,tsx}"
+```
+
+#### Impact Map Template:
+
+```markdown
+## Impact Map (existing-modification)
+
+### 変更対象ファイル
+| ファイル | 変更内容 | 理由 |
+|---------|---------|------|
+| path/to/file.ts | 関数Aの修正 | バグ修正 |
+
+### 依存関係グラフ
+[変更対象]
+path/to/file.ts (関数A)
+  ↑ 呼び出し元
+  ├── src/pages/xxx.tsx
+  ├── src/components/xxx.tsx
+  └── apps/xxx/pages/index.tsx
+  ↓ 呼び出し先
+  ├── src/db/xxx.ts
+  └── src/utils/xxx.ts
+
+### 影響範囲
+| アプリ/機能 | 影響度 | 理由 |
+|-----------|-------|------|
+| xxx アプリ | 高 | 直接使用 |
+| yyy アプリ | 低 | 使用していない |
+
+### 既存テスト
+| テストファイル | 影響 | 対応 |
+|-------------|------|------|
+| xxx.test.ts | あり | 更新必須 |
+| yyy.test.ts | なし | 追加検討 |
+```
+
+### Step 6: Results Integration
 - Document investigation results
 - Identify reusable code/patterns
 - Decide: componentize vs standalone implementation
@@ -146,6 +231,7 @@ When multiple implementations exist:
 
 ## Completion Criteria
 
+### Common (all modes)
 - [ ] All related existing code identified
 - [ ] **Each file ACTUALLY READ (not just listed)**
 - [ ] **Implementation summary for each file documented**
@@ -154,3 +240,10 @@ When multiple implementations exist:
 - [ ] External dependency specs confirmed
 - [ ] **Diff analysis completed (for multi-app tasks)**
 - [ ] **Exists vs Needed gap analysis documented**
+
+### Additional for existing-modification mode
+- [ ] **変更対象ファイルの完全読み込み完了**
+- [ ] **呼び出し元の特定完了**
+- [ ] **呼び出し先の特定完了**
+- [ ] **影響範囲マップ作成完了**
+- [ ] **既存テストの棚卸し完了**
