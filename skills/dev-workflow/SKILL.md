@@ -29,6 +29,20 @@ NO MERGE WITHOUT VERIFICATION
 
 ## 必須原則（Additional Iron Rules）
 
+### COMPACT後も必ずサブエージェント駆動を継続
+**最重要**: compact後にコンテキストが減っても、以下を守ること:
+- 親エージェントで直接実装しない
+- 調査 → investigator
+- 実装 → coder/implementer
+- レビュー → qa
+- ドキュメント → doc-reviewer
+
+**compact後の再開手順:**
+1. `/dev status` でワークフロー状態確認
+2. `git log --oneline -5` で最新コンテキスト確認
+3. MEMORY.mdを読む
+4. サブエージェントでタスク継続
+
 ### 調査はサブエージェント駆動
 Phase 2（調査）は必ずサブエージェントで実行する。
 Task(subagent_type="fractal-dev-workflow:investigator")

@@ -234,6 +234,40 @@ npm run lint
 
 ## Subagent Integration
 
+### CRITICAL: Compact後もサブエージェント駆動開発を継続
+
+**絶対に守ること:**
+```
+親エージェントで直接実装しない → サブエージェントに委譲
+```
+
+**理由:**
+- 親エージェントのコンテキストを汚さない
+- 並列実行で効率化
+- 失敗時のロールバックが容易
+
+**compact後に必ず確認:**
+1. `/dev status` でワークフロー状態を確認
+2. git logで最新のコンテキストを確認
+3. 実装タスクはサブエージェントに委譲
+
+**サブエージェント使い分け:**
+| 用途 | サブエージェント | モデル |
+|------|-----------------|--------|
+| 調査・探索 | investigator | sonnet |
+| 実装 | coder/implementer | sonnet |
+| レビュー | qa | sonnet |
+| ドキュメント | doc-reviewer | sonnet |
+
+**並列実行例:**
+```
+Task(subagent_type="fractal-dev-workflow:coder", model="sonnet", run_in_background=true):
+  Task 1: API実装
+
+Task(subagent_type="fractal-dev-workflow:coder", model="sonnet", run_in_background=true):
+  Task 2: テスト実装
+```
+
 ### Before Compact (親エージェント)
 
 ```markdown
