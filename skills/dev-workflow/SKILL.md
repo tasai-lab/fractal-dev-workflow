@@ -135,12 +135,41 @@ Task(subagent_type="implementer", model="sonnet"):
 |-------|------|-------|----------|--------|
 | 1 | 質問 + 要件定義 | questioning → requirements | Auto | MVP境界、受け入れ条件、「やらない」リスト |
 | 2 | 調査+ドメイン | investigation | Auto | 用語統一、ビジネスルール、境界責務 |
-| 3 | 契約設計 | design | **Required** | API仕様、DBスキーマ、エラー形式 |
+| 3 | 契約設計 | design | **Mode-aware** | API仕様、DBスキーマ、エラー形式 |
 | 4 | Codex計画レビュー | codex-review | **Codex→User** | レビュー結果（Codex 5.3 + xhigh） |
 | 5 | 実装 | implementation | **Required** | 動作するコード + テスト + コンポーネント |
 | 6 | Codexコードレビュー | codex-review | **Codex→User** | コードレビュー結果 + 承認 |
 | 7 | 検証 | verification | Auto | テストピラミッド結果、検証レポート |
 | 8 | 運用設計 | completion | Auto | ロールバック手順、監視、Feature Flag |
+
+---
+
+## Mode Selection (Phase 1 開始時)
+
+### Step 1: モード判定質問
+
+タスク受領後、まず以下の質問でモードを判定する:
+
+```
+AskUserQuestion:
+  question: "このタスクは新規作成と既存修正のどちらですか？"
+  header: "モード選択"
+  options:
+    - label: "新規作成（新しい機能/ページ/API）"
+      description: "ゼロから設計。HTMLモック、完全なAPI仕様が必要"
+    - label: "既存修正（バグ修正/改善/リファクタリング）"
+      description: "既存コード調査重視。影響範囲分析が必要"
+```
+
+### Step 2: モード保存
+
+回答を workflow state の `mode` フィールドに保存:
+- "新規作成" → mode: "new-creation"
+- "既存修正" → mode: "existing-modification"
+
+### Step 3: モード別ワークフロー分岐
+
+以降のフェーズでモードに応じた実行内容を適用。
 
 ---
 
@@ -299,6 +328,36 @@ questioning の流れ:
 **先にここを決めると、フロント・バック・QAが並列化できる。**
 契約（インターフェース）を先に固め、実装は後から。
 
+### モード別の必須成果物
+
+#### new-creation モード
+
+**必須成果物:**
+- [ ] HTMLモック（主要画面すべて）
+- [ ] API仕様（OpenAPI形式、完全定義）
+- [ ] コンポーネント設計（props型、状態管理、ディレクトリ構成）
+- [ ] DBスキーマ/マイグレーション
+- [ ] テスト設計
+- [ ] タスク分解 + worktree計画
+
+**承認:** ★ユーザー承認必須
+
+---
+
+#### existing-modification モード
+
+**必須成果物:**
+- [ ] 整合性チェックリスト（既存APIとの互換性、既存スキーマとの整合性）
+- [ ] API仕様変更（ある場合のみ）
+- [ ] DBスキーマ変更（ある場合のみ）
+- [ ] タスク分解
+
+**承認:**
+- 破壊的変更あり → ★ユーザー承認必須
+- 破壊的変更なし → 自動遷移
+
+---
+
 ### 3段階の設計
 
 #### A. アーキテクチャ土台（最初に一回だけちゃんとやる）
@@ -347,7 +406,7 @@ questioning の流れ:
 ### 成果物
 → `design` スキル参照
 
-### 完了条件（★ユーザー承認必須）
+### 完了条件（モード依存の承認フロー）
 - [ ] アーキテクチャ土台（認証、ログ、CI）
 - [ ] API仕様（OpenAPI等）
 - [ ] DBスキーマ/マイグレーション
@@ -355,6 +414,7 @@ questioning の流れ:
 - [ ] テストケース設計
 - [ ] コンポーネント化候補リスト
 - [ ] 重要な設計判断の記録（ADR）
+- [ ] モード別の承認取得（Mode Selection参照）
 
 ---
 
@@ -582,6 +642,31 @@ Task(subagent_type="implementer", model="sonnet", run_in_background=true):
 
 **CRITICAL: 各フェーズ完了時は以下のトリガーを実行する**
 
+### Phase Transition Rules
+
+#### Phase 3 → Phase 4
+
+**条件:**
+- mode == "new-creation" → ★ユーザー承認必須
+- mode == "existing-modification" AND has_breaking_changes == true → ★ユーザー承認必須
+- mode == "existing-modification" AND has_breaking_changes == false → 自動遷移
+
+#### Phase 4 → Phase 5
+
+**条件:**
+- codex_available AND codex_critical_issues == true → ★ユーザー承認必須
+- codex_available AND codex_critical_issues == false → 自動遷移
+- codex_unavailable → 自動遷移
+
+#### Phase 6 → Phase 7
+
+**条件:**
+- codex_available AND codex_critical_issues == true → ★ユーザー承認必須
+- codex_available AND codex_critical_issues == false → 自動遷移
+- codex_unavailable → 自動遷移
+
+---
+
 ### Phase 3 → Phase 4 遷移（計画レビュー）
 
 Phase 3（契約設計）完了後、**必ず** codex-delegate を起動してPhase 4を開始：
@@ -625,7 +710,7 @@ Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
 ```
 Phase 1 完了 → Phase 2 開始（自動）
 Phase 2 完了 → Phase 3 開始（自動）
-Phase 3 完了 → ★Phase 4 開始（codex-delegate 起動必須）
+Phase 3 完了 → ★Phase 4 開始（codex-delegate 起動必須、Mode-aware承認）
 Phase 4 承認 → Phase 5 開始（ユーザー承認後）
 Phase 5 完了 → ★Phase 6 開始（codex-delegate 起動必須）
 Phase 6 承認 → Phase 7 開始（ユーザー承認後）
@@ -638,6 +723,7 @@ Phase 7 完了 → Phase 8 開始（自動）
 - [ ] 完了条件をすべて満たしているか
 - [ ] 状態ファイルを更新したか (`~/.claude/fractal-workflow/{id}.json`)
 - [ ] 次フェーズのトリガーを実行したか（Phase 4, 6 は codex-delegate 必須）
+- [ ] Mode-aware承認フローを確認したか（Phase 3→4）
 
 ---
 
@@ -735,6 +821,7 @@ State is stored in `~/.claude/fractal-workflow/{workflow-id}.json`:
   "workflowId": "wf-20260212-001",
   "taskDescription": "タスクの説明",
   "status": "active",
+  "mode": "new-creation | existing-modification",
   "currentPhase": 3,
   "phases": {
     "1": {"status": "completed", "completedAt": "..."},
@@ -746,6 +833,16 @@ State is stored in `~/.claude/fractal-workflow/{workflow-id}.json`:
     "7": {"status": "pending"},
     "8": {"status": "pending"}
   },
+  "approvals": [
+    {
+      "phase": 3,
+      "approvalType": "user | codex",
+      "status": "pending | approved | rejected",
+      "requestedAt": "...",
+      "approvedAt": "...",
+      "reason": "new-creation mode | breaking changes detected | critical issues found"
+    }
+  ],
   "artifacts": {
     "requirements": "path/to/requirements.md",
     "design": "path/to/design.md",
