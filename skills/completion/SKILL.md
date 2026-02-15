@@ -307,6 +307,7 @@ Task(subagent_type="fractal-dev-workflow:doc-reviewer", model="sonnet"):
 - [ ] テスト結果へのリンクがある
 - [ ] レビュアーがアサインされている
 - [ ] 必要なラベルが付いている
+- [ ] **Post-Merge Tasksセクションが含まれている**
 
 ### PRテンプレート
 ```markdown
@@ -328,9 +329,76 @@ Task(subagent_type="fractal-dev-workflow:doc-reviewer", model="sonnet"):
 - [ ] 監視設定完了
 - [ ] ロールバック手順作成済み
 
+## Post-Merge Tasks
+マージ後に以下のタスクを実行してください:
+
+- [ ] [DBマイグレーション]: `npm run migrate` または該当コマンド
+- [ ] [環境変数設定]: 本番環境に新しい環境変数を追加
+- [ ] [デプロイ作業]: 必要なサービスの再デプロイ
+- [ ] [設定変更]: Cloudflare/CDN設定など
+
+> `/post-merge` コマンドで実行可能。タスクは `docs/post-merge-tasks/{branch-name}.md` にも保存されます。
+
 ## スクリーンショット（UIの変更がある場合）
 [画像]
 ```
+
+---
+
+## 7. Post-Merge Tasks管理
+
+### 目的
+マージ後に必要な作業を明確化し、Claudeがタスクとして実行できるようにする。
+
+### タスクファイル
+PR作成時に `docs/post-merge-tasks/{branch-name}.md` にタスクを保存:
+
+```markdown
+# Post-Merge Tasks: {branch-name}
+
+## Status: pending | in_progress | completed
+
+## Merge Info
+- Branch: {branch-name}
+- Created: {date}
+- PR: #{pr-number}
+
+## Tasks
+- [ ] [タスク説明]: `実行コマンド`
+
+## Execution Notes
+<!-- 実行時の注意点や順序依存関係 -->
+
+## Execution Log
+<!-- 実行ログが自動追記される -->
+```
+
+### タスク種類
+
+| 種類 | 例 |
+|------|-----|
+| DBマイグレーション | `npm run migrate`, `prisma migrate deploy` |
+| 環境変数設定 | 本番環境への新規ENV追加 |
+| デプロイ作業 | `wrangler deploy`, サービス再起動 |
+| 設定変更 | Cloudflare設定、CDNキャッシュクリア |
+| 通知 | Slack通知、関係者へのメール |
+| 検証 | 本番動作確認、監視ダッシュボード確認 |
+
+### 実行フロー
+
+```
+1. マージ完了
+2. /post-merge コマンド実行
+3. タスクファイル読み込み
+4. 各タスクを順次確認・実行
+5. 完了タスクをチェック
+6. Status更新: completed
+```
+
+### チェックリスト
+- [ ] Post-Merge Tasksがすべて実行された
+- [ ] タスクファイルのStatusがcompletedになった
+- [ ] 実行ログが記録された
 
 ---
 
