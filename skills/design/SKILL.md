@@ -12,6 +12,22 @@ description: 調査完了後、実装に入る前に使用。アーキ設計、�
 
 **Core principle:** 契約を先に固める。実装は後から。
 
+---
+
+## Design Scope by Mode
+
+### new-creation モード
+**詳細度: MAX**
+- HTMLモック必須
+- API仕様完全定義必須
+- コンポーネント設計（props型、状態管理、ディレクトリ構成）必須
+
+### existing-modification モード
+**詳細度: MIN（必要な部分のみ）**
+- HTMLモック不要（既存画面の変更箇所のみ記述）
+- API仕様は変更部分のみ
+- 整合性チェックリスト必須
+
 ## The Iron Law
 
 ```
@@ -198,6 +214,116 @@ ADD COLUMN "businessCardBackUrl" TEXT;
 |------|---------|------|---------|
 | ... | ... | ... | ... |
 ```
+
+---
+
+## HTML Mock Template (new-creation)
+
+### 目的
+新規機能の画面イメージを具体化する。実装前にレイアウトとコンポーネント配置を確定。
+
+### テンプレート: docs/mocks/{feature}-{screen}.html
+
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>{機能名} - {画面名}</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    .container { max-width: 1200px; }
+    .form-group { margin-bottom: 16px; }
+    button { padding: 8px 16px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>{画面タイトル}</h1>
+    <!-- 主要コンポーネントの配置 -->
+  </div>
+</body>
+</html>
+```
+
+### 使用ルール
+- **new-creation モードのみ**作成必須
+- existing-modification モードでは不要（変更箇所のみ記述で可）
+- レイアウト、主要コンポーネント、状態遷移を視覚化
+- 実装前にユーザー確認を得るための成果物
+
+---
+
+## Component Design Template (new-creation)
+
+### 目的
+新規コンポーネントの設計を明確化。props、状態管理、ディレクトリ構成を事前に決定。
+
+### テンプレート
+
+```markdown
+## コンポーネント: {ComponentName}
+
+#### Props型定義
+```typescript
+interface {ComponentName}Props {
+  // 必須props
+  // オプションprops
+}
+```
+
+#### 状態管理
+- ローカル状態: useState for...
+- グローバル状態: Context/Redux for...
+- サーバー状態: React Query/SWR for...
+
+#### ディレクトリ構成
+```
+src/components/{feature}/
+  ├── {ComponentName}.tsx
+  ├── {ComponentName}.test.tsx
+  ├── use{ComponentName}.ts (hook)
+  └── types.ts
+```
+```
+
+### 使用ルール
+- **new-creation モードのみ**作成必須
+- existing-modification モードでは変更部分のみ記述で可
+- コンポーネント設計はタスク分解の前に完了させる
+
+---
+
+## Consistency Checklist (existing-modification)
+
+### 目的
+既存機能への変更が整合性を保っているか確認。破壊的変更を事前に検出。
+
+### チェックリスト
+
+#### API整合性
+- [ ] 既存APIとの互換性（破壊的変更の有無）
+- [ ] 既存リクエスト形式との整合性
+- [ ] 既存レスポンス形式との整合性
+- [ ] エラーコードの一貫性
+
+#### DBスキーマ整合性
+- [ ] 既存テーブルへの影響
+- [ ] 外部キー制約の整合性
+- [ ] マイグレーションの後方互換性
+
+#### テスト整合性
+- [ ] 既存テストが引き続き動作するか
+- [ ] 新規テストの追加箇所
+
+#### 破壊的変更の有無
+- [ ] Yes → ユーザー承認必須
+- [ ] No → 自動遷移可能
+
+### 使用ルール
+- **existing-modification モードのみ**必須
+- new-creation モードでは基本不要（新規機能のため）
+- 破壊的変更が検出された場合は必ずユーザーに確認
 
 ---
 
