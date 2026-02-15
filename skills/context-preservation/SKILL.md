@@ -134,7 +134,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 
 **目的**: どのファイルがどう変更されたかを記録する。
 
-## Memory Record Guidelines
+## memory.json Guidelines
 
 ### memory.jsonに記録すべき内容
 
@@ -488,4 +488,4 @@ EOF
 - 関連ファイルの変更目的を明記
 - テスト結果も記録する
 - サブエージェントへの引き継ぎを忘れない
-- コンテキストは多層（git/memory/state）で保持
+- コンテキストは多層（git/memory.json/state）で保持
