@@ -261,7 +261,7 @@ ADD COLUMN "businessCardBackUrl" TEXT;
 
 ### テンプレート
 
-```markdown
+````markdown
 ## コンポーネント: {ComponentName}
 
 #### Props型定義
@@ -285,7 +285,7 @@ src/components/{feature}/
   ├── use{ComponentName}.ts (hook)
   └── types.ts
 ```
-```
+````
 
 ### 使用ルール
 - **new-creation モードのみ**作成必須
@@ -317,8 +317,8 @@ src/components/{feature}/
 - [ ] 新規テストの追加箇所
 
 #### 破壊的変更の有無
-- [ ] Yes → ユーザー承認必須
-- [ ] No → 自動遷移可能
+- [ ] Yes → ユーザー承認必須 → `TaskUpdate(id: workflow_id, status: "pending_approval")`
+- [ ] No → 自動遷移可能 → `TaskUpdate(id: workflow_id, status: "completed")`
 
 ### 記録パス
 整合性チェック結果は以下のパスに保存:
@@ -519,7 +519,7 @@ Task 1 (型定義)
 
 ### worktree計画テンプレート
 
-```markdown
+````markdown
 ## worktree計画: [機能名]
 
 ### ベースディレクトリ
@@ -564,7 +564,7 @@ git worktree remove ../fractal-worktrees/project-feature-types
 git worktree remove ../fractal-worktrees/project-feature-api
 git worktree remove ../fractal-worktrees/project-feature-ui
 ```
-```
+````
 
 ### worktree計画時のチェックリスト
 
@@ -577,7 +577,7 @@ git worktree remove ../fractal-worktrees/project-feature-ui
 
 ## 統合: 設計書テンプレート
 
-```markdown
+````markdown
 # 設計書: [タスク名]
 
 ## A. アーキテクチャ設計
@@ -643,11 +643,13 @@ git worktree remove ../fractal-worktrees/project-feature-ui
 
 ### マージ順序
 [依存関係に基づくマージ順]
-```
+````
 
 ---
 
-## Completion Criteria（★ユーザー承認必須）
+## Completion Criteria（モード別）
+
+### new-creation モード
 
 - [ ] アーキテクチャ設計完了
   - [ ] システム構成図
@@ -655,10 +657,12 @@ git worktree remove ../fractal-worktrees/project-feature-ui
   - [ ] データモデル
   - [ ] 重要な設計判断（ADR）
 - [ ] インターフェース設計完了
-  - [ ] API仕様
-  - [ ] DBスキーマ
+  - [ ] API仕様完全定義
+  - [ ] DBスキーマ/マイグレーション
   - [ ] エラーコード
   - [ ] リトライ方針
+- [ ] HTMLモック作成（主要画面すべて）
+- [ ] コンポーネント設計完了
 - [ ] テスト設計完了
   - [ ] 重要フロー
   - [ ] 境界値
@@ -673,7 +677,31 @@ git worktree remove ../fractal-worktrees/project-feature-ui
   - [ ] タスクグループにworktree割り当て
   - [ ] マージ順序が依存関係を反映
   - [ ] クリーンアップ手順記載
-- [ ] **ユーザー承認**
+
+**承認:** ★ユーザー承認必須 → `TaskUpdate(id: workflow_id, status: "pending_approval")`
+
+---
+
+### existing-modification モード
+
+- [ ] 整合性チェックリスト完了
+  - [ ] API整合性確認
+  - [ ] DBスキーマ整合性確認
+  - [ ] テスト整合性確認
+  - [ ] 破壊的変更の有無判定
+- [ ] インターフェース設計（変更がある場合のみ）
+  - [ ] API仕様変更
+  - [ ] DBスキーマ変更
+- [ ] テスト設計（影響範囲のみ）
+- [ ] **タスク分解完了**
+  - [ ] 全変更対象ファイルが列挙
+  - [ ] 各タスクが1ファイル単位
+  - [ ] 依存関係が明示
+  - [ ] TaskCreate で全タスク登録
+
+**承認:**
+- 破壊的変更あり → ★ユーザー承認必須 → `TaskUpdate(id: workflow_id, status: "pending_approval")`
+- 破壊的変更なし → 自動遷移 → `TaskUpdate(id: workflow_id, status: "completed")`
 
 ---
 
