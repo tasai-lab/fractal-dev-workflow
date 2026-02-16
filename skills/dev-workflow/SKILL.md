@@ -505,6 +505,35 @@ Task(subagent_type="implementer", model="sonnet", run_in_background=true):
   Task 2: API実装 + Integration Test
 ```
 
+### Code Simplification（各スライス完了時）
+
+各縦スライス実装完了後、コードレビュー前に code-simplifier を実行:
+
+```
+Task(subagent_type="code-simplifier:code-simplifier", model="sonnet"):
+  ## コード簡素化
+
+  ### 対象
+  直近で変更されたファイル
+
+  ### 実行内容
+  - 冗長なコードの削減
+  - 命名の一貫性確認
+  - 不要な抽象化の排除
+  - コードの可読性向上
+
+  ### 出力
+  - 変更したファイル一覧
+  - 各変更の理由
+```
+
+**実行タイミング:**
+- 各 Slice 完了後
+- Phase 6（Codexコードレビュー）前
+
+**スキップ条件:**
+- 変更ファイル数が3未満の場合はオプショナル
+
 ### 成果物
 → `implementation` スキル参照
 
@@ -513,6 +542,7 @@ Task(subagent_type="implementer", model="sonnet", run_in_background=true):
 - [ ] 各タスクにテスト（TDDで作成）
 - [ ] 共通コンポーネントを抽出
 - [ ] 全テスト Pass
+- [ ] code-simplifier 実行（変更ファイル3以上の場合）
 - [ ] 実装完了コミット
 
 ---
@@ -931,6 +961,7 @@ If you catch yourself thinking:
 | 1-3 | **Architect** | 設計参謀：要件を仕様書に変換 | sonnet |
 | 4 | **Codex** | 計画の批判的レビュー（codex-delegate経由） | codex |
 | 5 | **TechLead** → **Coder** | 技術分解 → TDD実装 | sonnet |
+| 5-6間 | **code-simplifier** | コード簡素化・品質向上 | sonnet |
 | 6 | **Codex** | コードレビュー + 承認（codex-delegate経由） | codex |
 | 7 | **QA** | 品質憲兵：検証のみ、編集禁止 | sonnet |
 | 8 | **Architect** | 運用設計 | sonnet |
