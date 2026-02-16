@@ -7,7 +7,7 @@ description: 調査完了後、実装に入る前の計画策定時に使用。O
 
 ## Overview
 
-調査結果に基づいて実装計画を策定する。このフェーズは**ユーザー承認が必須**。
+調査結果に基づいて実装計画を策定する。計画策定後はPhase 4（Codex計画レビュー）に自動遷移する。
 
 **Core principle:** NEVER implement without a reviewed plan first.
 

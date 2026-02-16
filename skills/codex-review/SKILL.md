@@ -65,7 +65,7 @@ digraph review {
     "Plan/Code ready" -> "Check Codex availability";
     "Check Codex availability" -> "Codex available?" [shape=diamond];
     "Codex available?" -> "Review 1: Existing Implementation" [label="yes"];
-    "Codex available?" -> "Run staff-reviewer" [label="no"];
+    "Codex available?" -> "Run qa agent (fallback)" [label="no"];
     "Review 1: Existing Implementation" -> "Issues found?" [shape=diamond];
     "Issues found?" -> "Fix issues" [label="yes"];
     "Fix issues" -> "Review 1: Existing Implementation";
@@ -74,7 +74,7 @@ digraph review {
     "More issues?" -> "Fix requirements issues" [label="yes"];
     "Fix requirements issues" -> "Review 2: Requirements Coverage";
     "More issues?" -> "Review complete" [label="no"];
-    "Run staff-reviewer" -> "Review complete";
+    "Run qa agent (fallback)" -> "Review complete";
 }
 ```
 

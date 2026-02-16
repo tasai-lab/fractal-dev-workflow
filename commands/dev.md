@@ -8,8 +8,8 @@ The user wants to start a development workflow. Use the skill to guide them thro
 1. 質問 (Questioning)
 2. 調査 (Investigation)
 3. 契約設計 (Contract Design)
-4. Codex計画レビュー (Codex Plan Review) - **Codex→User Approval Required**
+4. Codex計画レビュー (Codex Plan Review) - **Codex自動レビュー（必須）**
 5. 実装 (Implementation)
-6. Codexコードレビュー (Codex Code Review) - **Codex→User Approval Required**
+6. Codexコードレビュー (Codex Code Review) - **Codex自動レビュー（必須）**
 7. 検証 (Verification)
 8. 運用設計 (Operations)

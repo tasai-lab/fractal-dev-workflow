@@ -214,8 +214,8 @@ notify_fallback() {
 {
     "fallback": true,
     "reason": "Codex CLI not available",
-    "alternative": "staff-reviewer",
-    "message": "Use staff-reviewer agent as fallback for critical review"
+    "alternative": "fractal-dev-workflow:qa",
+    "message": "Use qa agent as fallback for critical review (mandatory)"
 }
 EOF
 }
