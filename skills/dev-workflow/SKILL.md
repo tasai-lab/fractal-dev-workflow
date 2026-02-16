@@ -5,6 +5,19 @@ description: 開発タスクを受けた時、機能実装・バグ修正・リ�
 
 # Development Workflow Orchestrator
 
+## Terminology (Source of Truth)
+
+このセクションはプラグイン全体の用語定義の**正本（source of truth）**です。
+他のスキル/エージェントでは定義を重複記載せず、このセクションを参照してください。
+
+| 用語 | 定義 | 詳細参照 |
+|------|------|---------|
+| 破壊的変更 | API削除、必須フィールド追加、型変更等 | `design/SKILL.md` |
+| 主要画面 | Phase 1で定義したユースケースに登場するすべての画面 | `questioning/SKILL.md` |
+| Critical Issue | セキュリティ脆弱性、データ損失リスク、本番障害リスク | `codex-review/SKILL.md` |
+| 最低限のテストカバレッジ | 主要関数の80%以上、正常系各1ケース、主要異常系各1ケース | `qa.md` |
+| 憶測 | file:line参照を伴わない推測。「ファイル名から推測」「構造から推測」は憶測 | `investigation/SKILL.md` |
+
 ## Overview
 
 開発タスクを8つのフェーズで体系的に進行させるオーケストレーター。
