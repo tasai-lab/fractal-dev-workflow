@@ -6,18 +6,6 @@
 
 ### Added
 
-- 8フェーズワークフローシステム (Phase 1-8)
-- Codex計画レビュー (Phase 4) - codex-delegate + xhigh reasoning
-- Codexコードレビュー (Phase 6) - コード品質・セキュリティ自動検証
-- サブエージェント駆動開発
-  - investigator: コードベース調査
-  - architect: 設計・仕様作成
-  - tech-lead: タスク分解
-  - coder: TDD実装
-  - qa: 品質検証（読み取り専用）
-  - codex-delegate: Codex CLI呼び出し
-  - code-simplifier: コード簡素化
-  - doc-reviewer: ドキュメント品質レビュー
 - モード分岐ロジック (new-creation / existing-modification)
 - 用語定義セクション (Source of Truth) - dev-workflow/SKILL.md
 - 検証メカニズム強化
@@ -25,21 +13,22 @@
   - 差し戻し条件: 「ファイル名から推測」「根拠不足」は却下
   - 証拠の最小要件: path:line + コマンド + 結果
 - 破壊的変更判定ロジック (design/SKILL.md)
-  - 定義表 (API/DB/認証/設定)
-  - jqコマンドによるstate記録
-  - 4ステップ判定フロー
 - PR作成前ゲートチェック (completion/SKILL.md)
 - code-simplifier統合 (各Slice完了後に自動実行)
 - コミット前チェック自動化 (pnpm test/lint/typecheck)
 - Worktree Enforcement (Phase 5開始時に必須)
 - 追加要望対応フロー (質問→調査→判定→実装)
 - コンテキスト保存戦略 (コミットメッセージに作業状態を構造化記録)
-- failure-memoryスキル (失敗パターン記録・再発防止)
-- context-circulationスキル (コミット経由のコンテキスト共有)
+- doc-reviewerエージェント
+- context-preservationスキル
+- post-mergeスキル群 (post-merge-tasks, post-merge-execute)
+- plugin-reinstallスキル
 - ワークフローフロードキュメント (docs/workflow-flow.md) - Mermaid図
 - ドキュメント更新スキル (update-docs) - バージョン管理ルール付き
 - pre-pushドキュメントチェックフック (hooks/check-docs.sh)
-- update-docsコマンド (commands/update-docs.md)
+- update-docsコマンド
+- Phase終了時のmemory記録トリガー
+- compact後のサブエージェント駆動開発継続機能
 
 ### Changed
 
@@ -50,8 +39,9 @@
 - Codexレビューを必須化 (スキップ不可)
 - Codex利用不可時のフォールバックをqaエージェントに統一
 - staff-reviewer参照を全てqaエージェントに置換
-- Phase概要テーブルのApproval列を更新 (Phase 3: Required, Phase 4/6: Auto)
 - NEEDS_CHANGES時の再レビューフロー簡素化 (最大3回→自動遷移)
+- codex-reviewにVerdictの重大/軽微判定基準を追加
+- サブエージェント名の統一
 - investigation差し戻し条件に「根拠不足」を追加
 
 ### Fixed
@@ -63,6 +53,7 @@
   - スキップ可能な遷移条件を削除
 - codex-wrapper.shのフォールバック参照を修正 (staff-reviewer → qa)
 - フローチャートとPhase Transition Rulesの不一致を修正
+- designスキルの完了条件をモード別に分離
 
 ### Removed
 
@@ -70,11 +61,59 @@
 - staff-reviewerエージェント参照
 - 不要なドキュメント (design-dev-workflow-v2.md, phase-4/6レビューレポート)
 
-## [0.1.0] - 2026-02-14
+## [0.3.0] - 2026-02-14
 
 ### Added
 
-- 初回リリース
+- 8フェーズワークフロー（運用設計Phaseを独立化）
+- 2段階承認機能（Codex承認→ユーザー承認）
+- 承認チェックとフェーズ遷移ガード
+- designスキルにタスク分解とworktree計画を追加
+- 質問フェーズのサブエージェント駆動を明示化
+
+### Changed
+
+- 7フェーズ → 8フェーズに拡張（検証と運用設計を分離）
+- 入力検証の強化とドキュメント統一
+
+### Fixed
+
+- hooks.jsonの形式をnested形式に修正
+
+## [0.2.0] - 2026-02-12
+
+### Added
+
+- dev-workflowオーケストレータースキル（7フェーズ）
+- コアスキル: questioning, investigation, planning, codex-review, implementation
+- 補助スキル: failure-memory, parallel-implementation, context-circulation, testing
+- エージェント: investigator, code-reviewer, implementer, codex-delegate, staff-reviewer, spec-reviewer, QA, Coder
+- Codexラッパースクリプト (codex-wrapper.sh)
+- ワークフローヘルパースクリプト
+- フックシステム（承認強制）
+- カスタムコマンド (/dev, /dev-status, /dev-resume)
+- マーケットプレイス構造
+- Codex 5.3 + 2観点レビュー導入
+- TDDワークフロー統合
+- Asai-Spec Protocol（エージェント役割分担）
+- Sonnet 4.5積極活用方針
+- README.md、using-workflowスキル
+- セットアップ手順、権限設定の配布方法
+
+### Changed
+
+- 6フェーズ → 7フェーズに拡張（調査・計画フェーズを強化）
+
+### Fixed
+
+- codex-wrapper.shのCLI引数を環境変数に修正
+- codex-delegate.mdの形式修正
+
+## [0.1.0] - 2026-02-12
+
+### Added
+
+- プラグイン基盤作成 (plugin.json、ディレクトリ構造)
 - 基本的な6フェーズワークフロー
 - Codex統合
-- サブエージェントシステム
+- サブエージェントシステム基盤
