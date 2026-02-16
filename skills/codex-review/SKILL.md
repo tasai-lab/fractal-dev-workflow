@@ -284,7 +284,7 @@ dev-workflowは `has_critical_issues` を遷移条件に使用する。
 - Critical Issues: [数]
 - Minor Issues: [数]
 
-### Critical Issues (ユーザー承認必須)
+### Critical Issues (自動修正対象)
 | # | 種別 | 説明 | 対応方針 |
 |---|------|------|---------|
 | 1 | セキュリティ | XSS脆弱性 | サニタイズ追加 |

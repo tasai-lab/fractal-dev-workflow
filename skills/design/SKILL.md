@@ -341,8 +341,8 @@ jq '.phases["3"].has_breaking_changes = true' ~/.claude/fractal-workflow/{workfl
 4. 該当なし → has_breaking_changes = false
 
 #### 破壊的変更の有無
-- [ ] Yes → ユーザー承認必須 → `TaskUpdate(id: workflow_id, status: "pending_approval")`
-- [ ] No → 自動遷移可能 → `TaskUpdate(id: workflow_id, status: "completed")`
+- [ ] Yes → 破壊的変更を記録 → `TaskUpdate(id: workflow_id, status: "completed")`
+- [ ] No → 自動遷移 → `TaskUpdate(id: workflow_id, status: "completed")`
 
 ### 記録パス
 整合性チェック結果は以下のパスに保存:
@@ -702,7 +702,7 @@ git worktree remove ../fractal-worktrees/project-feature-ui
   - [ ] マージ順序が依存関係を反映
   - [ ] クリーンアップ手順記載
 
-**承認:** ★ユーザー承認必須 → `TaskUpdate(id: workflow_id, status: "pending_approval")`
+**承認:** 自動遷移（Phase 4 Codexレビューへ） → `TaskUpdate(id: workflow_id, status: "completed")`
 
 ---
 
@@ -723,9 +723,7 @@ git worktree remove ../fractal-worktrees/project-feature-ui
   - [ ] 依存関係が明示
   - [ ] TaskCreate で全タスク登録
 
-**承認:**
-- 破壊的変更あり → ★ユーザー承認必須 → `TaskUpdate(id: workflow_id, status: "pending_approval")`
-- 破壊的変更なし → 自動遷移 → `TaskUpdate(id: workflow_id, status: "completed")`
+**承認:** 自動遷移（Phase 4 Codexレビューへ） → `TaskUpdate(id: workflow_id, status: "completed")`
 
 ---
 
