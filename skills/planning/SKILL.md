@@ -161,11 +161,13 @@ Final plan must include:
 2. [Step 2]
 ```
 
-## Auto Transition to Phase 4
+## User Approval Required
 
-計画策定完了後、Phase 4（Codex計画レビュー）に自動遷移する。ユーザー承認は不要。
-- 計画をworkflow stateに記録
-- codex-delegateを起動してPhase 4を開始
+**計画策定完了後、ユーザー承認を取得してからPhase 4に遷移する。**
+
+計画をユーザーに提示し、承認を待つ:
+- "承認" / "Approved" / 明示的な承認を確認
+- 承認後、codex-delegateを起動してPhase 4を開始
 
 ## Completion Criteria
 

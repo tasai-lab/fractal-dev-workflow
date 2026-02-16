@@ -11,7 +11,7 @@ flowchart TD
     START([タスク受領]) --> Q[Phase 1: 質問 + 要件定義]
     Q -->|自動| INV[Phase 2: 調査 + ドメイン整理]
     INV -->|自動| DES[Phase 3: 契約設計]
-    DES -->|自動: codex-delegate起動必須| CR1[Phase 4: Codex計画レビュー]
+    DES -->|★ユーザー承認| CR1[Phase 4: Codex計画レビュー]
     CR1 -->|自動遷移| IMP[Phase 5: 実装]
     IMP -->|自動: codex-delegate起動必須| CR2[Phase 6: Codexコードレビュー]
     CR2 -->|自動遷移| VER[Phase 7: 検証]
@@ -35,7 +35,7 @@ flowchart TD
 |------|------|------|
 | Phase 1 → 2 | 自動 | 要件定義完了後 |
 | Phase 2 → 3 | 自動 | 調査完了条件を満たした場合 |
-| Phase 3 → 4 | 自動 | 契約設計完了後、Codexレビュー必須 |
+| Phase 3 → 4 | ★ユーザー承認必須 | 計画をユーザーに提示し承認後にCodexレビュー |
 | Phase 4 → 5 | 自動 | Codexレビュー承認後（NEEDS_CHANGESの場合も3回後自動遷移） |
 | Phase 5 → 6 | 自動 | 実装完了後、Codexレビュー必須 |
 | Phase 6 → 7 | 自動 | Codexレビュー承認後 |
