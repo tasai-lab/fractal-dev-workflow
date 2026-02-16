@@ -16,7 +16,7 @@ description: 開発タスクを受けた時、機能実装・バグ修正・リ�
 | 主要画面 | Phase 1で定義したユースケースに登場するすべての画面 | `questioning/SKILL.md` |
 | Critical Issue | セキュリティ脆弱性、データ損失リスク、本番障害リスク | `codex-review/SKILL.md` |
 | 最低限のテストカバレッジ | 主要関数の80%以上、正常系各1ケース、主要異常系各1ケース | `qa.md` |
-| 憶測 | file:line参照を伴わない推測。「ファイル名から推測」「構造から推測」は憶測 | `investigation/SKILL.md` |
+| 憶測 | file:line参照を伴わない推測。「ファイル名から推測」「構造から推測」は憶測。根拠（path:line・コマンド実行結果）が不足している場合も差し戻し対象 | `investigation/SKILL.md` |
 
 ## Overview
 
