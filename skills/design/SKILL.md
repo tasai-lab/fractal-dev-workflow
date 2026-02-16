@@ -316,6 +316,30 @@ src/components/{feature}/
 - [ ] 既存テストが引き続き動作するか
 - [ ] 新規テストの追加箇所
 
+### 破壊的変更の判定ロジック
+
+#### 定義
+以下のいずれかに該当する場合、`has_breaking_changes = true`:
+
+| カテゴリ | 破壊的変更の例 | 非破壊的変更の例 |
+|---------|---------------|-----------------|
+| API | 削除、必須フィールド追加、型変更 | オプショナルフィールド追加 |
+| DB | カラム削除、型変更、NOT NULL追加 | オプショナルカラム追加 |
+| 認証 | 認可ルール変更、スコープ変更 | 新規スコープ追加 |
+| 設定 | 必須環境変数追加 | オプショナル環境変数追加 |
+
+#### state への記録
+判定結果は workflow state に記録:
+```bash
+jq '.phases["3"].has_breaking_changes = true' ~/.claude/fractal-workflow/{workflow-id}.json > /tmp/wf.json && mv /tmp/wf.json ~/.claude/fractal-workflow/{workflow-id}.json
+```
+
+#### 判定フロー
+1. Consistency Checklist を実行
+2. 上記表に該当する変更を特定
+3. 1件でも該当 → has_breaking_changes = true
+4. 該当なし → has_breaking_changes = false
+
 #### 破壊的変更の有無
 - [ ] Yes → ユーザー承認必須 → `TaskUpdate(id: workflow_id, status: "pending_approval")`
 - [ ] No → 自動遷移可能 → `TaskUpdate(id: workflow_id, status: "completed")`
