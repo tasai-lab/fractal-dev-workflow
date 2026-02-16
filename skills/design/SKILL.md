@@ -702,7 +702,7 @@ git worktree remove ../fractal-worktrees/project-feature-ui
   - [ ] マージ順序が依存関係を反映
   - [ ] クリーンアップ手順記載
 
-**承認:** 自動遷移（Phase 4 Codexレビューへ） → `TaskUpdate(id: workflow_id, status: "completed")`
+**承認:** ★ユーザー承認必須 → `TaskUpdate(id: workflow_id, status: "pending_approval")`
 
 ---
 
@@ -723,7 +723,7 @@ git worktree remove ../fractal-worktrees/project-feature-ui
   - [ ] 依存関係が明示
   - [ ] TaskCreate で全タスク登録
 
-**承認:** 自動遷移（Phase 4 Codexレビューへ） → `TaskUpdate(id: workflow_id, status: "completed")`
+**承認:** ★ユーザー承認必須 → `TaskUpdate(id: workflow_id, status: "pending_approval")`
 
 ---
 

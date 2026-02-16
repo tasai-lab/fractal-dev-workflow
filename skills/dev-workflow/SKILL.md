@@ -148,7 +148,7 @@ Task(subagent_type="implementer", model="sonnet"):
 |-------|------|-------|----------|--------|
 | 1 | 質問 + 要件定義 | questioning → requirements | Auto | MVP境界、受け入れ条件、「やらない」リスト |
 | 2 | 調査+ドメイン | investigation | Auto | 用語統一、ビジネスルール、境界責務 |
-| 3 | 契約設計 | design | **Mode-aware** | API仕様、DBスキーマ、エラー形式 |
+| 3 | 契約設計 | design | **Required** | API仕様、DBスキーマ、エラー形式 |
 | 4 | Codex計画レビュー | codex-review | **Auto（Codex必須）** | レビュー結果（Codex 5.3 + xhigh） |
 | 5 | 実装 | implementation | **Required** | 動作するコード + テスト + コンポーネント |
 | 6 | Codexコードレビュー | codex-review | **Auto（Codex必須）** | コードレビュー結果 + 承認 |
@@ -347,7 +347,7 @@ questioning の流れ:
 - [ ] テスト設計
 - [ ] タスク分解 + worktree計画
 
-**承認:** 自動遷移（Phase 4 Codexレビューへ）
+**承認:** ★ユーザー承認必須 → Phase 4 Codexレビューへ
 
 ---
 
@@ -359,7 +359,7 @@ questioning の流れ:
 - [ ] DBスキーマ変更（ある場合のみ）
 - [ ] タスク分解
 
-**承認:** 自動遷移（Phase 4 Codexレビューへ）
+**承認:** ★ユーザー承認必須 → Phase 4 Codexレビューへ
 
 ---
 
@@ -689,9 +689,9 @@ Task(subagent_type="code-simplifier:code-simplifier", model="sonnet"):
 
 #### Phase 3 → Phase 4
 
-**条件:** 常に自動遷移（codex-delegateの起動は必須）
-- Phase 3完了 → codex-delegate を起動して Phase 4 開始
-- ユーザー承認不要（モードに関わらず自動遷移）
+**条件:** ★ユーザー承認必須（全モード共通）
+- Phase 3完了 → 計画をユーザーに提示 → 承認後 codex-delegate を起動して Phase 4 開始
+- new-creation / existing-modification に関わらず常にユーザー承認が必要
 
 #### Phase 4 → Phase 5
 
@@ -732,8 +732,8 @@ Phase 4またはPhase 6でCodexが`NEEDS_CHANGES`を返した場合:
 
 ### Phase 3 → Phase 4 遷移（計画レビュー）
 
-Phase 3（契約設計）完了後、**必ず** codex-delegate を起動してPhase 4を開始。
-**スキップ不可。ユーザー承認不要。**
+Phase 3（契約設計）完了後、**ユーザー承認を取得してから** codex-delegate を起動してPhase 4を開始。
+**計画の承認はスキップ不可。**
 
 ```
 # Phase 3 完了後 → 必ず実行
@@ -785,7 +785,7 @@ Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
 ```
 Phase 1 完了 → Phase 2 開始（自動）
 Phase 2 完了 → Phase 3 開始（自動）
-Phase 3 完了 → Phase 4 開始（自動: codex-delegate 起動必須）
+Phase 3 完了 → ★ユーザー承認 → Phase 4 開始（codex-delegate 起動必須）
 Phase 4 完了 → Phase 5 開始（自動: レビュー結果に関わらず自動遷移）
 Phase 5 完了 → Phase 6 開始（自動: codex-delegate 起動必須）
 Phase 6 完了 → Phase 7 開始（自動: レビュー結果に関わらず自動遷移）
