@@ -88,10 +88,24 @@ $WRAPPER review-requirements "$PROJECT_DIR" "$(cat plan.md)" "$(cat requirements
    scripts/codex-wrapper.sh review-requirements . "$(cat plan.md)" "$(cat requirements.md)"
    ```
 
-3. **If unavailable, report fallback needed**
+3. **If unavailable, report fallback needed and execute qa review**
    ```
    Codex CLI is not available.
-   Fallback to spec-reviewer agent recommended.
+   Executing qa agent fallback (mandatory).
+   ```
+
+   **重要:** フォールバック報告だけでなく、呼び出し元に以下のアクションを明示すること:
+   ```
+   ## Codex Unavailable - QA Fallback Required
+
+   Codex CLI is not installed or not accessible.
+
+   **必須アクション:** 以下のフォールバックを実行してください:
+   Task(subagent_type="fractal-dev-workflow:qa"):
+     ## QA Review (Codex Fallback)
+     [レビュー対象の内容をここに記載]
+
+   レビュー自体のスキップは不可。
    ```
 
 ## Report Format
@@ -112,10 +126,16 @@ $WRAPPER review-requirements "$PROJECT_DIR" "$(cat plan.md)" "$(cat requirements
 
 ### On Fallback
 ```
-## Codex Unavailable
+## Codex Unavailable - QA Fallback Required
 
 Codex CLI is not installed or not accessible.
-Recommend using spec-reviewer agent as fallback.
+
+**必須:** 以下のqaエージェントフォールバックを実行してください:
+Task(subagent_type="fractal-dev-workflow:qa"):
+  ## QA Review (Codex Fallback)
+  [レビュー対象の内容]
+
+レビューのスキップは不可。qaエージェントによるレビューは必須です。
 ```
 
 ## Custom Model/Reasoning
@@ -137,4 +157,5 @@ CODEX_REASONING_EFFORT=xhigh codex exec "prompt"
 - Run BOTH review perspectives for plans
 - Don't pass sensitive data directly
 - Report timeout/failures clearly
-- Suggest spec-reviewer fallback when appropriate
+- **Codex利用不可時はqaエージェントフォールバックが必須（スキップ不可）**
+- **レビュー結果に関わらずユーザー承認は不要（常に自動遷移）**
