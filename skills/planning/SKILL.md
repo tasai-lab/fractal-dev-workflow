@@ -39,7 +39,7 @@ digraph planning {
     "Differences found?" -> "Create unified plan" [label="no"];
     "Create unified plan" -> "Validate against investigation";
     "Validate against investigation" -> "Structure the plan";
-    "Structure the plan" -> "Request user approval" [style=dashed];
+    "Structure the plan" -> "Phase 4 Codex Review (auto)";
 }
 ```
 
@@ -161,14 +161,11 @@ Final plan must include:
 2. [Step 2]
 ```
 
-## Approval Required
+## Auto Transition to Phase 4
 
-**This phase requires explicit user approval before proceeding.**
-
-Present the plan and wait for:
-- "承認" / "Approved" / explicit approval
-- Record approval timestamp in workflow state
-- Only then proceed to Phase 4
+計画策定完了後、Phase 4（Codex計画レビュー）に自動遷移する。ユーザー承認は不要。
+- 計画をworkflow stateに記録
+- codex-delegateを起動してPhase 4を開始
 
 ## Completion Criteria
 
