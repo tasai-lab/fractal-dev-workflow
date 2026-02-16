@@ -149,9 +149,9 @@ Task(subagent_type="implementer", model="sonnet"):
 | 1 | 質問 + 要件定義 | questioning → requirements | Auto | MVP境界、受け入れ条件、「やらない」リスト |
 | 2 | 調査+ドメイン | investigation | Auto | 用語統一、ビジネスルール、境界責務 |
 | 3 | 契約設計 | design | **Mode-aware** | API仕様、DBスキーマ、エラー形式 |
-| 4 | Codex計画レビュー | codex-review | **Codex→User** | レビュー結果（Codex 5.3 + xhigh） |
+| 4 | Codex計画レビュー | codex-review | **Auto（Codex必須）** | レビュー結果（Codex 5.3 + xhigh） |
 | 5 | 実装 | implementation | **Required** | 動作するコード + テスト + コンポーネント |
-| 6 | Codexコードレビュー | codex-review | **Codex→User** | コードレビュー結果 + 承認 |
+| 6 | Codexコードレビュー | codex-review | **Auto（Codex必須）** | コードレビュー結果 + 承認 |
 | 7 | 検証 | verification | Auto | テストピラミッド結果、検証レポート |
 | 8 | 運用設計 | completion | Auto | ロールバック手順、監視、Feature Flag |
 
@@ -459,6 +459,16 @@ Codexによる2観点の批判的レビューで品質を保証。
 
 ### worktree必須
 
+**CRITICAL: worktreeなしでの実装は禁止。以下を Phase 5 開始時に必ず実行すること:**
+
+```bash
+# Phase 5 開始時の最初のアクション（スキップ不可）
+git worktree add /path/to/worktrees/<branch-name>
+cd /path/to/worktrees/<branch-name>
+```
+
+**worktree作成前に実装コードを書いてはいけない。**
+
 実装は必ずworktreeで作業する:
 
 ```bash
@@ -681,24 +691,23 @@ Task(subagent_type="code-simplifier:code-simplifier", model="sonnet"):
 
 #### Phase 3 → Phase 4
 
-**条件:**
-- mode == "new-creation" → ★ユーザー承認必須
-- mode == "existing-modification" AND has_breaking_changes == true → ★ユーザー承認必須
-- mode == "existing-modification" AND has_breaking_changes == false → 自動遷移
+**条件:** 常に自動遷移（codex-delegateの起動は必須）
+- Phase 3完了 → codex-delegate を起動して Phase 4 開始
+- ユーザー承認不要（モードに関わらず自動遷移）
 
 #### Phase 4 → Phase 5
 
-**条件:**
-- codex_available AND has_critical_issues == true → ★ユーザー承認必須
-- codex_available AND has_critical_issues == false → 自動遷移
-- codex_unavailable → 自動遷移
+**条件:** 常に自動遷移
+- Codexレビュー完了 → Critical Issuesがあれば自動修正 → 自動遷移
+- Codex利用不可 → qaエージェントでフォールバック → 自動遷移
+- ユーザー承認不要
 
 #### Phase 6 → Phase 7
 
-**条件:**
-- codex_available AND has_critical_issues == true → ★ユーザー承認必須
-- codex_available AND has_critical_issues == false → 自動遷移
-- codex_unavailable → 自動遷移
+**条件:** 常に自動遷移
+- Codexコードレビュー完了 → Critical Issuesがあれば自動修正 → 自動遷移
+- Codex利用不可 → qaエージェントでフォールバック → 自動遷移
+- ユーザー承認不要
 
 ---
 
@@ -706,7 +715,7 @@ Task(subagent_type="code-simplifier:code-simplifier", model="sonnet"):
 
 Phase 4またはPhase 6でCodexが`NEEDS_CHANGES`を返した場合:
 
-1. **指摘事項を修正**
+1. **指摘事項を自動修正**
    - Critical Issuesをすべて修正
    - 修正内容をコミット
 
@@ -715,20 +724,21 @@ Phase 4またはPhase 6でCodexが`NEEDS_CHANGES`を返した場合:
    - 修正後のコードをレビュー
 
 3. **判定**
-   - APPROVED_AUTO → 次Phaseへ自動遷移
-   - APPROVED_WITH_CHANGES → ユーザー承認後、次Phaseへ
+   - APPROVED → 次Phaseへ自動遷移
    - NEEDS_CHANGES（再び） → Step 1に戻る
 
-最大3回の再レビューまで。それ以上はユーザー判断を仰ぐ。
+最大3回の再レビューまで。それ以上は修正内容を報告して自動遷移。
+ユーザー承認は不要。
 
 ---
 
 ### Phase 3 → Phase 4 遷移（計画レビュー）
 
-Phase 3（契約設計）完了後、**必ず** codex-delegate を起動してPhase 4を開始：
+Phase 3（契約設計）完了後、**必ず** codex-delegate を起動してPhase 4を開始。
+**スキップ不可。ユーザー承認不要。**
 
 ```
-# Phase 3 完了確認後
+# Phase 3 完了後 → 必ず実行
 Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
   ## Phase 4: Codex計画レビュー
 
@@ -738,7 +748,12 @@ Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
   以下の手順でレビューを実行してください:
   1. scripts/codex-wrapper.sh check でCodex可用性を確認
   2. 利用可能な場合: review-spec と review-requirements を順次実行
-  3. 利用不可の場合: fallback を報告
+  3. 利用不可の場合: 以下のフォールバックを実行
+
+  ★Codex利用不可時のフォールバック（必須）:
+  Task(subagent_type="fractal-dev-workflow:qa"):
+    ## QA Review (Codex Fallback)
+    計画ファイルを読み、既存実装との整合性と要件カバレッジをレビュー
 
   結果を以下の形式で報告:
   - Review 1 (既存実装照合): [結果]
@@ -748,10 +763,11 @@ Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
 
 ### Phase 5 → Phase 6 遷移（コードレビュー）
 
-Phase 5（実装）完了後、**必ず** codex-delegate を起動してPhase 6を開始：
+Phase 5（実装）完了後、**必ず** codex-delegate を起動してPhase 6を開始。
+**スキップ不可。ユーザー承認不要。**
 
 ```
-# Phase 5 完了確認後
+# Phase 5 完了後 → 必ず実行
 Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
   ## Phase 6: Codexコードレビュー
 
@@ -759,6 +775,11 @@ Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
 
   scripts/codex-wrapper.sh review . uncommitted を実行し、
   コード品質・テストカバレッジ・セキュリティを評価してください。
+
+  ★Codex利用不可時のフォールバック（必須）:
+  Task(subagent_type="fractal-dev-workflow:qa"):
+    ## QA Code Review (Codex Fallback)
+    実装コードの品質・テストカバレッジ・セキュリティをレビュー
 ```
 
 ### 遷移フローチャート
@@ -766,10 +787,10 @@ Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
 ```
 Phase 1 完了 → Phase 2 開始（自動）
 Phase 2 完了 → Phase 3 開始（自動）
-Phase 3 完了 → ★Phase 4 開始（codex-delegate 起動必須、Mode-aware承認）
-Phase 4 承認 → Phase 5 開始（ユーザー承認後）
-Phase 5 完了 → ★Phase 6 開始（codex-delegate 起動必須）
-Phase 6 承認 → Phase 7 開始（ユーザー承認後）
+Phase 3 完了 → Phase 4 開始（自動: codex-delegate 起動必須）
+Phase 4 完了 → Phase 5 開始（自動: レビュー結果に関わらず自動遷移）
+Phase 5 完了 → Phase 6 開始（自動: codex-delegate 起動必須）
+Phase 6 完了 → Phase 7 開始（自動: レビュー結果に関わらず自動遷移）
 Phase 7 完了 → Phase 8 開始（自動）
 ```
 
@@ -778,8 +799,8 @@ Phase 7 完了 → Phase 8 開始（自動）
 フェーズ完了時に確認:
 - [ ] 完了条件をすべて満たしているか
 - [ ] 状態ファイルを更新したか (`~/.claude/fractal-workflow/{id}.json`)
-- [ ] 次フェーズのトリガーを実行したか（Phase 4, 6 は codex-delegate 必須）
-- [ ] Mode-aware承認フローを確認したか（Phase 3→4）
+- [ ] Phase 4, 6: codex-delegate を起動したか（必須、スキップ不可）
+- [ ] Phase 4, 6: Codex利用不可の場合、qaフォールバックを実行したか
 
 ---
 
@@ -865,6 +886,48 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### context-preservationスキル連携
 詳細な資料作成が必要な場合は context-preservation スキルを使用。
+
+---
+
+## Additional Requirements Handling（追加要望対応フロー）
+
+### 目的
+ワークフロー実行中に追加要望が発生した場合、適切なフローで対応する。
+**追加要望を受けても、フローをスキップしない。**
+
+### 追加要望発生時のフロー
+
+```
+追加要望を受信
+  ↓
+Step 1: 質問フェーズ（必須）
+  AskUserQuestion で追加要望の詳細を明確化
+  - 何を変更するか
+  - なぜ変更するか
+  - MVPスコープ
+  ↓
+Step 2: 影響調査（必須・サブエージェント駆動）
+  Task(subagent_type="fractal-dev-workflow:investigator"):
+    追加要望の影響範囲を調査
+  ↓
+Step 3: スコープ判定
+  - 現在のPhaseに吸収可能 → 現在のPhaseに統合
+  - 新しいSliceが必要 → タスク分解に追加
+  - 設計変更が必要 → Phase 3に戻る
+  ↓
+Step 4: 実装（サブエージェント駆動）
+  Task(subagent_type="fractal-dev-workflow:coder"):
+    追加要望の実装
+```
+
+### Red Flags
+
+| Thought | Reality |
+|---------|---------|
+| "簡単だからそのまま実装" | 質問と調査をスキップするな |
+| "現在のタスクに含めよう" | 影響調査なしで統合するな |
+| "親エージェントで直接やる" | サブエージェント駆動を守れ |
+| "worktreeは不要" | 追加実装もworktreeで作業 |
 
 ---
 
