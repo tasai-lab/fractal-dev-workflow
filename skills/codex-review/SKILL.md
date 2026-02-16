@@ -43,11 +43,13 @@ Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
 ## The Iron Law
 
 ```
-PREFER EXTERNAL CRITICAL REVIEW FOR ALL PLANS AND CODE
+EXTERNAL CRITICAL REVIEW IS MANDATORY FOR ALL PLANS AND CODE
 TWO-PERSPECTIVE REVIEW: EXISTING IMPLEMENTATION + REQUIREMENTS COVERAGE
+SKIPPING REVIEW IS NOT PERMITTED - USE QA AGENT AS FALLBACK
 ```
 
-Codex is preferred but not required. Use qa as fallback.
+Codexレビューは必須です。Codex CLIが利用不可の場合、qaエージェントによるフォールバックが必須です。
+レビュー自体をスキップすることはできません。
 
 ## Codex Configuration
 
@@ -63,7 +65,7 @@ digraph review {
     "Plan/Code ready" -> "Check Codex availability";
     "Check Codex availability" -> "Codex available?" [shape=diamond];
     "Codex available?" -> "Review 1: Existing Implementation" [label="yes"];
-    "Codex available?" -> "Run staff-reviewer" [label="no"];
+    "Codex available?" -> "Run qa agent (fallback)" [label="no"];
     "Review 1: Existing Implementation" -> "Issues found?" [shape=diamond];
     "Issues found?" -> "Fix issues" [label="yes"];
     "Fix issues" -> "Review 1: Existing Implementation";
@@ -72,7 +74,7 @@ digraph review {
     "More issues?" -> "Fix requirements issues" [label="yes"];
     "Fix requirements issues" -> "Review 2: Requirements Coverage";
     "More issues?" -> "Review complete" [label="no"];
-    "Run staff-reviewer" -> "Review complete";
+    "Run qa agent (fallback)" -> "Review complete";
 }
 ```
 
@@ -189,8 +191,8 @@ The qa agent provides:
 
 ## Critical Issue Definition
 
-### 重大な指摘（ユーザー承認必須）
-以下のいずれかに該当する場合、Codexの指摘は「重大」と判定し、ユーザー承認を必須とする:
+### 重大な指摘（自動修正必須）
+以下のいずれかに該当する場合、Codexの指摘は「重大」と判定し、自動修正を実施する:
 
 1. **セキュリティ脆弱性**
    - XSS、SQLインジェクション、CSRF等
@@ -233,14 +235,14 @@ The qa agent provides:
 
 ### APPROVED（`has_critical_issues=true`）
 - 重大な指摘あり（critical_issues_count > 0）
-- 対応推奨だが、対応後に承認可能
-- **dev-workflow:** ユーザー承認必須
+- 指摘内容を記録し、可能な範囲で自動修正
+- **dev-workflow:** 自動遷移（指摘内容を記録）
 
 ### NEEDS CHANGES（`has_critical_issues=true`）
 - セキュリティ脆弱性（重大）
 - アーキテクチャ上の問題
 - 要件との不一致
-- **dev-workflow:** ユーザー承認必須 + 再レビュー推奨
+- **dev-workflow:** 自動修正 → 再レビュー → 自動遷移（最大3回）
 
 ## Review Result Format
 
@@ -262,8 +264,12 @@ The qa agent provides:
 | Verdict | has_critical_issues | critical_issues_count | dev-workflow遷移 |
 |---------|---------------------|----------------------|------------------|
 | APPROVED | false | 0 | 自動遷移（Phase 5 or 7） |
-| APPROVED | true | > 0 | ユーザー承認必須（軽微な指摘あり） |
-| NEEDS CHANGES | true | > 0 | ユーザー承認必須（Critical Issues対応後） |
+| APPROVED | true | > 0 | 自動遷移（指摘内容を記録） |
+| NEEDS CHANGES | true | > 0 | 自動修正 → 再レビュー → 自動遷移 |
+
+**注意:** ユーザー承認は不要。全てのケースで自動遷移する。
+Critical Issuesがある場合は自動修正を試み、修正後に再レビューを実行する。
+最大3回の再レビュー後、自動遷移する。
 
 **変数仕様:**
 - `verdict`: 総合判定（"APPROVED" | "NEEDS CHANGES"）
@@ -278,7 +284,7 @@ dev-workflowは `has_critical_issues` を遷移条件に使用する。
 - Critical Issues: [数]
 - Minor Issues: [数]
 
-### Critical Issues (ユーザー承認必須)
+### Critical Issues (自動修正対象)
 | # | 種別 | 説明 | 対応方針 |
 |---|------|------|---------|
 | 1 | セキュリティ | XSS脆弱性 | サニタイズ追加 |
@@ -289,8 +295,9 @@ dev-workflowは `has_critical_issues` を遷移条件に使用する。
 | 1 | スタイル | 変数名改善 | 任意 |
 
 ### Recommendation
-- [自動遷移 / ユーザー承認必須]
+- [自動遷移（常に自動遷移）]
 - [再レビュー必要 / 不要]
+- [自動修正の対象: リスト]
 
 ## Completion Criteria
 

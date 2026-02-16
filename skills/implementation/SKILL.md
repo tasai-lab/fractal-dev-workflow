@@ -15,6 +15,24 @@ description: 計画承認後、実際のコード実装を開始する時に使�
 - 独立タスクは並列化
 - **共通化できるものはコンポーネントにする**
 
+## Worktree Enforcement（必須）
+
+**CRITICAL: Phase 5の実装はworktreeで行うこと。worktreeなしでの実装は禁止。**
+
+Phase 5開始時の最初のアクション:
+```bash
+# 必ず最初に実行（スキップ不可）
+git worktree add /path/to/worktrees/<branch-name>
+# 以降の全作業はworktreeディレクトリで実行
+```
+
+**Red Flags:**
+| Thought | Reality |
+|---------|---------|
+| "小さい変更だからworktree不要" | 全ての実装はworktreeで行う |
+| "もう実装を始めてしまった" | 変更をstash → worktree作成 → stash pop |
+| "worktreeの作成が面倒" | mainブランチの汚染の方が面倒 |
+
 ## The Iron Law
 
 ```
@@ -516,14 +534,22 @@ Slice 2 実装 → テストPass → code-simplifier → コミット
 
 ---
 
-## Completion Criteria（★ユーザー承認必須）
+## Completion Criteria
 
+- [ ] worktreeで作業していることを確認
 - [ ] 全タスク完了
 - [ ] 各タスクにテスト
 - [ ] 全テスト Pass
 - [ ] カバレッジ目標達成
-- [ ] コードレビュー完了
-- [ ] **ユーザー承認**
+- [ ] code-simplifier 実行（変更ファイル3以上の場合）
+- [ ] 実装完了コミット
+- [ ] **Phase 6: codex-delegate 起動（必須・スキップ不可）**
+  ```
+  Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
+    ## Phase 6: Codexコードレビュー
+    scripts/codex-wrapper.sh review . uncommitted を実行
+    ★Codex利用不可時: qaエージェントフォールバック必須
+  ```
 
 ---
 

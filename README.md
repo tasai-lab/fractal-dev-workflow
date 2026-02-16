@@ -5,7 +5,7 @@
 ## 特徴
 
 - **8フェーズワークフロー**: 質問→調査→設計→計画レビュー→実装→コードレビュー→テスト→完了
-- **2段階承認ゲート**: Phase 4(計画レビュー)とPhase 6(コードレビュー)で Codexによる批判的レビュー後、ユーザーが最終判断する2段階チェック
+- **Codex自動レビュー**: Phase 4(計画レビュー)とPhase 6(コードレビュー)でCodexによる批判的レビューを自動実行。レビュー結果に関わらず自動遷移
 - **Codexレビュー統合**: 外部の批判的視点で品質保証
 - **チーム駆動実装**: サブエージェントによる並列実装
 - **失敗パターン学習**: 同じ失敗を繰り返さない
@@ -57,13 +57,13 @@ Phase 1: 質問 (Questioning)
 Phase 2: 調査 (Investigation)
     ↓ 自動
 Phase 3: 設計 (Design)
-    ↓ ★ユーザー承認必須★
+    ↓ 自動遷移
 Phase 4: 計画レビュー (Plan Review)
-    ↓ ★Codex承認→ユーザー承認★ (2段階)
+    ↓ Codex自動レビュー→自動遷移
 Phase 5: 実装 (Implementation)
     ↓ 自動
 Phase 6: コードレビュー (Code Review)
-    ↓ ★Codex承認→ユーザー承認★ (2段階)
+    ↓ Codex自動レビュー→自動遷移
 Phase 7: テスト (Testing)
     ↓ 自動
 Phase 8: 完了 (Completion)
@@ -94,7 +94,7 @@ Phase 8: 完了 (Completion)
 | `investigator` | Haiku | コードベース調査 |
 | `implementer` | Sonnet | コード実装 |
 | `codex-delegate` | Haiku | Codex CLI呼び出し |
-| `staff-reviewer` | Opus | Codexフォールバック |
+| `qa` | Sonnet | Codexフォールバック（レビュー必須） |
 | `doc-reviewer` | Sonnet | ドキュメント品質レビュー |
 
 ## 依存関係
@@ -103,7 +103,7 @@ Phase 8: 完了 (Completion)
 - jq (JSON処理)
 - bash 4.0+
 - flock (ファイルロック)
-- Codex CLI (オプション、なければstaff-reviewerで代替)
+- Codex CLI (推奨、なければqaエージェントでフォールバック。レビュー自体は必須)
 
 ## 設定
 
