@@ -479,6 +479,43 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 
 ---
 
+## Code Simplification Step
+
+### 実行タイミング
+各縦スライス（Slice）実装完了後、次のスライスに進む前
+
+### 呼び出し方法
+```
+Task(subagent_type="code-simplifier:code-simplifier", model="sonnet"):
+  ## コード簡素化: Slice X 完了後
+
+  ### 対象ファイル
+  [このスライスで変更したファイル一覧]
+
+  ### 簡素化の観点
+  1. 冗長なコードの削減
+  2. 命名の一貫性（用語定義との整合性）
+  3. 不要な抽象化の排除
+  4. 重複コードの共通化
+
+  ### 制約
+  - 機能を変更しない
+  - テストが引き続きパスすること
+```
+
+### フロー
+```
+Slice 1 実装 → テストPass → code-simplifier → コミット
+Slice 2 実装 → テストPass → code-simplifier → コミット
+...
+全Slice完了 → Phase 6へ
+```
+
+### スキップ条件
+- 変更行数が50行未満の場合はオプショナル
+
+---
+
 ## Completion Criteria（★ユーザー承認必須）
 
 - [ ] 全タスク完了
