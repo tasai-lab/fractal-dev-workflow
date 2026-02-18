@@ -1,6 +1,6 @@
 ---
 name: dev-workflow
-description: 開発タスクを受けた時、機能実装・バグ修正・リファクタリングの前に使用。8フェーズを自動で進行させるメインオーケストレーター。
+description: 開発タスクを受けた時、機能実装・バグ修正・リファクタリングの前に使用。9フェーズを自動で進行させるメインオーケストレーター。
 ---
 
 # Development Workflow Orchestrator
@@ -20,7 +20,7 @@ description: 開発タスクを受けた時、機能実装・バグ修正・リ�
 
 ## Overview
 
-開発タスクを8つのフェーズで体系的に進行させるオーケストレーター。
+開発タスクを9つのフェーズで体系的に進行させるオーケストレーター。
 **事故りにくい順序**で、堅実な実装を実現する。
 
 **Core principles:**
@@ -86,7 +86,7 @@ Task(subagent_type="implementer", model="sonnet"):
 | 実装 | sonnet | バランス良好 |
 | 複雑な設計判断 | opus | 深い推論が必要な場合のみ |
 
-## The Eight Phases（事故りにくい順）
+## The Nine Phases（事故りにくい順）
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -124,19 +124,26 @@ Task(subagent_type="implementer", model="sonnet"):
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  Phase 6: Codexコードレビュー                                │
+│  Phase 6: Chromeデバッグ（実装のUI/挙動を実機検証）          │
+│  ─────────────────────────────────────────────────────────  │
+│  devサーバー起動 → UI表示確認 → インタラクション検証          │
+│  → エラー検出 → 自動修正(最大3回)                            │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│  Phase 7: Codexコードレビュー                                │
 │  ─────────────────────────────────────────────────────────  │
 │  実装コードの批判的レビュー + 承認                            │
 └─────────────────────────────────────────────────────────────┘
                               ↓ 自動遷移（Codexレビュー必須）
 ┌─────────────────────────────────────────────────────────────┐
-│  Phase 7: 検証（テストピラミッド）                           │
+│  Phase 8: 検証（テストピラミッド）                           │
 │  ─────────────────────────────────────────────────────────  │
 │  Unit(多) → Integration(中) → E2E(少) → Contract → 負荷     │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  Phase 8: 運用設計                                          │
+│  Phase 9: 運用設計                                          │
 │  ─────────────────────────────────────────────────────────  │
 │  マイグレーション → ロールバック → Feature Flag → アラート   │
 └─────────────────────────────────────────────────────────────┘
@@ -151,9 +158,10 @@ Task(subagent_type="implementer", model="sonnet"):
 | 3 | 契約設計 | design | **Required** | API仕様、DBスキーマ、エラー形式 |
 | 4 | Codex計画レビュー | codex-review | **Auto（Codex必須）** | レビュー結果（Codex 5.3 + xhigh） |
 | 5 | 実装 | implementation | **Required** | 動作するコード + テスト + コンポーネント |
-| 6 | Codexコードレビュー | codex-review | **Auto（Codex必須）** | コードレビュー結果 + 承認 |
-| 7 | 検証 | verification | Auto | テストピラミッド結果、検証レポート |
-| 8 | 運用設計 | completion | Auto | ロールバック手順、監視、Feature Flag |
+| 6 | Chromeデバッグ | chrome-debug | Auto | UI/挙動検証結果 |
+| 7 | Codexコードレビュー | codex-review | **Auto（Codex必須）** | コードレビュー結果 + 承認 |
+| 8 | 検証 | verification | Auto | テストピラミッド結果、検証レポート |
+| 9 | 運用設計 | completion | Auto | ロールバック手順、監視、Feature Flag |
 
 ---
 
@@ -537,7 +545,7 @@ Task(subagent_type="code-simplifier:code-simplifier", model="sonnet"):
 
 **実行タイミング:**
 - 各 Slice 完了後
-- Phase 6（Codexコードレビュー）前
+- Phase 7（Codexコードレビュー）前
 
 **スキップ条件:**
 - 変更ファイル数が3未満の場合はオプショナル
@@ -555,7 +563,51 @@ Task(subagent_type="code-simplifier:code-simplifier", model="sonnet"):
 
 ---
 
-## Phase 6: Codexコードレビュー
+## Phase 6: Chromeデバッグ（実装のUI/挙動を実機検証）
+
+### 目的
+実装したコードを実際のブラウザで動作確認し、テストでは検出できないUI/UXの問題を早期に発見する。
+**コードレビュー前に実機で確認することで、レビューの質も向上する。**
+
+### 全タスク必須
+バックエンドのみの変更でも、影響するUIがある場合はブラウザ確認を行う。
+
+### 実行モデル
+**Chrome操作は必ずサブエージェント（sonnet）に委譲する。**
+親エージェントは環境準備とオーケストレーションのみ。
+
+```
+Task(subagent_type="general-purpose", model="sonnet"):
+  Chrome MCPツールでUI/挙動を検証
+```
+
+### プロセス
+
+#### Step 1: 環境準備（親エージェント）
+- devサーバーを起動（ポート3100、使用中なら3101-3199でフォールバック）
+
+#### Step 2-4: Chrome検証（サブエージェント）
+- サブエージェントがChrome MCPツールでUI表示、インタラクション、エラーを検証
+- コンソールログ・ネットワークリクエストを確認
+
+#### Step 5: 問題修正サイクル（問題発見時）
+- 修正用サブエージェント（coder）で自動修正
+- 再検証用サブエージェント（general-purpose）で再確認
+- 最大3回まで繰り返し
+
+### 成果物
+→ `chrome-debug` スキル参照
+
+### 完了条件
+- [ ] 全主要画面の表示確認
+- [ ] 全主要インタラクションの動作確認
+- [ ] コンソールにJSエラーがゼロ
+- [ ] ネットワークリクエストに4xx/5xxがゼロ
+- [ ] 問題発見時: 修正済みまたはレポート作成済み
+
+---
+
+## Phase 7: Codexコードレビュー
 
 ### 目的
 実装されたコードに対するCodexによる批判的レビューと承認。
@@ -578,7 +630,7 @@ Task(subagent_type="code-simplifier:code-simplifier", model="sonnet"):
 
 ---
 
-## Phase 7: 検証（テストピラミッド）
+## Phase 8: 検証（テストピラミッド）
 
 ### 目的
 テストピラミッドに従い、ROI順でテストを実施。
@@ -628,7 +680,7 @@ Task(subagent_type="code-simplifier:code-simplifier", model="sonnet"):
 
 ---
 
-## Phase 8: 運用設計
+## Phase 9: 運用設計
 
 ### 目的
 **後回しにすると炎上する**運用設計を完了させる。
@@ -700,7 +752,20 @@ Task(subagent_type="code-simplifier:code-simplifier", model="sonnet"):
 - Codex利用不可 → qaエージェントでフォールバック → 自動遷移
 - ユーザー承認不要
 
+#### Phase 5 → Phase 6
+
+**条件:** 常に自動遷移
+- 実装完了 → chrome-debugスキルに従いブラウザで実機検証 → 自動遷移
+- ユーザー承認不要
+
 #### Phase 6 → Phase 7
+
+**条件:** 常に自動遷移（codex-delegate 起動必須）
+- Chromeデバッグ完了 → codex-delegate を起動して Phase 7 開始
+- Codex利用不可 → qaエージェントでフォールバック → 自動遷移
+- ユーザー承認不要
+
+#### Phase 7 → Phase 8
 
 **条件:** 常に自動遷移
 - Codexコードレビュー完了 → Critical Issuesがあれば自動修正 → 自動遷移
@@ -711,7 +776,7 @@ Task(subagent_type="code-simplifier:code-simplifier", model="sonnet"):
 
 ### NEEDS_CHANGES時の再レビューフロー
 
-Phase 4またはPhase 6でCodexが`NEEDS_CHANGES`を返した場合:
+Phase 4またはPhase 7でCodexが`NEEDS_CHANGES`を返した場合:
 
 1. **指摘事項を自動修正**
    - Critical Issuesをすべて修正
@@ -759,15 +824,20 @@ Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
   - Verdict: [APPROVED / NEEDS CHANGES]
 ```
 
-### Phase 5 → Phase 6 遷移（コードレビュー）
+### Phase 5 → Phase 6 遷移（Chromeデバッグ）
 
-Phase 5（実装）完了後、**必ず** codex-delegate を起動してPhase 6を開始。
+Phase 5（実装）完了後、自動的にPhase 6（Chromeデバッグ）を開始。
+chrome-debugスキルに従い、ブラウザで実機検証を実行する。
+
+### Phase 6 → Phase 7 遷移（コードレビュー）
+
+Phase 6（Chromeデバッグ）完了後、**必ず** codex-delegate を起動してPhase 7を開始。
 **スキップ不可。ユーザー承認不要。**
 
 ```
-# Phase 5 完了後 → 必ず実行
+# Phase 6 完了後 → 必ず実行
 Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
-  ## Phase 6: Codexコードレビュー
+  ## Phase 7: Codexコードレビュー
 
   実装コミット: [latest commits]
 
@@ -786,10 +856,11 @@ Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
 Phase 1 完了 → Phase 2 開始（自動）
 Phase 2 完了 → Phase 3 開始（自動）
 Phase 3 完了 → ★ユーザー承認 → Phase 4 開始（codex-delegate 起動必須）
-Phase 4 完了 → Phase 5 開始（自動: レビュー結果に関わらず自動遷移）
-Phase 5 完了 → Phase 6 開始（自動: codex-delegate 起動必須）
-Phase 6 完了 → Phase 7 開始（自動: レビュー結果に関わらず自動遷移）
+Phase 4 完了 → Phase 5 開始（自動）
+Phase 5 完了 → Phase 6 開始（自動: Chromeデバッグ）
+Phase 6 完了 → Phase 7 開始（自動: codex-delegate 起動必須）
 Phase 7 完了 → Phase 8 開始（自動）
+Phase 8 完了 → Phase 9 開始（自動）
 ```
 
 ### トリガーチェックリスト
@@ -797,8 +868,8 @@ Phase 7 完了 → Phase 8 開始（自動）
 フェーズ完了時に確認:
 - [ ] 完了条件をすべて満たしているか
 - [ ] 状態ファイルを更新したか (`~/.claude/fractal-workflow/{id}.json`)
-- [ ] Phase 4, 6: codex-delegate を起動したか（必須、スキップ不可）
-- [ ] Phase 4, 6: Codex利用不可の場合、qaフォールバックを実行したか
+- [ ] Phase 4, 7: codex-delegate を起動したか（必須、スキップ不可）
+- [ ] Phase 4, 7: Codex利用不可の場合、qaフォールバックを実行したか
 
 ---
 
@@ -825,9 +896,10 @@ Phase 7 完了 → Phase 8 開始（自動）
 | 3 | 契約設計の決定事項とその理由 |
 | 4 | Codexレビューで指摘された問題パターン |
 | 5 | 実装時の技術的課題と解決策 |
-| 6 | コードレビューの指摘パターン |
-| 7 | テストで発見した問題と対策 |
-| 8 | 運用設計のベストプラクティス |
+| 6 | Chromeデバッグで発見したUI/UX問題と修正内容 |
+| 7 | コードレビューの指摘パターン |
+| 8 | テストで発見した問題と対策 |
+| 9 | 運用設計のベストプラクティス |
 
 ### 記録フォーマット
 ```markdown
@@ -952,7 +1024,8 @@ State is stored in `~/.claude/fractal-workflow/{workflow-id}.json`:
     "5": {"status": "pending"},
     "6": {"status": "pending"},
     "7": {"status": "pending"},
-    "8": {"status": "pending"}
+    "8": {"status": "pending"},
+    "9": {"status": "pending"}
   },
   "approvals": [
     {
@@ -969,7 +1042,7 @@ State is stored in `~/.claude/fractal-workflow/{workflow-id}.json`:
       "critical_issues_count": 0,
       "has_critical_issues": false
     },
-    "6": {
+    "7": {
       "critical_issues_count": 0,
       "has_critical_issues": false
     }
@@ -1023,9 +1096,10 @@ If you catch yourself thinking:
 | 4 | **Codex** | 計画の批判的レビュー（codex-delegate経由） | codex |
 | 5 | **TechLead** → **Coder** | 技術分解 → TDD実装 | sonnet |
 | 5-6間 | **code-simplifier** | コード簡素化・品質向上 | sonnet |
-| 6 | **Codex** | コードレビュー + 承認（codex-delegate経由） | codex |
-| 7 | **QA** | 品質憲兵：検証のみ、編集禁止 | sonnet |
-| 8 | **Architect** | 運用設計 | sonnet |
+| 6 | **Subagent (sonnet)** | Chrome MCP操作 + UI/挙動検証 | sonnet |
+| 7 | **Codex** | コードレビュー + 承認（codex-delegate経由） | codex |
+| 8 | **QA** | 品質憲兵：検証のみ、編集禁止 | sonnet |
+| 9 | **Architect** | 運用設計 | sonnet |
 
 ### Agent 使い分け
 
@@ -1054,17 +1128,18 @@ If you catch yourself thinking:
 - requirements - Phase 1 (要件定義)
 - investigation - Phase 2
 - design - Phase 3
-- codex-review - Phase 4 & 6
+- codex-review - Phase 4 & 7
 - implementation - Phase 5
-- verification - Phase 7
-- completion - Phase 8
+- chrome-debug - Phase 6
+- verification - Phase 8
+- completion - Phase 9
 
 **Required agents:**
-- architect - Phase 1-3, 8
+- architect - Phase 1-3, 9
 - tech-lead - Phase 5 (task decomposition)
 - coder - Phase 5 (TDD implementation)
-- qa - Phase 7 (read-only verification)
-- codex-delegate - Phase 4 & 6 (critical review)
+- qa - Phase 8 (read-only verification)
+- codex-delegate - Phase 4 & 7 (critical review)
 - investigator - Phase 2 (codebase exploration)
 
 **Optional skills:**

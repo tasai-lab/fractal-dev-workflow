@@ -29,13 +29,13 @@ Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
   3. 結果をVerdictと共に報告
 ```
 
-## Phase 6 起動条件（コードレビュー）
+## Phase 7 起動条件（コードレビュー）
 
 **TRIGGER**: Phase 5（実装）完了後、以下を実行：
 
 ```
 Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
-  ## Phase 6: Codexコードレビュー
+  ## Phase 7: Codexコードレビュー
 
   scripts/codex-wrapper.sh review . uncommitted を実行
 ```
@@ -263,7 +263,7 @@ The qa agent provides:
 
 | Verdict | has_critical_issues | critical_issues_count | dev-workflow遷移 |
 |---------|---------------------|----------------------|------------------|
-| APPROVED | false | 0 | 自動遷移（Phase 5 or 7） |
+| APPROVED | false | 0 | 自動遷移（Phase 5 or 8） |
 | APPROVED | true | > 0 | 自動遷移（指摘内容を記録） |
 | NEEDS CHANGES | true | > 0 | 自動修正 → 再レビュー → 自動遷移 |
 

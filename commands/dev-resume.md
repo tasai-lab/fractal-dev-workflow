@@ -10,6 +10,7 @@ Invoke the appropriate fractal-dev-workflow skill based on the current phase:
 - Phase 3: fractal-dev-workflow:design
 - Phase 4: fractal-dev-workflow:codex-review
 - Phase 5: fractal-dev-workflow:implementation
-- Phase 6: fractal-dev-workflow:codex-review
-- Phase 7: fractal-dev-workflow:verification
-- Phase 8: fractal-dev-workflow:completion
+- Phase 6: fractal-dev-workflow:chrome-debug
+- Phase 7: fractal-dev-workflow:codex-review
+- Phase 8: fractal-dev-workflow:verification
+- Phase 9: fractal-dev-workflow:completion

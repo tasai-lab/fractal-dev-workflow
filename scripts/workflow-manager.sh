@@ -85,12 +85,12 @@ set_phase() {
         fi
     fi
 
-    # Phase 7への遷移: Phase 6の2段階承認が必要
-    if [[ "$phase" -ge 7 ]] && [[ "$current_phase" -lt 7 ]]; then
-        local p6_codex=$(echo "$current" | jq -r '.phases["6"].codexApprovedAt // empty')
-        local p6_user=$(echo "$current" | jq -r '.phases["6"].userApprovedAt // empty')
-        if [[ -z "$p6_codex" ]] || [[ -z "$p6_user" ]]; then
-            echo "ERROR: Phase 6の承認が完了していません" >&2
+    # Phase 8への遷移: Phase 7の2段階承認が必要
+    if [[ "$phase" -ge 8 ]] && [[ "$current_phase" -lt 8 ]]; then
+        local p7_codex=$(echo "$current" | jq -r '.phases["7"].codexApprovedAt // empty')
+        local p7_user=$(echo "$current" | jq -r '.phases["7"].userApprovedAt // empty')
+        if [[ -z "$p7_codex" ]] || [[ -z "$p7_user" ]]; then
+            echo "ERROR: Phase 7の承認が完了していません" >&2
             exit 1
         fi
     fi
@@ -153,9 +153,10 @@ create_workflow() {
         "3": {"name": "設計", "status": "pending"},
         "4": {"name": "計画レビュー", "status": "pending"},
         "5": {"name": "実装", "status": "pending"},
-        "6": {"name": "コードレビュー", "status": "pending"},
-        "7": {"name": "テスト", "status": "pending"},
-        "8": {"name": "運用設計", "status": "pending"}
+        "6": {"name": "Chromeデバッグ", "status": "pending"},
+        "7": {"name": "コードレビュー", "status": "pending"},
+        "8": {"name": "テスト", "status": "pending"},
+        "9": {"name": "運用設計", "status": "pending"}
     },
     "createdAt": "$timestamp"
 }

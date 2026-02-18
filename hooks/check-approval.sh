@@ -60,15 +60,15 @@ EOF
     fi
 fi
 
-# Phase 7以降は Phase 6（コードレビュー）の2段階承認が必要
-if [[ $current_phase -ge 7 ]]; then
-    phase6_codex=$(echo "$state" | jq --arg p "6" -r '.phases[$p].codexApprovedAt // empty')
-    phase6_user=$(echo "$state" | jq --arg p "6" -r '.phases[$p].userApprovedAt // empty')
-    if [[ -z "$phase6_codex" ]] || [[ -z "$phase6_user" ]]; then
+# Phase 8以降は Phase 7（コードレビュー）の2段階承認が必要
+if [[ $current_phase -ge 8 ]]; then
+    phase7_codex=$(echo "$state" | jq --arg p "7" -r '.phases[$p].codexApprovedAt // empty')
+    phase7_user=$(echo "$state" | jq --arg p "7" -r '.phases[$p].userApprovedAt // empty')
+    if [[ -z "$phase7_codex" ]] || [[ -z "$phase7_user" ]]; then
         cat <<EOF
 {
     "status": "error",
-    "message": "Implementation blocked: Phase 6 (コードレビュー) のCodex承認とユーザー承認が必要です。Current approvals - Codex: $(if [[ -n "$phase6_codex" ]]; then echo "✓"; else echo "✗"; fi), User: $(if [[ -n "$phase6_user" ]]; then echo "✓"; else echo "✗"; fi)"
+    "message": "Implementation blocked: Phase 7 (コードレビュー) のCodex承認とユーザー承認が必要です。Current approvals - Codex: $(if [[ -n "$phase7_codex" ]]; then echo "✓"; else echo "✗"; fi), User: $(if [[ -n "$phase7_user" ]]; then echo "✓"; else echo "✗"; fi)"
 }
 EOF
         exit 1

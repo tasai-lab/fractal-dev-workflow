@@ -58,19 +58,19 @@ assert_not_empty() {
     fi
 }
 
-# Test 1: 8フェーズのワークフロー作成
-test_create_8_phase_workflow() {
-    echo "Test 1: 8フェーズのワークフロー作成"
+# Test 1: 9フェーズのワークフロー作成
+test_create_9_phase_workflow() {
+    echo "Test 1: 9フェーズのワークフロー作成"
 
     local wf_id=$($WORKFLOW_MANAGER create "Test workflow")
     local state=$($WORKFLOW_MANAGER get "$wf_id")
 
     # フェーズ数確認
     local phase_count=$(echo "$state" | jq '.phases | length')
-    assert_equals "8" "$phase_count" "フェーズ数は8であること"
+    assert_equals "9" "$phase_count" "フェーズ数は9であること"
 
     # 各フェーズが存在することを確認
-    for i in {1..8}; do
+    for i in {1..9}; do
         local phase_status=$(echo "$state" | jq -r ".phases[\"$i\"].status")
         assert_equals "pending" "$phase_status" "Phase $i のステータスはpending"
     done
@@ -219,38 +219,38 @@ test_phase_transition_requires_approval() {
     assert_equals "5" "$phase" "2段階承認後にPhase 5に遷移できること"
 }
 
-# Test 8: Phase 7への遷移で Phase 6の2段階承認チェック
-test_phase_7_transition_requires_approval() {
-    echo "Test 8: Phase 7への遷移で Phase 6の2段階承認チェック"
+# Test 8: Phase 8への遷移で Phase 7の2段階承認チェック
+test_phase_8_transition_requires_approval() {
+    echo "Test 8: Phase 8への遷移で Phase 7の2段階承認チェック"
 
     local wf_id=$($WORKFLOW_MANAGER create "Test workflow")
 
-    # Phase 6まで進める（Phase 4は承認済みと仮定）
+    # Phase 7まで進める（Phase 4は承認済みと仮定）
     $WORKFLOW_MANAGER approve "$wf_id" "4" "codex"
     $WORKFLOW_MANAGER approve "$wf_id" "4" "user"
-    $WORKFLOW_MANAGER set-phase "$wf_id" "6"
+    $WORKFLOW_MANAGER set-phase "$wf_id" "7"
 
-    # Phase 6の承認なしでPhase 7に遷移を試みる（失敗するはず）
-    local error_output=$($WORKFLOW_MANAGER set-phase "$wf_id" "7" 2>&1 || echo "ERROR_OCCURRED")
+    # Phase 7の承認なしでPhase 8に遷移を試みる（失敗するはず）
+    local error_output=$($WORKFLOW_MANAGER set-phase "$wf_id" "8" 2>&1 || echo "ERROR_OCCURRED")
 
     if echo "$error_output" | grep -q "ERROR"; then
         TESTS_RUN=$((TESTS_RUN + 1))
         TESTS_PASSED=$((TESTS_PASSED + 1))
-        echo "  PASS: Phase 6の承認なしではPhase 7に遷移できないこと"
+        echo "  PASS: Phase 7の承認なしではPhase 8に遷移できないこと"
     else
         TESTS_RUN=$((TESTS_RUN + 1))
         TESTS_FAILED=$((TESTS_FAILED + 1))
-        echo "  FAIL: Phase 6の承認なしでPhase 7に遷移できてしまった"
+        echo "  FAIL: Phase 7の承認なしでPhase 8に遷移できてしまった"
     fi
 
-    # 2段階承認後にPhase 7に遷移（成功するはず）
-    $WORKFLOW_MANAGER approve "$wf_id" "6" "codex"
-    $WORKFLOW_MANAGER approve "$wf_id" "6" "user"
+    # 2段階承認後にPhase 8に遷移（成功するはず）
+    $WORKFLOW_MANAGER approve "$wf_id" "7" "codex"
+    $WORKFLOW_MANAGER approve "$wf_id" "7" "user"
 
-    $WORKFLOW_MANAGER set-phase "$wf_id" "7"
+    $WORKFLOW_MANAGER set-phase "$wf_id" "8"
     local phase=$($WORKFLOW_MANAGER phase "$wf_id")
 
-    assert_equals "7" "$phase" "2段階承認後にPhase 7に遷移できること"
+    assert_equals "8" "$phase" "2段階承認後にPhase 8に遷移できること"
 }
 
 # テスト実行
@@ -261,14 +261,14 @@ main() {
 
     setup
 
-    test_create_8_phase_workflow
+    test_create_9_phase_workflow
     test_codex_approval
     test_user_approval
     test_two_stage_approval
     test_cli_approve_third_argument
     test_is_approved_new_schema
     test_phase_transition_requires_approval
-    test_phase_7_transition_requires_approval
+    test_phase_8_transition_requires_approval
 
     teardown
 

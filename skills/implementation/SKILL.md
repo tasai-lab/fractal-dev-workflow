@@ -526,7 +526,7 @@ Task(subagent_type="code-simplifier:code-simplifier", model="sonnet"):
 Slice 1 実装 → テストPass → code-simplifier → コミット
 Slice 2 実装 → テストPass → code-simplifier → コミット
 ...
-全Slice完了 → Phase 6へ
+全Slice完了 → Phase 7へ
 ```
 
 ### スキップ条件
@@ -543,10 +543,10 @@ Slice 2 実装 → テストPass → code-simplifier → コミット
 - [ ] カバレッジ目標達成
 - [ ] code-simplifier 実行（変更ファイル3以上の場合）
 - [ ] 実装完了コミット
-- [ ] **Phase 6: codex-delegate 起動（必須・スキップ不可）**
+- [ ] **Phase 7: codex-delegate 起動（必須・スキップ不可）**
   ```
   Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
-    ## Phase 6: Codexコードレビュー
+    ## Phase 7: Codexコードレビュー
     scripts/codex-wrapper.sh review . uncommitted を実行
     ★Codex利用不可時: qaエージェントフォールバック必須
   ```

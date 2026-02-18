@@ -79,7 +79,7 @@ description: プラグインの使い方とトラブルシューティング。A
 
 ---
 
-## Workflow（7フェーズ）
+## Workflow（9フェーズ）
 
 ```
 Phase 1: 要件定義   → Architect
@@ -87,8 +87,10 @@ Phase 2: 調査       → Investigator
 Phase 3: 設計       → Architect     ★承認必須
 Phase 4: レビュー   → Codex
 Phase 5: 実装       → TechLead + Coder  ★承認必須
-Phase 6: 検証       → QA
-Phase 7: 完了       → Architect
+Phase 6: Chromeデバッグ → Chrome Debug
+Phase 7: 検証       → QA
+Phase 8: テスト     → QA
+Phase 9: 完了       → Architect
 ```
 
 ### 起動方法
@@ -189,7 +191,7 @@ Phase 7: 完了       → Architect
 
 ### 2. 承認ポイントを守る
 
-- Phase 3（設計）と Phase 5（実装）は承認必須
+- Phase 3（設計）と Phase 4（計画レビュー）と Phase 7（コードレビュー）は承認必須
 - 承認なしに次へ進まない
 - 「たぶん大丈夫」は禁止
 
