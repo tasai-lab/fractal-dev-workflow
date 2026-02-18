@@ -51,10 +51,11 @@ NO MERGE WITHOUT VERIFICATION
 - ドキュメント → doc-reviewer
 
 **compact後の再開手順:**
-1. `/dev status` でワークフロー状態確認
-2. `git log --oneline -5` で最新コンテキスト確認
-3. MEMORY.mdを読む
-4. サブエージェントでタスク継続
+1. `docs/context/CONTEXT.md` を読む（最重要）
+2. `/dev status` でワークフロー状態確認
+3. `git log --oneline -5` で最新コンテキスト確認
+4. MEMORY.mdを読む
+5. サブエージェントでタスク継続
 
 ### 調査はサブエージェント駆動
 Phase 2（調査）は必ずサブエージェントで実行する。
@@ -957,6 +958,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ### context-preservationスキル連携
 詳細な資料作成が必要な場合は context-preservation スキルを使用。
 
+### context-docによる自動ドキュメント生成
+
+コミット毎にPostToolUse hookが発火し、サブエージェント（sonnet）が `docs/context/CONTEXT.md` を自動更新する。
+
+**フロー:**
+1. git commit完了 → PostToolUse hook (check-commit-context.sh) が検出
+2. hookがClaudeに更新指示を出力
+3. Claudeがサブエージェントを起動してドキュメント更新
+4. サブエージェントが git add + commit
+
+**compact後の再注入:**
+1. `docs/context/CONTEXT.md` を読む
+2. `/dev status` でワークフロー状態確認
+3. `git log --oneline -10` で最新コミット確認
+4. タスク続行
+
+→ `context-doc` スキル参照
+
 ---
 
 ## Additional Requirements Handling（追加要望対応フロー）
@@ -1148,3 +1167,4 @@ If you catch yourself thinking:
 - context-circulation - For commit-based context sharing
 - failure-memory - For learning from failures
 - project-setup - Project initialization with templates
+- context-doc - Automatic context documentation per commit
