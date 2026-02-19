@@ -91,13 +91,15 @@ fi
 # mainへのpush: ドキュメントチェック
 WARNINGS=""
 
-# 1. CHANGELOGが更新されているか
-CHANGELOG_CHANGED=$(git diff main --name-only 2>/dev/null | grep -c "CHANGELOG.md" || true)
-if [[ "$CHANGELOG_CHANGED" -eq 0 ]]; then
-    # 直近のコミットでCHANGELOGが変更されているか
-    CHANGELOG_IN_COMMITS=$(git log main..HEAD --name-only --format="" 2>/dev/null | grep -c "CHANGELOG.md" || true)
-    if [[ "$CHANGELOG_IN_COMMITS" -eq 0 ]]; then
-        WARNINGS="${WARNINGS}\n- CHANGELOG.md が更新されていません"
+# 1. CHANGELOGが更新されているか（origin/mainとの差分で判定）
+REMOTE_REF=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || echo "")
+if [[ -n "$REMOTE_REF" ]]; then
+    CHANGELOG_CHANGED=$(git diff "$REMOTE_REF" --name-only 2>/dev/null | grep -c "CHANGELOG.md" || true)
+    if [[ "$CHANGELOG_CHANGED" -eq 0 ]]; then
+        CHANGELOG_IN_COMMITS=$(git log "$REMOTE_REF"..HEAD --name-only --format="" 2>/dev/null | grep -c "CHANGELOG.md" || true)
+        if [[ "$CHANGELOG_IN_COMMITS" -eq 0 ]]; then
+            WARNINGS="${WARNINGS}\n- CHANGELOG.md が更新されていません"
+        fi
     fi
 fi
 
