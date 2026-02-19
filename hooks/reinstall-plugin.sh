@@ -12,7 +12,14 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') reinstall-plugin.sh triggered" >> "$LOG_FILE"
 PLUGIN_NAME="fractal-dev-workflow"
 MARKETPLACE="fractal-marketplace"
 CACHE_DIR="$HOME/.claude/plugins/cache/$MARKETPLACE/$PLUGIN_NAME"
-SOURCE_DIR="${CLAUDE_PLUGIN_ROOT:-/Users/t.asai/code/fractal-dev-workflow}"
+# SOURCE_DIR はローカルプラグインのシンボリックリンクから解決する
+# CLAUDE_PLUGIN_ROOT はキャッシュパス自体を返すため使用しない
+LOCAL_PLUGIN="$HOME/.claude/plugins/local/$PLUGIN_NAME"
+if [[ -L "$LOCAL_PLUGIN" ]]; then
+    SOURCE_DIR=$(readlink "$LOCAL_PLUGIN")
+else
+    SOURCE_DIR="/Users/t.asai/code/fractal-dev-workflow"
+fi
 VERSION=$(cat "$SOURCE_DIR/.claude-plugin/plugin.json" 2>/dev/null | jq -r '.version // "0.4.0"')
 
 echo "  CACHE_DIR=$CACHE_DIR VERSION=$VERSION SOURCE_DIR=$SOURCE_DIR" >> "$LOG_FILE"
