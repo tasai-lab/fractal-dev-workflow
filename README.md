@@ -86,6 +86,7 @@ Phase 9: 完了 (Completion)
 | `context-circulation` | コミットによるコンテキスト共有 |
 | `context-preservation` | compact後のコンテキスト保存・復元 |
 | `using-workflow` | 使用ガイド |
+| `plugin-audit` | プラグイン品質評価（5カテゴリ・100点満点） |
 
 ## エージェント一覧
 

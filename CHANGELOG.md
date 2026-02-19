@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-02-19
+
+### Added
+
+- plugin-auditスキル（5カテゴリ評価: Structure, Compliance, Flow, Token, Security）
+  - 100点満点のスコア付きレポート生成
+  - サブエージェント並列評価による客観性確保
+  - 証拠ベース評価（path:line必須、推測禁止）
+  - スコアリング基準定義 (references/scoring-rubric.md)
+  - 仕様準拠チェックルール定義 (references/compliance-rules.md)
+- /plugin-auditコマンド追加
+
+### Fixed
+
+- workflow-manager.shのWORKFLOW_DIRパス解決を修正（get_workflow_dir()に統一）
+
 ## [0.4.0] - 2026-02-17
 
 ### Added
