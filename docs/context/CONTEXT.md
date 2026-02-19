@@ -1,17 +1,20 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-20（49a59fc）
+最終更新: 2026-02-20（856cfc2）
 
 ## 現在の状態
 
 - **Phase**: Phase 8（検証）完了、全16タスク完了、全テスト合格（66/66）
 - **進行中タスク**: なし（安定稼働中）
-- **バージョン**: 0.10.5（push時にconventional commitsで自動バンプ）
+- **バージョン**: 0.10.7（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 856cfc2 | 2026-02-20 | fix(hooks): check-docs.shをプラグインリポジトリ内のみに限定 | hooks/check-docs.sh |
+| e0ee416 | 2026-02-20 | chore: bump version to 0.10.6 | .claude-plugin/plugin.json |
+| 45e9494 | 2026-02-20 | docs(context): コンテキストドキュメント更新 - バージョンバンプ時のシンボリックリンク同期 | docs/context/CONTEXT.md |
 | 49a59fc | 2026-02-20 | fix(hooks): バージョンバンプ時にinstallPathとキャッシュシンボリックリンクも同期 | hooks/check-docs.sh, CHANGELOG.md |
 | 9a37e0f | 2026-02-20 | chore: bump version to 0.10.4 | .claude-plugin/plugin.json |
 | 9222849 | 2026-02-20 | fix(skills): スクリプト参照を絶対パスに統一しworktree独立性を確保 | skills/codex-review, skills/design, skills/dev-workflow, skills/failure-memory, skills/implementation, skills/investigation, skills/planning, skills/plugin-reinstall, skills/post-merge-execute, skills/using-workflow |
@@ -77,6 +80,17 @@
 | f289b42 | - | chore: バージョン0.4.0にアップデート | - |
 
 ## 重要な決定事項
+
+### check-docs.shのプラグインリポジトリ内限定化（2026-02-20）
+- **問題**: check-docs.shフックはプラグイン自身のリポジトリ専用だが、他プロジェクトのワークツリーでBashツールが実行される際にも発動し、ドキュメントチェックやバージョンバンプが誤って実行されていた
+- **修正**: スクリプト冒頭でREPO_ROOT（`git rev-parse --show-toplevel`）とPLUGIN_ROOT（スクリプトの親ディレクトリ）を比較し、一致しない場合は即 `exit 0` でスキップ
+- **副作用**: バージョン自動更新ロジックの外側にあった `if [[ "$REPO_ROOT" == "$PLUGIN_ROOT" ]]; then` のネストが不要になったため、インデントを1段階削除してコードを整理（65行挿入・63行削除）
+- **対象ファイル**: `hooks/check-docs.sh`（128行変更）
+
+### コミットメッセージ内の「git push」によるgrep誤検出バグ（2026-02-20）
+- **発見**: check-docs.shがコミットメッセージを含むgitログをgrepでコマンド判定する際、コミットメッセージ本文に「git push」という文字列が含まれていると誤検出が起きる
+- **原因**: `grep -q "git push"` などのパターンが、コマンド引数（コミットメッセージ等）の内容もマッチする
+- **対策方針**: grepでコマンド判定する場合はコマンド部分のみを抽出してから比較するか、入力をコマンドフィールドに限定して検索する
 
 ### バージョンバンプ時のinstallPathと キャッシュシンボリックリンク同期（2026-02-20）
 - **問題**: バージョンバンプ時に installed_plugins.json の version フィールドのみ更新していたが、installPath のシンボリックリンク生成が並行して実行される場合に整合性が崩れる可能性があった
@@ -310,6 +324,8 @@
 
 | 日付 | 内容 | 教訓 |
 |---|---|---|
+| 2026-02-20 | check-docs.shが他プロジェクトのワークツリーでも誤作動していた | フック冒頭でREPO_ROOTとPLUGIN_ROOTを比較し、対象外リポジトリでは即exit 0するスコープガードを実装する |
+| 2026-02-20 | コミットメッセージ内に「git push」を含むと、check-docs.shのgrepコマンド判定が誤検出する | grepでコマンド判定する際は、コマンド引数（コミットメッセージ等）の内容もマッチする可能性があることを常に考慮し、コマンド部分のみを抽出して比較する |
 | 2026-02-19 | サブエージェントのレポート出力がファイル保存されていなかった | スキルに出力ファイルパス（docs/audits/YYYY-MM-DD.md）と保存コマンドを明記し、出力要件を強制化する |
 | 2026-02-19 | plugin-audit SKILL.md 日本語化でテストパターン不一致が発生した | スキル仕様変更時はテストの期待値も同時に更新し、日本語対応を徹底する |
 | 2026-02-19 | Chrome Debuggerへの委任設計時、サーバー管理ポリシーが不十分だった | サーバー操作を伴う機能は起動・停止・並列実行禁止を事前に明記し、ゲート化する |
@@ -323,6 +339,7 @@
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-20 | check-docs.shフックをプラグインリポジトリ内のみに限定する修正を指示。コミットメッセージ内の「git push」がフックのgrep誤検出を起こすバグも発見された |
 | 2026-02-20 | worktreeや別ディレクトリからスクリプトが見つからないエラーの報告を受け、全スキルファイルのスクリプト参照を相対パスからシンボリックリンク経由の絶対パス（`~/.claude/plugins/local/fractal-dev-workflow/scripts/`）に統一するよう指示 |
 | 2026-02-19 | 「日本語で記述が必須」→ plugin-audit の全出力物（SKILL.md・レポート）を日本語化 |
 | 2026-02-19 | 「マーメイド図を用いたmdファイル生成が必要」→ Pie Chart・Gauge Chart・Flowchart の3種類のマーメイド図をテンプレート化し、docs/audits/YYYY-MM-DD.md に日付管理形式で保存 |
