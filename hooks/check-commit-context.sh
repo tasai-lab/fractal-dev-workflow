@@ -26,12 +26,11 @@ if echo "$COMMAND" | grep -qE 'context-doc|コンテキストドキュメント'
     exit 0
 fi
 
-cat <<'INSTRUCTION'
-[Context Document Update Required]
+INSTRUCTION="[Context Document Update Required]
 
 コミットが検出されました。サブエージェントでコンテキストドキュメントを更新してください:
 
-Task(subagent_type="general-purpose", model="sonnet"):
+Task(subagent_type=\"general-purpose\", model=\"sonnet\"):
   ## コンテキストドキュメント更新
 
   ### 手順
@@ -45,5 +44,11 @@ Task(subagent_type="general-purpose", model="sonnet"):
      - ミスと教訓（あれば追加）
      - ユーザーとの対話要約（重要な指示があれば追加）
   5. ファイルを書き込む（docs/context/CONTEXT.md）
-  6. git add docs/context/CONTEXT.md && git commit -m "docs(context): コンテキストドキュメント更新"
-INSTRUCTION
+  6. git add docs/context/CONTEXT.md && git commit -m \"docs(context): コンテキストドキュメント更新\""
+
+jq -n --arg ctx "$INSTRUCTION" '{
+  hookSpecificOutput: {
+    hookEventName: "PostToolUse",
+    additionalContext: $ctx
+  }
+}'
