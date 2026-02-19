@@ -1,6 +1,6 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-19（443db7d）
+最終更新: 2026-02-19（1f566d7）
 
 ## 現在の状態
 
@@ -12,6 +12,10 @@
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 1f566d7 | 2026-02-19 | fix(agent): chrome-debuggerにChrome MCPツールを追加 | agents/chrome-debugger.md |
+| 822f3fd | 2026-02-19 | chore: bump version to 0.10.2 | .claude-plugin/plugin.json |
+| b0881f0 | 2026-02-19 | chore: bump version to 0.10.2 | .claude-plugin/plugin.json |
+| 5506c7e | 2026-02-19 | docs(context): コンテキストドキュメント更新 - v0.10.1 | docs/context/CONTEXT.md |
 | 443db7d | 2026-02-19 | docs: CHANGELOG.md更新 - v0.10.1 整合性修正 | CHANGELOG.md |
 | 4a01678 | 2026-02-19 | chore: bump version to 0.10.1 | .claude-plugin/plugin.json |
 | 0823ae8 | 2026-02-19 | chore: bump version to 0.10.0 | .claude-plugin/plugin.json |
@@ -67,6 +71,24 @@
 | f289b42 | - | chore: バージョン0.4.0にアップデート | - |
 
 ## 重要な決定事項
+
+### chrome-debuggerエージェントへのChrome MCPツール追加（2026-02-19）
+- **問題**: `agents/chrome-debugger.md` のtools定義にChrome MCPツール（`mcp__claude-in-chrome__*`）が未定義だったため、chrome-debuggerエージェントがブラウザ操作ツールを利用できなかった
+- **修正**: tools定義に以下13個のMCPツールを追加
+  - `mcp__claude-in-chrome__computer`
+  - `mcp__claude-in-chrome__find`
+  - `mcp__claude-in-chrome__form_input`
+  - `mcp__claude-in-chrome__get_page_text`
+  - `mcp__claude-in-chrome__gif_creator`
+  - `mcp__claude-in-chrome__javascript_tool`
+  - `mcp__claude-in-chrome__navigate`
+  - `mcp__claude-in-chrome__read_console_messages`
+  - `mcp__claude-in-chrome__read_network_requests`
+  - `mcp__claude-in-chrome__read_page`
+  - `mcp__claude-in-chrome__resize_window`
+  - `mcp__claude-in-chrome__tabs_context_mcp`
+  - `mcp__claude-in-chrome__tabs_create_mcp`
+- **対象ファイル**: `agents/chrome-debugger.md`（13行追加）
 
 ### workflow-manager.sh Tasks連携コマンド追加（2026-02-19）
 - **目的**: Claude Code Tasks APIとワークフロー状態を連携させ、タスク管理を一元化する
