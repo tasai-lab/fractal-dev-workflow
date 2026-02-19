@@ -1,17 +1,20 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-19（031b754）
+最終更新: 2026-02-19（687164f）
 
 ## 現在の状態
 
 - **Phase**: ワークフロー完了、mainにマージ済み
 - **進行中タスク**: なし（安定稼働中）
-- **バージョン**: 0.6.2（push時にconventional commitsで自動バンプ）
+- **バージョン**: 0.7.0（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 687164f | 2026-02-19 | docs: CHANGELOG.md更新 - v0.7.0 get-dirコマンド追加・パス修正・audit図対応 | CHANGELOG.md |
+| e2f8b96 | 2026-02-19 | chore: bump version to 0.7.0 | - |
+| 828d160 | 2026-02-19 | docs(context): コンテキストドキュメント更新 - plugin-audit マーメイド図対応 | docs/context/CONTEXT.md |
 | 031b754 | 2026-02-19 | feat(skills): plugin-audit のレポートをマーメイド図付きmdファイル出力に変更 | skills/plugin-audit/SKILL.md |
 | 0ae3b85 | 2026-02-19 | fix(skills): ハードコードパスをworkflow-manager.sh経由に修正 | skills/dev-workflow, skills/using-workflow, skills/design, skills/failure-memory, skills/implementation |
 | 9b47b1e | 2026-02-19 | feat(scripts): workflow-manager.sh に get-dir コマンドを追加 | scripts/workflow-manager.sh |
