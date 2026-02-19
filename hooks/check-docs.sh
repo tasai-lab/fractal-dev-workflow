@@ -13,6 +13,13 @@ if [[ "$TOOL_NAME" != "Bash" ]]; then
     exit 0
 fi
 
+# このプラグインのリポジトリ内でのみ動作（他プロジェクトではスキップ）
+REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "")
+PLUGIN_ROOT=$(cd "$SCRIPT_DIR/.." 2>/dev/null && pwd -P)
+if [[ -z "$REPO_ROOT" ]] || [[ "$(cd "$REPO_ROOT" && pwd -P)" != "$PLUGIN_ROOT" ]]; then
+    exit 0
+fi
+
 # コマンドを取得
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null || true)
 
@@ -38,75 +45,70 @@ if [[ "$IS_MAIN_PUSH" != "true" ]]; then
     exit 0
 fi
 
-# バージョン自動更新（fractal-dev-workflow リポジトリのpush時のみ）
-REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "")
-PLUGIN_ROOT=$(cd "$SCRIPT_DIR/.." 2>/dev/null && pwd -P)
+# バージョン自動更新
+PLUGIN_JSON="$PLUGIN_ROOT/.claude-plugin/plugin.json"
+if [[ -f "$PLUGIN_JSON" ]]; then
+    CURRENT_VERSION=$(jq -r '.version' "$PLUGIN_JSON" 2>/dev/null || echo "0.0.0")
 
-if [[ "$REPO_ROOT" == "$PLUGIN_ROOT" ]]; then
-    PLUGIN_JSON="$PLUGIN_ROOT/.claude-plugin/plugin.json"
-    if [[ -f "$PLUGIN_JSON" ]]; then
-        CURRENT_VERSION=$(jq -r '.version' "$PLUGIN_JSON" 2>/dev/null || echo "0.0.0")
+    # 直近コミットがバージョンバンプなら二重バンプ防止
+    LAST_MSG=$(git log -1 --format="%s" 2>/dev/null || echo "")
+    if [[ "$LAST_MSG" != chore:\ bump\ version* ]]; then
+        # リモートとの差分コミットを取得
+        REMOTE_BRANCH=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || echo "")
+        if [[ -n "$REMOTE_BRANCH" ]]; then
+            COMMITS=$(git log "$REMOTE_BRANCH"..HEAD --format="%s" 2>/dev/null)
+        else
+            COMMITS=$(git log -20 --format="%s" 2>/dev/null)
+        fi
 
-        # 直近コミットがバージョンバンプなら二重バンプ防止
-        LAST_MSG=$(git log -1 --format="%s" 2>/dev/null || echo "")
-        if [[ "$LAST_MSG" != chore:\ bump\ version* ]]; then
-            # リモートとの差分コミットを取得
-            REMOTE_BRANCH=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || echo "")
-            if [[ -n "$REMOTE_BRANCH" ]]; then
-                COMMITS=$(git log "$REMOTE_BRANCH"..HEAD --format="%s" 2>/dev/null)
-            else
-                COMMITS=$(git log -20 --format="%s" 2>/dev/null)
+        if [[ -n "$COMMITS" ]]; then
+            # conventional commits からバンプタイプ判定
+            BUMP_TYPE="patch"
+            if echo "$COMMITS" | grep -qiE 'BREAKING CHANGE|^[a-z]+!\(|^[a-z]+!:'; then
+                BUMP_TYPE="major"
+            elif echo "$COMMITS" | grep -qiE '^feat'; then
+                BUMP_TYPE="minor"
             fi
 
-            if [[ -n "$COMMITS" ]]; then
-                # conventional commits からバンプタイプ判定
-                BUMP_TYPE="patch"
-                if echo "$COMMITS" | grep -qiE 'BREAKING CHANGE|^[a-z]+!\(|^[a-z]+!:'; then
-                    BUMP_TYPE="major"
-                elif echo "$COMMITS" | grep -qiE '^feat'; then
-                    BUMP_TYPE="minor"
+            # バージョン計算
+            IFS='.' read -r V_MAJOR V_MINOR V_PATCH <<< "$CURRENT_VERSION"
+            case "$BUMP_TYPE" in
+                major) V_MAJOR=$((V_MAJOR + 1)); V_MINOR=0; V_PATCH=0 ;;
+                minor) V_MINOR=$((V_MINOR + 1)); V_PATCH=0 ;;
+                patch) V_PATCH=$((V_PATCH + 1)) ;;
+            esac
+            NEW_VERSION="${V_MAJOR}.${V_MINOR}.${V_PATCH}"
+
+            # plugin.json + installed_plugins.json 更新 + コミット
+            if [[ "$NEW_VERSION" != "$CURRENT_VERSION" ]]; then
+                jq --arg v "$NEW_VERSION" '.version = $v' "$PLUGIN_JSON" > "${PLUGIN_JSON}.tmp" && mv "${PLUGIN_JSON}.tmp" "$PLUGIN_JSON"
+                git add "$PLUGIN_JSON" 2>/dev/null
+
+                # installed_plugins.json のバージョンも同期
+                INSTALLED_JSON="$HOME/.claude/plugins/installed_plugins.json"
+                PLUGIN_KEY="fractal-dev-workflow@fractal-marketplace"
+                if [[ -f "$INSTALLED_JSON" ]]; then
+                    COMMIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "")
+                    UPDATED_AT=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
+                    NEW_INSTALL_PATH="$HOME/.claude/plugins/cache/fractal-marketplace/fractal-dev-workflow/$NEW_VERSION"
+                    jq --arg v "$NEW_VERSION" --arg sha "$COMMIT_SHA" --arg ts "$UPDATED_AT" --arg key "$PLUGIN_KEY" --arg ip "$NEW_INSTALL_PATH" \
+                        '.plugins[$key][0].version = $v | .plugins[$key][0].installPath = $ip | .plugins[$key][0].gitCommitSha = $sha | .plugins[$key][0].lastUpdated = $ts' \
+                        "$INSTALLED_JSON" > "${INSTALLED_JSON}.tmp" && mv "${INSTALLED_JSON}.tmp" "$INSTALLED_JSON"
+                    hook_log "check-docs" "installed_plugins.json synced to $NEW_VERSION"
                 fi
 
-                # バージョン計算
-                IFS='.' read -r V_MAJOR V_MINOR V_PATCH <<< "$CURRENT_VERSION"
-                case "$BUMP_TYPE" in
-                    major) V_MAJOR=$((V_MAJOR + 1)); V_MINOR=0; V_PATCH=0 ;;
-                    minor) V_MINOR=$((V_MINOR + 1)); V_PATCH=0 ;;
-                    patch) V_PATCH=$((V_PATCH + 1)) ;;
-                esac
-                NEW_VERSION="${V_MAJOR}.${V_MINOR}.${V_PATCH}"
-
-                # plugin.json + installed_plugins.json 更新 + コミット
-                if [[ "$NEW_VERSION" != "$CURRENT_VERSION" ]]; then
-                    jq --arg v "$NEW_VERSION" '.version = $v' "$PLUGIN_JSON" > "${PLUGIN_JSON}.tmp" && mv "${PLUGIN_JSON}.tmp" "$PLUGIN_JSON"
-                    git add "$PLUGIN_JSON" 2>/dev/null
-
-                    # installed_plugins.json のバージョンも同期
-                    INSTALLED_JSON="$HOME/.claude/plugins/installed_plugins.json"
-                    PLUGIN_KEY="fractal-dev-workflow@fractal-marketplace"
-                    if [[ -f "$INSTALLED_JSON" ]]; then
-                        COMMIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "")
-                        UPDATED_AT=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
-                        NEW_INSTALL_PATH="$HOME/.claude/plugins/cache/fractal-marketplace/fractal-dev-workflow/$NEW_VERSION"
-                        jq --arg v "$NEW_VERSION" --arg sha "$COMMIT_SHA" --arg ts "$UPDATED_AT" --arg key "$PLUGIN_KEY" --arg ip "$NEW_INSTALL_PATH" \
-                            '.plugins[$key][0].version = $v | .plugins[$key][0].installPath = $ip | .plugins[$key][0].gitCommitSha = $sha | .plugins[$key][0].lastUpdated = $ts' \
-                            "$INSTALLED_JSON" > "${INSTALLED_JSON}.tmp" && mv "${INSTALLED_JSON}.tmp" "$INSTALLED_JSON"
-                        hook_log "check-docs" "installed_plugins.json synced to $NEW_VERSION"
-                    fi
-
-                    # キャッシュのシンボリックリンクも新バージョンに更新
-                    CACHE_DIR="$HOME/.claude/plugins/cache/fractal-marketplace/fractal-dev-workflow"
-                    SOURCE_DIR=$(readlink "$HOME/.claude/plugins/local/fractal-dev-workflow" 2>/dev/null)
-                    if [[ -n "$SOURCE_DIR" ]] && [[ -d "$SOURCE_DIR" ]]; then
-                        rm -rf "$CACHE_DIR"
-                        mkdir -p "$CACHE_DIR"
-                        ln -s "$SOURCE_DIR" "$CACHE_DIR/$NEW_VERSION"
-                        hook_log "check-docs" "cache symlink updated to $NEW_VERSION"
-                    fi
-
-                    git commit -m "chore: bump version to $NEW_VERSION" 2>/dev/null
-                    hook_log "check-docs" "version bumped: $CURRENT_VERSION -> $NEW_VERSION ($BUMP_TYPE)"
+                # キャッシュのシンボリックリンクも新バージョンに更新
+                CACHE_DIR="$HOME/.claude/plugins/cache/fractal-marketplace/fractal-dev-workflow"
+                SOURCE_DIR=$(readlink "$HOME/.claude/plugins/local/fractal-dev-workflow" 2>/dev/null)
+                if [[ -n "$SOURCE_DIR" ]] && [[ -d "$SOURCE_DIR" ]]; then
+                    rm -rf "$CACHE_DIR"
+                    mkdir -p "$CACHE_DIR"
+                    ln -s "$SOURCE_DIR" "$CACHE_DIR/$NEW_VERSION"
+                    hook_log "check-docs" "cache symlink updated to $NEW_VERSION"
                 fi
+
+                git commit -m "chore: bump version to $NEW_VERSION" 2>/dev/null
+                hook_log "check-docs" "version bumped: $CURRENT_VERSION -> $NEW_VERSION ($BUMP_TYPE)"
             fi
         fi
     fi
