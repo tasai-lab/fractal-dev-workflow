@@ -5,6 +5,8 @@ description: 実装完了後、ChromeブラウザでUIと挙動を実際に検�
 
 # Chrome Debug Phase
 
+**必須: Phase Banner Protocol（dev-workflow/SKILL.md）に従い Phase 6 バナーを表示すること。**
+
 ## Overview
 
 Phase 6として、Phase 5（実装）の後、Phase 7（コードレビュー）の前に実行する。

@@ -18,6 +18,41 @@ description: 開発タスクを受けた時、機能実装・バグ修正・リ�
 | 最低限のテストカバレッジ | 主要関数の80%以上、正常系各1ケース、主要異常系各1ケース | `qa.md` |
 | 憶測 | file:line参照を伴わない推測。「ファイル名から推測」「構造から推測」は憶測。根拠（path:line・コマンド実行結果）が不足している場合も差し戻し対象 | `investigation/SKILL.md` |
 
+## Phase Banner Protocol（必須）
+
+各Phaseを開始する際、**必ず**以下のバナーをユーザーに表示すること。表示なしでPhaseの作業を開始してはならない。
+
+### Phase開始バナー
+
+```
+========================================
+  Phase {N}: {Phase名称}
+  Workflow: {workflowId}
+  Mode: {mode}
+========================================
+```
+
+### Phase名称マッピング
+
+| Phase | 名称 |
+|-------|------|
+| 1 | 質問 + 要件定義 |
+| 2 | 調査 + ドメイン整理 |
+| 3 | 契約設計 |
+| 4 | Codex計画レビュー |
+| 5 | 実装 |
+| 6 | Chromeデバッグ |
+| 7 | Codexコードレビュー |
+| 8 | 検証 |
+| 9 | 運用設計 |
+
+### 状態更新
+
+バナー表示と同時に、wf-*.json を更新:
+- `currentPhase` を該当Phase番号に設定
+- 該当Phaseの `status` を `"in_progress"` に設定
+- 該当Phaseの `startedAt` を現在時刻に設定
+
 ## Overview
 
 開発タスクを9つのフェーズで体系的に進行させるオーケストレーター。
@@ -1046,6 +1081,7 @@ State is stored in `~/.claude/fractal-workflow/{workflow-id}.json`:
   "mode": "new-creation | existing-modification",
   "chromeInvestigation": false,
   "currentPhase": 3,
+  "currentSlice": null,
   "phases": {
     "1": {"status": "completed", "completedAt": "..."},
     "2": {"status": "completed", "completedAt": "..."},
@@ -1055,7 +1091,15 @@ State is stored in `~/.claude/fractal-workflow/{workflow-id}.json`:
       "has_breaking_changes": false
     },
     "4": {"status": "pending"},
-    "5": {"status": "pending"},
+    "5": {
+      "status": "pending",
+      "currentSlice": null,
+      "slices": {
+        "1": {"status": "pending"},
+        "2": {"status": "pending"},
+        "3": {"status": "pending"}
+      }
+    },
     "6": {"status": "pending"},
     "7": {"status": "pending"},
     "8": {"status": "pending"},

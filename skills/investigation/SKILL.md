@@ -5,6 +5,8 @@ description: 要件確定後、計画策定の前にコードベースと外部�
 
 # Investigation Phase
 
+**必須: Phase Banner Protocol（dev-workflow/SKILL.md）に従い Phase 2 バナーを表示すること。**
+
 ## Overview
 
 計画を立てる前に、コードベースと外部情報のエビデンスを収集する。

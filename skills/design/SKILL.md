@@ -5,6 +5,8 @@ description: 調査完了後、実装に入る前に使用。アーキ設計、�
 
 # Design Phase
 
+**必須: Phase Banner Protocol（dev-workflow/SKILL.md）に従い Phase 3 バナーを表示すること。**
+
 ## Overview
 
 実装の前に「どう作るか」の骨格を固める。

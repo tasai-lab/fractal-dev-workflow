@@ -5,6 +5,8 @@ description: ユーザーからタスクを受けた直後、調査や実装に�
 
 # Questioning Phase
 
+**必須: Phase Banner Protocol（dev-workflow/SKILL.md）に従い Phase 1 バナーを表示すること。**
+
 ## Overview
 
 調査に入る前に、全ての要件を明確にする。曖昧さは実装の手戻りにつながる。

@@ -5,6 +5,8 @@ description: 実装完了後、リリース前のゲートとして使用。統�
 
 # Verification Phase
 
+**必須: Phase Banner Protocol（dev-workflow/SKILL.md）に従い Phase 8 バナーを表示すること。**
+
 ## Overview
 
 リリース前に自動化可能な検証を実施する。

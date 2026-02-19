@@ -2,6 +2,29 @@
 description: 中断されたワークフローを再開
 ---
 
+再開時の手順:
+1. wf-*.json を読み込む
+2. Phase Banner Protocol に従いバナーを表示
+
+```
+========================================
+  Phase {N}: {Phase名称}
+  Workflow: {workflowId}
+  Mode: {mode}
+========================================
+```
+
+3. Phase 5の場合は Slice Banner も表示
+
+```
+----------------------------------------
+  Phase 5 > Slice {N}: {Slice名称}
+  Workflow: {workflowId}
+----------------------------------------
+```
+
+4. 該当Phaseのスキルを起動
+
 Read the workflow state file at ~/.claude/fractal-workflow/ and resume from the current phase.
 
 Invoke the appropriate fractal-dev-workflow skill based on the current phase:

@@ -5,6 +5,8 @@ description: 計画策定後またはタスク実装後にCodexによる批判�
 
 # Codex Critical Review Phase
 
+**必須: Phase Banner Protocol（dev-workflow/SKILL.md）に従い該当Phase（4または7）のバナーを表示すること。**
+
 ## Overview
 
 Codex CLI (codex-5.3, reasoning: xhigh) を使用して計画とコードの批判的レビューを実施する。

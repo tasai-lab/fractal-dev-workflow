@@ -5,6 +5,8 @@ description: 検証完了後、リリース前の最終準備として使用。�
 
 # Completion Phase
 
+**必須: Phase Banner Protocol（dev-workflow/SKILL.md）に従い Phase 9 バナーを表示すること。**
+
 ## Overview
 
 「作って終わり」にしない。運用を見据えた準備を完了させる。
