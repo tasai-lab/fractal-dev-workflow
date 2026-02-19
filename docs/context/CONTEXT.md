@@ -1,17 +1,18 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-19（8b2056c）
+最終更新: 2026-02-19（81239ac）
 
 ## 現在の状態
 
-- **Phase**: 開発安定化フェーズ（プラグイン基盤強化完了）
-- **進行中タスク**: なし
-- **バージョン**: 0.5.0（push時にconventional commitsで自動バンプ）
+- **Phase**: 開発安定化フェーズ（Phase表示バグ修正完了）
+- **進行中タスク**: なし（Slice 1 完了）
+- **バージョン**: 0.5.1（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 81239ac | 2026-02-19 | fix(workflow-manager): WORKFLOW_DIRをget_workflow_dir()で解決するよう修正 | scripts/workflow-manager.sh, tests/test-workflow-approval.sh |
 | 8b2056c | 2026-02-19 | fix(hooks): バージョンバンプ時にinstalled_plugins.jsonも自動同期 | hooks/check-docs.sh, installed_plugins.json |
 | 7eed319 | 2026-02-19 | chore: bump version to 0.5.0 | - |
 | e0d8ec5 | 2026-02-19 | docs(context): コンテキストドキュメント更新 - Phase/Sliceバナー表示必須化 | docs/context/ |
@@ -99,6 +100,13 @@
 - **仕様**: `$HOME/.claude/workflows/<WORKFLOW_NAME>/<WORKTREE_NAME>/` 配下にスコープ
 - **対象**: セッション設定、テンプラスト、ログ等
 
+### workflow-manager.sh のWORKFLOW_DIR解決修正（2026-02-19）
+- **問題**: `workflow-manager.sh` が `$HOME/.claude/fractal-workflow` を直接参照していたため、`session-init.sh` が参照するmd5ハッシュベースのパスと不一致が発生。Phase情報が表示されないバグの原因だった
+- **修正**: `workflow-manager.sh` の冒頭で `hooks/workflow-lib.sh` を source し、`WORKFLOW_DIR` のデフォルト値を `get_workflow_dir()` の結果に変更
+- **後方互換性**: `WORKFLOW_DIR` 環境変数が明示的に設定されている場合は引き続きその値を優先（既存テストは環境変数でオーバーライドするため互換性を維持）
+- **フォールバック**: `workflow-lib.sh` が見つからない場合は従来パス（`$HOME/.claude/fractal-workflow`）を維持
+- **テスト**: Test 9を追加（25/25 passed）
+
 ### parse_options の引数クォーティング問題（2026-02-19）
 - **問題**: `echo "${filtered_args[@]}"` を使用していたため、`eval` 実行時に日本語全角括弧等の特殊文字がシェル構文として解釈されエラーになっていた
 - **修正**: `printf '%q ' "${filtered_args[@]}"` に変更し、各引数をシェルセーフにクォートするよう対応
@@ -155,6 +163,7 @@
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-19 | Slice 1: Phase表示バグ修正。workflow-manager.shがget_workflow_dir()と異なるパスを参照していた不一致を解消 |
 | 2026-02-19 | Chrome Debuggerエージェント統合およびサーバー管理ポリシー強化を完了 |
 | 2026-02-19 | コンテキストドキュメント自動生成機構の追加を指示。コミット毎にdocs/context/CONTEXT.mdを更新する仕組みを実装 |
 | 2026-02-19 | codex-wrapper.shのparse_options関数で `echo` を `printf '%q '` に変更し、日本語全角括弧等の特殊文字対応を指示 |
