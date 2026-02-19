@@ -1,8 +1,8 @@
 #!/bin/bash
 # check-approval.sh - 承認状態をチェックしてWrite/Editをブロック
 
-# stdinからフック入力を読み取る
-INPUT=$(cat)
+# stdinからフック入力を読み取る（未使用だが消費必須）
+cat > /dev/null
 
 WORKFLOW_DIR="$HOME/.claude/fractal-workflow"
 
@@ -20,7 +20,7 @@ fi
 
 # ワークフロー状態を読み取り
 state=$(cat "$active_wf")
-current_phase=$(echo "$state" | jq -r '.currentPhase // 0 | tonumber')
+current_phase=$(echo "$state" | jq -r '.currentPhase // 0 | tonumber' 2>/dev/null || echo "")
 
 # currentPhase の型チェック
 if ! [[ "$current_phase" =~ ^[0-9]+$ ]]; then

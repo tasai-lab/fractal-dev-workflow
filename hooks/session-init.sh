@@ -2,7 +2,7 @@
 # session-init.sh - セッション開始時の初期化
 
 # stdin読み取り（フックプロトコル）
-INPUT=$(cat)
+cat > /dev/null
 
 WORKFLOW_DIR="$HOME/.claude/fractal-workflow"
 
