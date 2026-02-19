@@ -26,7 +26,7 @@ Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
   要件ファイル: {requirements artifact path}
 
   手順:
-  1. scripts/codex-wrapper.sh check
+  1. ~/.claude/plugins/local/fractal-dev-workflow/scripts/codex-wrapper.sh check
   2. review-spec → review-requirements を順次実行
   3. 結果をVerdictと共に報告
 ```
@@ -39,7 +39,7 @@ Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
 Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
   ## Phase 7: Codexコードレビュー
 
-  scripts/codex-wrapper.sh review . uncommitted を実行
+  ~/.claude/plugins/local/fractal-dev-workflow/scripts/codex-wrapper.sh review . uncommitted を実行
 ```
 
 ## The Iron Law
@@ -87,7 +87,7 @@ digraph review {
 Verify plan against existing codebase:
 
 ```bash
-scripts/codex-wrapper.sh review-spec "$PROJECT_DIR" "$(cat plan.md)"
+~/.claude/plugins/local/fractal-dev-workflow/scripts/codex-wrapper.sh review-spec "$PROJECT_DIR" "$(cat plan.md)"
 ```
 
 **Focus:**
@@ -101,7 +101,7 @@ scripts/codex-wrapper.sh review-spec "$PROJECT_DIR" "$(cat plan.md)"
 Verify all requirements are covered:
 
 ```bash
-scripts/codex-wrapper.sh review-requirements "$PROJECT_DIR" "$(cat plan.md)" "$(cat requirements.md)"
+~/.claude/plugins/local/fractal-dev-workflow/scripts/codex-wrapper.sh review-requirements "$PROJECT_DIR" "$(cat plan.md)" "$(cat requirements.md)"
 ```
 
 **Focus:**
@@ -113,7 +113,7 @@ scripts/codex-wrapper.sh review-requirements "$PROJECT_DIR" "$(cat plan.md)" "$(
 ## Code Review (per task, max 2 iterations)
 
 ```bash
-scripts/codex-wrapper.sh review "$PROJECT_DIR" uncommitted
+~/.claude/plugins/local/fractal-dev-workflow/scripts/codex-wrapper.sh review "$PROJECT_DIR" uncommitted
 ```
 
 ## Review Iteration Loop

@@ -120,11 +120,11 @@ Task(subagent_type="implementer", model="sonnet"):
 ```
 # Slice開始時
 TaskUpdate: taskId={slice_task_id}, status="in_progress"
-bash scripts/workflow-manager.sh update-task {workflow_id} {slice_task_id} in_progress
+bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh update-task {workflow_id} {slice_task_id} in_progress
 
 # Slice完了時（テスト・code-simplifier完了後）
 TaskUpdate: taskId={slice_task_id}, status="completed"
-bash scripts/workflow-manager.sh update-task {workflow_id} {slice_task_id} completed
+bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh update-task {workflow_id} {slice_task_id} completed
 ```
 
 ---
@@ -604,7 +604,7 @@ Slice 3 バナー表示 → 実装 → テストPass → code-simplifier → コ
   ```
   Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
     ## Phase 7: Codexコードレビュー
-    scripts/codex-wrapper.sh review . uncommitted を実行
+    ~/.claude/plugins/local/fractal-dev-workflow/scripts/codex-wrapper.sh review . uncommitted を実行
     ★Codex利用不可時: qaエージェントフォールバック必須
   ```
 

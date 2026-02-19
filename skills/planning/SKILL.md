@@ -53,7 +53,7 @@ Task(subagent_type="Plan"):
 
 **Codex parallel plan (when available):**
 ```bash
-CODEX_REASONING=xhigh scripts/codex-wrapper.sh exec "$PROJECT_DIR" \
+CODEX_REASONING=xhigh ~/.claude/plugins/local/fractal-dev-workflow/scripts/codex-wrapper.sh exec "$PROJECT_DIR" \
   "以下の要件に基づいて実装計画を策定: [requirements and investigation]"
 ```
 

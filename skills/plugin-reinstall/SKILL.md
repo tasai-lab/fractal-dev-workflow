@@ -19,7 +19,7 @@ SessionEnd時に `reinstall-plugin.sh` が自動実行され、以下を行う:
 ### 健全性チェック
 
 ```bash
-bash ~/code/fractal-dev-workflow/scripts/plugin-health-check.sh
+bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/plugin-health-check.sh
 ```
 
 ### よくある問題
@@ -51,7 +51,7 @@ ln -s "$PLUGIN_DIR" ~/.claude/plugins/cache/fractal-marketplace/fractal-dev-work
 ### plugin.jsonが空の場合
 
 ```bash
-cat > ~/code/fractal-dev-workflow/.claude-plugin/plugin.json << 'PJSON'
+cat > ~/.claude/plugins/local/fractal-dev-workflow/.claude-plugin/plugin.json << 'PJSON'
 {
   "name": "fractal-dev-workflow",
   "version": "0.10.3",

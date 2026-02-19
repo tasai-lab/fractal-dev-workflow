@@ -333,7 +333,7 @@ src/components/{feature}/
 #### state への記録
 判定結果は workflow state に記録:
 ```bash
-WFDIR=$(bash scripts/workflow-manager.sh get-dir)
+WFDIR=$(bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh get-dir)
 jq '.phases["3"].has_breaking_changes = true' "$WFDIR/{workflow-id}.json" > /tmp/wf.json && mv /tmp/wf.json "$WFDIR/{workflow-id}.json"
 ```
 
@@ -344,8 +344,8 @@ jq '.phases["3"].has_breaking_changes = true' "$WFDIR/{workflow-id}.json" > /tmp
 4. 該当なし → has_breaking_changes = false
 
 #### 破壊的変更の有無
-- [ ] Yes → 破壊的変更を記録 → `bash scripts/workflow-manager.sh set-phase {workflow_id} {next_phase}`
-- [ ] No → 自動遷移 → `bash scripts/workflow-manager.sh set-phase {workflow_id} {next_phase}`
+- [ ] Yes → 破壊的変更を記録 → `bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase {workflow_id} {next_phase}`
+- [ ] No → 自動遷移 → `bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase {workflow_id} {next_phase}`
 
 ### 記録パス
 整合性チェック結果は以下のパスに保存:
@@ -535,7 +535,7 @@ TaskUpdate: Task 2 addBlockedBy: [Task 1]
 TaskUpdate: Task 3 addBlockedBy: [Task 1]
 
 # workflow-manager.sh にも登録（worktreeスコープ）
-bash scripts/workflow-manager.sh add-task {workflow_id} {taskId} "Task 1: 型定義" 5
+bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh add-task {workflow_id} {taskId} "Task 1: 型定義" 5
 ```
 
 **重要:** TaskCreate と workflow-manager.sh の add-task を両方実行すること。
@@ -727,7 +727,7 @@ git worktree remove ../fractal-worktrees/project-feature-ui
   - [ ] マージ順序が依存関係を反映
   - [ ] クリーンアップ手順記載
 
-**承認:** ★ユーザー承認必須 → `bash scripts/workflow-manager.sh set-phase {workflow_id} {next_phase}`
+**承認:** ★ユーザー承認必須 → `bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase {workflow_id} {next_phase}`
 
 ---
 
@@ -748,7 +748,7 @@ git worktree remove ../fractal-worktrees/project-feature-ui
   - [ ] 依存関係が明示
   - [ ] TaskCreate で全タスク登録
 
-**承認:** ★ユーザー承認必須 → `bash scripts/workflow-manager.sh set-phase {workflow_id} {next_phase}`
+**承認:** ★ユーザー承認必須 → `bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase {workflow_id} {next_phase}`
 
 ---
 

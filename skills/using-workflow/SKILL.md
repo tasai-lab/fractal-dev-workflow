@@ -76,5 +76,5 @@ This plugin works with:
 
 ## State Files
 
-- Workflow state: `$(bash scripts/workflow-manager.sh get-dir)/{workflow-id}.json`
-- Failure memory: `$(bash scripts/workflow-manager.sh get-dir)/failure-memory.json`
+- Workflow state: `$(bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh get-dir)/{workflow-id}.json`
+- Failure memory: `$(bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh get-dir)/failure-memory.json`

@@ -80,7 +80,7 @@ Task(subagent_type="fractal-dev-workflow:investigator", model="haiku"):
 
 **Codex parallel investigation (when available):**
 ```bash
-CODEX_REASONING=xhigh scripts/codex-wrapper.sh exec "$PROJECT_DIR" \
+CODEX_REASONING=xhigh ~/.claude/plugins/local/fractal-dev-workflow/scripts/codex-wrapper.sh exec "$PROJECT_DIR" \
   "以下の調査を行ってください: [investigation content]"
 ```
 

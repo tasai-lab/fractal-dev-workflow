@@ -478,7 +478,7 @@ Task(subagent_type="fractal-dev-workflow:coder", model="sonnet"):
   5. ログ記録
 
   ### 出力
-  - scripts/post-merge-execute.sh
+  - ~/.claude/plugins/local/fractal-dev-workflow/scripts/post-merge-execute.sh
   - tests/post-merge-execute.test.sh
 ```
 
@@ -486,13 +486,13 @@ Task(subagent_type="fractal-dev-workflow:coder", model="sonnet"):
 
 ```bash
 # ユーザー確認を含む実行
-./scripts/post-merge-execute.sh --interactive
+~/.claude/plugins/local/fractal-dev-workflow/scripts/post-merge-execute.sh --interactive
 
 # 自動実行（確認なし、自動実行可能なタスクのみ）
-./scripts/post-merge-execute.sh --auto
+~/.claude/plugins/local/fractal-dev-workflow/scripts/post-merge-execute.sh --auto
 
 # ドライラン（実行せず表示のみ）
-./scripts/post-merge-execute.sh --dry-run
+~/.claude/plugins/local/fractal-dev-workflow/scripts/post-merge-execute.sh --dry-run
 ```
 
 ---

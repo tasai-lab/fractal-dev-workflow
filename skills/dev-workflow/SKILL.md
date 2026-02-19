@@ -868,7 +868,7 @@ Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
   要件ファイル: [requirements artifact path]
 
   以下の手順でレビューを実行してください:
-  1. scripts/codex-wrapper.sh check でCodex可用性を確認
+  1. ~/.claude/plugins/local/fractal-dev-workflow/scripts/codex-wrapper.sh check でCodex可用性を確認
   2. 利用可能な場合: review-spec と review-requirements を順次実行
   3. 利用不可の場合: 以下のフォールバックを実行
 
@@ -900,7 +900,7 @@ Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
 
   実装コミット: [latest commits]
 
-  scripts/codex-wrapper.sh review . uncommitted を実行し、
+  ~/.claude/plugins/local/fractal-dev-workflow/scripts/codex-wrapper.sh review . uncommitted を実行し、
   コード品質・テストカバレッジ・セキュリティを評価してください。
 
   ★Codex利用不可時のフォールバック（必須）:
@@ -926,7 +926,7 @@ Phase 8 完了 → Phase 9 開始（自動）
 
 フェーズ完了時に確認:
 - [ ] 完了条件をすべて満たしているか
-- [ ] 状態ファイルを更新したか (`bash scripts/workflow-manager.sh get {id}`)
+- [ ] 状態ファイルを更新したか (`bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh get {id}`)
 - [ ] Phase 4, 7: codex-delegate を起動したか（必須、スキップ不可）
 - [ ] Phase 4, 7: Codex利用不可の場合、qaフォールバックを実行したか
 
@@ -976,7 +976,7 @@ Phase 8 完了 → Phase 9 開始（自動）
 ### failure-memory連携
 2回以上同じパターンの失敗が発生した場合:
 1. failure-memoryスキルを呼び出し
-2. `$(bash scripts/workflow-manager.sh get-dir)/failure-memory.json` に記録
+2. `$(bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh get-dir)/failure-memory.json` に記録
 3. memoryにも要約を追記
 
 ---
@@ -1084,17 +1084,17 @@ State is stored in worktree-scoped directory via `workflow-manager.sh`:
 
 ```bash
 # ディレクトリ取得
-WFDIR=$(bash scripts/workflow-manager.sh get-dir)
+WFDIR=$(bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh get-dir)
 # ファイルパス: $WFDIR/{workflow-id}.json
 
 # 状態確認
-bash scripts/workflow-manager.sh get {workflow-id}
+bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh get {workflow-id}
 
 # フェーズ更新
-bash scripts/workflow-manager.sh set-phase {workflow-id} {phase}
+bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase {workflow-id} {phase}
 
 # 承認記録
-bash scripts/workflow-manager.sh approve {workflow-id} {phase}
+bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh approve {workflow-id} {phase}
 ```
 
 ```json
