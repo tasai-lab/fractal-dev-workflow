@@ -4,14 +4,20 @@
 
 ## 現在の状態
 
-- **Phase**: 開発安定化フェーズ（サーバー管理ポリシー強化・Chrome Debugger統合）
-- **進行中タスク**: なし（最新コミットでChrome Debugger統合完了）
-- **バージョン**: 0.4.0
+- **Phase**: 開発安定化フェーズ（プラグイン基盤強化完了）
+- **進行中タスク**: なし
+- **バージョン**: 0.4.0（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 85379a6 | 2026-02-19 | feat(hooks): git push時にconventional commitsからバージョン自動更新 | hooks/check-docs.sh |
+| b995e9b | 2026-02-19 | fix(hooks): installPathをソース直接参照に変更しSessionEndフック廃止 | hooks/, installed_plugins.json |
+| 6f5041f | 2026-02-19 | fix(hooks): 公式フック仕様への準拠を強化 | hooks/ |
+| b0fa753 | 2026-02-19 | feat(hooks): フック再発防止策を実装 | hooks/, scripts/ |
+| 6664a11 | 2026-02-19 | fix(hooks): reinstall-plugin.shの自己参照シンボリックリンクを修正 | hooks/ |
+| e2410ab | 2026-02-19 | docs(context): コンテキストドキュメント更新 | docs/context/ |
 | bb6e8cd | 2026-02-19 | feat(chrome-debug): サーバー管理ポリシーを強化 | skills/chrome-debug/SKILL.md |
 | 6bc0265 | 2026-02-19 | feat(skills): Chrome操作をchrome-debuggerエージェントに委任 | skills/ |
 | cbd0d79 | 2026-02-19 | feat(hooks): ワークフローディレクトリをworktreeスコープ化 | hooks/ |
@@ -63,6 +69,17 @@
 - hooks/ 配下の複数スクリプト（session-init.sh, check-docs.sh, check-approval.sh, hooks.json）をClaude Code公式フック仕様に準拠させる一連の修正を実施
 - QAレビュー推奨修正も適用済み
 
+### installPathソース直接参照（2026-02-19）
+- **問題**: installPathがキャッシュパスだと、キャッシュ破損時にフック全体が無効化される（鶏と卵問題）
+- **解決**: `installed_plugins.json`のinstallPathをソースディレクトリ(`/Users/t.asai/code/fractal-dev-workflow`)直接に変更
+- **副作用**: SessionEndフック廃止（キャッシュ更新不要）、CLAUDE_PLUGIN_ROOTがソース直接になるため新セッションから有効
+
+### バージョン自動バンプ（2026-02-19）
+- git push時にcheck-docs.shがconventional commitsからバンプタイプを判定
+- BREAKING CHANGE → major, feat → minor, その他 → patch
+- fractal-dev-workflowリポジトリのpush時のみ動作
+- 二重バンプ防止: 直近コミットが`chore: bump version`の場合はスキップ
+
 ### 9Phase体制（2026-02-19時点）
 - Phase 1: 質問・要件確認
 - Phase 2: 調査（Chrome挙動確認をオプショナルで追加）
@@ -86,6 +103,8 @@
 | 2026-02-19 | worktreeスコープ化を遅延実装していた | 複数worktree対応の際は実装当初からディレクトリスコープを設計に含める |
 | 2026-02-19 | `echo` で配列を渡した後 `eval` すると全角文字がシェル構文エラーになる | `eval` と組み合わせる場合は必ず `printf '%q '` を使用し、各引数をクォートする |
 | 2026-02-19 | Claude Code公式フック仕様との非準拠が複数箇所で発生 | フック実装時は公式仕様を事前確認し、一括で準拠させる |
+| 2026-02-19 | reinstall-plugin.shがCLAUDE_PLUGIN_ROOTから自己参照シンボリックリンクを作成 | CLAUDE_PLUGIN_ROOTはキャッシュパスを返すためソース解決に使用禁止 |
+| 2026-02-19 | キャッシュ破損時にフック自体が読み込めなくなる鶏と卵問題 | installPathはソース直接参照にすべき |
 
 ## ユーザーとの対話要約
 
@@ -94,3 +113,6 @@
 | 2026-02-19 | Chrome Debuggerエージェント統合およびサーバー管理ポリシー強化を完了 |
 | 2026-02-19 | コンテキストドキュメント自動生成機構の追加を指示。コミット毎にdocs/context/CONTEXT.mdを更新する仕組みを実装 |
 | 2026-02-19 | codex-wrapper.shのparse_options関数で `echo` を `printf '%q '` に変更し、日本語全角括弧等の特殊文字対応を指示 |
+| 2026-02-19 | ワークフローをworktree毎にスコープ化する要件（リポジトリ毎ではなくworktree毎） |
+| 2026-02-19 | installPathをソース直接参照に変更し、キャッシュ依存を排除 |
+| 2026-02-19 | バージョン自動バンプ（push時にconventional commitsから判定）を実装 |

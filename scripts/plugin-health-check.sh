@@ -26,31 +26,42 @@ else
     ((ERRORS++))
 fi
 
-# 2. キャッシュのシンボリックリンク確認
-echo "[2/6] プラグインキャッシュ..."
-CACHE_DIR="$HOME/.claude/plugins/cache/$MARKETPLACE/$PLUGIN_NAME"
-if [[ -d "$CACHE_DIR" ]]; then
-    for ver_path in "$CACHE_DIR"/*/; do
-        ver=$(basename "$ver_path")
-        LINK_PATH="$CACHE_DIR/$ver"
-        if [[ -L "$LINK_PATH" ]]; then
-            LINK_TARGET=$(readlink "$LINK_PATH")
+# 2. キャッシュまたはinstallPath直接参照の確認
+echo "[2/6] installPath..."
+INSTALLED="$HOME/.claude/plugins/installed_plugins.json"
+INSTALL_PATH=$(jq -r ".plugins[\"${PLUGIN_NAME}@${MARKETPLACE}\"][0].installPath // \"\"" "$INSTALLED" 2>/dev/null)
+if [[ -n "$INSTALL_PATH" ]]; then
+    if [[ "$INSTALL_PATH" == *"/.claude/plugins/cache/"* ]]; then
+        # キャッシュ経由: シンボリックリンクの健全性確認
+        if [[ -L "$INSTALL_PATH" ]]; then
+            LINK_TARGET=$(readlink "$INSTALL_PATH")
             if [[ "$LINK_TARGET" == *"/.claude/plugins/cache/"* ]]; then
-                echo "  ERROR: 自己参照シンボリックリンク検出: $LINK_PATH -> $LINK_TARGET"
+                echo "  ERROR: 自己参照シンボリックリンク検出: $INSTALL_PATH -> $LINK_TARGET"
                 ((ERRORS++))
             elif [[ -d "$LINK_TARGET" ]]; then
-                echo "  OK: $LINK_PATH -> $LINK_TARGET"
+                echo "  OK: キャッシュ経由 $INSTALL_PATH -> $LINK_TARGET"
             else
-                echo "  ERROR: ターゲットが存在しない: $LINK_PATH -> $LINK_TARGET"
+                echo "  ERROR: ターゲットが存在しない: $INSTALL_PATH -> $LINK_TARGET"
                 ((ERRORS++))
             fi
-        elif [[ -d "$LINK_PATH" ]]; then
-            echo "  WARNING: 実ディレクトリ（シンボリックリンクではない）: $LINK_PATH"
+        elif [[ -d "$INSTALL_PATH" ]]; then
+            echo "  WARNING: キャッシュが実ディレクトリ（シンボリックリンクではない）: $INSTALL_PATH"
             ((WARNINGS++))
+        else
+            echo "  ERROR: installPathが存在しない: $INSTALL_PATH"
+            ((ERRORS++))
         fi
-    done
+    else
+        # ソース直接参照
+        if [[ -d "$INSTALL_PATH" ]]; then
+            echo "  OK: ソース直接参照 ($INSTALL_PATH)"
+        else
+            echo "  ERROR: installPathが存在しない: $INSTALL_PATH"
+            ((ERRORS++))
+        fi
+    fi
 else
-    echo "  ERROR: キャッシュディレクトリが存在しない: $CACHE_DIR"
+    echo "  ERROR: installed_plugins.jsonにエントリが見つからない"
     ((ERRORS++))
 fi
 
@@ -101,7 +112,7 @@ fi
 echo "[5/6] バージョン..."
 INSTALLED="$HOME/.claude/plugins/installed_plugins.json"
 if [[ -f "$INSTALLED" && -L "$LOCAL_LINK" ]]; then
-    INSTALLED_VER=$(jq -r ".[] | select(.name == \"$PLUGIN_NAME\") | .version // \"unknown\"" "$INSTALLED" 2>/dev/null)
+    INSTALLED_VER=$(jq -r ".plugins[\"${PLUGIN_NAME}@${MARKETPLACE}\"][0].version // \"unknown\"" "$INSTALLED" 2>/dev/null)
     PLUGIN_JSON="$(readlink "$LOCAL_LINK")/.claude-plugin/plugin.json"
     PLUGIN_VER=$(jq -r '.version // "unknown"' "$PLUGIN_JSON" 2>/dev/null)
     if [[ "$INSTALLED_VER" == "$PLUGIN_VER" ]]; then
