@@ -1,17 +1,18 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-19（81239ac）
+最終更新: 2026-02-19（a3f0c07）
 
 ## 現在の状態
 
-- **Phase**: 開発安定化フェーズ（Phase表示バグ修正完了）
-- **進行中タスク**: なし（Slice 1 完了）
+- **Phase**: 開発安定化フェーズ
+- **進行中タスク**: Slice 2 完了（plugin-audit SKILL.md 作成）
 - **バージョン**: 0.5.1（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| a3f0c07 | 2026-02-19 | feat(skill): plugin-audit SKILL.md 作成 | skills/plugin-audit/SKILL.md, tests/test-plugin-audit-skill.sh |
 | 81239ac | 2026-02-19 | fix(workflow-manager): WORKFLOW_DIRをget_workflow_dir()で解決するよう修正 | scripts/workflow-manager.sh, tests/test-workflow-approval.sh |
 | 8b2056c | 2026-02-19 | fix(hooks): バージョンバンプ時にinstalled_plugins.jsonも自動同期 | hooks/check-docs.sh, installed_plugins.json |
 | 7eed319 | 2026-02-19 | chore: bump version to 0.5.0 | - |
@@ -163,6 +164,7 @@
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-19 | Slice 2: plugin-audit SKILL.md 作成。5カテゴリ（Structure/Compliance/Flow/Token/Security）100点評価スキルをTDDで実装（31/31テストPASS） |
 | 2026-02-19 | Slice 1: Phase表示バグ修正。workflow-manager.shがget_workflow_dir()と異なるパスを参照していた不一致を解消 |
 | 2026-02-19 | Chrome Debuggerエージェント統合およびサーバー管理ポリシー強化を完了 |
 | 2026-02-19 | コンテキストドキュメント自動生成機構の追加を指示。コミット毎にdocs/context/CONTEXT.mdを更新する仕組みを実装 |
