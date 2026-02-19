@@ -200,6 +200,7 @@ Commands:
   approve <id> <phase>      Record phase approval
   lock <workflow_id>        Acquire workflow lock
   list                      List active workflows
+  get-dir                    Get workflow directory path (worktree-scoped)
   help                      Show this help
 
 Examples:
@@ -219,6 +220,7 @@ case "${1:-help}" in
     approve) approve "${2:-}" "${3:-}" "${4:-user}" ;;
     lock) acquire_lock "${2:-}" ;;
     list) list_active ;;
+    get-dir) echo "$WORKFLOW_DIR" ;;
     help|--help|-h) show_help ;;
     *)
         echo "Unknown command: $1" >&2
