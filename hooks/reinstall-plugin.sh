@@ -30,6 +30,13 @@ if [[ ! -d "$SOURCE_DIR" ]]; then
     exit 0
 fi
 
+# 自己参照防止: SOURCE_DIR がキャッシュパス内を指していないか検証
+RESOLVED_SOURCE=$(cd "$SOURCE_DIR" 2>/dev/null && pwd -P)
+if [[ "$RESOLVED_SOURCE" == *"/.claude/plugins/cache/"* ]]; then
+    echo "  ERROR: SOURCE_DIR resolves to cache path ($RESOLVED_SOURCE). Aborting." >> "$LOG_FILE"
+    exit 0
+fi
+
 # 既にシンボリックリンクなら何もしない
 if [[ -L "$CACHE_DIR/$VERSION" ]]; then
     echo "  SKIP: already symlinked" >> "$LOG_FILE"
@@ -40,4 +47,16 @@ fi
 rm -rf "$CACHE_DIR"
 mkdir -p "$CACHE_DIR"
 ln -s "$SOURCE_DIR" "$CACHE_DIR/$VERSION"
-echo "  DONE: symlink created at $CACHE_DIR/$VERSION -> $SOURCE_DIR" >> "$LOG_FILE"
+
+# シンボリックリンクの検証
+LINK_TARGET=$(readlink "$CACHE_DIR/$VERSION")
+if [[ "$LINK_TARGET" != "$SOURCE_DIR" ]]; then
+    echo "  ERROR: symlink verification failed. Expected $SOURCE_DIR, got $LINK_TARGET" >> "$LOG_FILE"
+    rm -f "$CACHE_DIR/$VERSION"
+    exit 1
+fi
+if [[ ! -d "$CACHE_DIR/$VERSION/hooks" ]]; then
+    echo "  ERROR: hooks directory not found at $CACHE_DIR/$VERSION/hooks" >> "$LOG_FILE"
+    exit 1
+fi
+echo "  DONE: symlink created and verified at $CACHE_DIR/$VERSION -> $SOURCE_DIR" >> "$LOG_FILE"

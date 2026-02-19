@@ -10,3 +10,18 @@ get_workflow_dir() {
     worktree_hash="${worktree_hash:0:12}"
     echo "$HOME/.claude/fractal-workflow/$worktree_hash"
 }
+
+# フック共通ログ関数
+HOOK_LOG_FILE="/tmp/fractal-hooks.log"
+
+hook_log() {
+    local hook_name="$1"
+    local message="$2"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') [$hook_name] $message" >> "$HOOK_LOG_FILE"
+}
+
+hook_error() {
+    local hook_name="$1"
+    local message="$2"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') [$hook_name] ERROR: $message" >> "$HOOK_LOG_FILE"
+}

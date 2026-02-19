@@ -4,6 +4,8 @@
 
 # 入力をJSONとして受け取る（Claude Codeがstdinで渡す）
 INPUT=$(cat)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/workflow-lib.sh" 2>/dev/null || true
 
 # Bashツール以外は無視
 TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null || true)

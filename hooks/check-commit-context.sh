@@ -3,6 +3,8 @@
 # git commit完了を検出し、コンテキストドキュメント更新を指示する
 
 INPUT=$(cat)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/workflow-lib.sh" 2>/dev/null || true
 TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty')
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
 
