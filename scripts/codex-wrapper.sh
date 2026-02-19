@@ -66,7 +66,7 @@ parse_options() {
         esac
     done
 
-    echo "${filtered_args[@]}"
+    printf '%q ' "${filtered_args[@]}"
 }
 
 # リトライ付き実行
