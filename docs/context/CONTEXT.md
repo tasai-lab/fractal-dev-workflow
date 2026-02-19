@@ -1,6 +1,6 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-19（5cc2e3e）
+最終更新: 2026-02-19（ada8f97）
 
 ## 現在の状態
 
@@ -12,6 +12,9 @@
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| ada8f97 | 2026-02-19 | feat(skills): Phase/Sliceバナー表示の必須化 | skills/, hooks/, commands/ |
+| f9e4afc | 2026-02-19 | chore: bump version to 0.4.1 | - |
+| e80785b | 2026-02-19 | docs(context): コンテキストドキュメント更新 | docs/context/ |
 | 5cc2e3e | 2026-02-19 | fix(hooks): CHANGELOGチェックをorigin/mainベースに修正 | hooks/check-docs.sh |
 | 85379a6 | 2026-02-19 | feat(hooks): git push時にconventional commitsからバージョン自動更新 | hooks/check-docs.sh |
 | b995e9b | 2026-02-19 | fix(hooks): installPathをソース直接参照に変更しSessionEndフック廃止 | hooks/, installed_plugins.json |
@@ -35,6 +38,27 @@
 | f289b42 | - | chore: バージョン0.4.0にアップデート | - |
 
 ## 重要な決定事項
+
+### Phase Banner Protocol（2026-02-19）
+- **目的**: 各Phase開始時にバナー表示を必須化し、現在のPhaseを明確にする
+- **実装**: `skills/dev-workflow/SKILL.md` に Phase Banner Protocol セクションを新設
+- **仕様**: 全9Phase分の名称マッピングを定義（例: Phase 1 = 質問・要件確認）
+- **参照追加**: 全8スキルファイル（chrome-debug, codex-review, completion, design, investigation, questioning, verification + implementation）にバナー参照を追加
+- **session-init.sh**: セッション再開時にPhase/Slice情報を表示するよう拡張
+- **コマンド**: dev-status, dev-resume コマンドにバナー表示指示を追加
+
+### Slice Banner Protocol（2026-02-19）
+- **目的**: Phase 5（実装フェーズ）の各Slice開始時にバナー表示を必須化
+- **実装**: `skills/implementation/SKILL.md` に Slice Banner Protocol セクションを新設
+- **仕様**: 3Slice分の名称マッピングを定義（Slice 1 = バックエンド実装、Slice 2 = フロントエンド実装、Slice 3 = 統合テスト）
+- **対象ファイル**: `skills/implementation/SKILL.md`（40行追加）
+
+### wf-*.jsonスキーマ拡張（2026-02-19）
+- **目的**: ワークフロー状態ファイルでSlice情報を追跡可能にする
+- **追加フィールド**:
+  - `currentSlice`: 現在実行中のSlice番号（1-3）
+  - `slices`: 各Sliceの状態オブジェクト（completed, inProgress等）
+- **対象ファイル**: `skills/dev-workflow/SKILL.md`（スキーマ定義部分）
 
 ### CHANGELOGチェックのorigin/mainベース修正（2026-02-19）
 - **問題**: `git diff main` はローカルのmainブランチとの比較だったため、リモートへのpush前にローカルmainを更新していない場合に誤検知が発生していた
