@@ -1,17 +1,18 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-19（a3f0c07）
+最終更新: 2026-02-19（c223d10）
 
 ## 現在の状態
 
 - **Phase**: 開発安定化フェーズ
-- **進行中タスク**: Slice 2 完了（plugin-audit SKILL.md 作成）
+- **進行中タスク**: Slice 3 完了（plugin-audit コマンド定義追加）
 - **バージョン**: 0.5.1（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| c223d10 | 2026-02-19 | feat(commands): plugin-auditコマンド定義を追加 | commands/plugin-audit.md |
 | a3f0c07 | 2026-02-19 | feat(skill): plugin-audit SKILL.md 作成 | skills/plugin-audit/SKILL.md, tests/test-plugin-audit-skill.sh |
 | 81239ac | 2026-02-19 | fix(workflow-manager): WORKFLOW_DIRをget_workflow_dir()で解決するよう修正 | scripts/workflow-manager.sh, tests/test-workflow-approval.sh |
 | 8b2056c | 2026-02-19 | fix(hooks): バージョンバンプ時にinstalled_plugins.jsonも自動同期 | hooks/check-docs.sh, installed_plugins.json |
@@ -164,6 +165,7 @@
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-19 | Slice 3: plugin-audit コマンド定義追加。/plugin-auditスラッシュコマンドを定義し、fractal-dev-workflow:plugin-auditスキルをTaskツールで起動する仕様で実装 |
 | 2026-02-19 | Slice 2: plugin-audit SKILL.md 作成。5カテゴリ（Structure/Compliance/Flow/Token/Security）100点評価スキルをTDDで実装（31/31テストPASS） |
 | 2026-02-19 | Slice 1: Phase表示バグ修正。workflow-manager.shがget_workflow_dir()と異なるパスを参照していた不一致を解消 |
 | 2026-02-19 | Chrome Debuggerエージェント統合およびサーバー管理ポリシー強化を完了 |
