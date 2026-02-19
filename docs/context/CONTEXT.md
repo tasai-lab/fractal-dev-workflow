@@ -1,17 +1,18 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-19（0ae3b85）
+最終更新: 2026-02-19（031b754）
 
 ## 現在の状態
 
 - **Phase**: ワークフロー完了、mainにマージ済み
 - **進行中タスク**: なし（安定稼働中）
-- **バージョン**: 0.6.0（push時にconventional commitsで自動バンプ）
+- **バージョン**: 0.6.2（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 031b754 | 2026-02-19 | feat(skills): plugin-audit のレポートをマーメイド図付きmdファイル出力に変更 | skills/plugin-audit/SKILL.md |
 | 0ae3b85 | 2026-02-19 | fix(skills): ハードコードパスをworkflow-manager.sh経由に修正 | skills/dev-workflow, skills/using-workflow, skills/design, skills/failure-memory, skills/implementation |
 | 9b47b1e | 2026-02-19 | feat(scripts): workflow-manager.sh に get-dir コマンドを追加 | scripts/workflow-manager.sh |
 | 3c780cf | 2026-02-19 | fix(codex-wrapper): macOS互換のtimeout実装に置換 | scripts/codex-wrapper.sh |
@@ -147,6 +148,22 @@
 - **修正**: `printf '%q ' "${filtered_args[@]}"` に変更し、各引数をシェルセーフにクォートするよう対応
 - **対象ファイル**: `scripts/codex-wrapper.sh` の `parse_options` 関数（66行目付近）
 
+### plugin-audit レポート出力形式の md + マーメイド図化（2026-02-19）
+- **目的**: スコアリング結果の可視化を強化し、ユーザーが監査結果を一目で把握できるようにする
+- **実装**: `skills/plugin-audit/SKILL.md` の出力仕様を以下に変更
+  - **md ファイル出力**: 監査結果を markdown ファイル形式で構造化出力
+  - **マーメイド図挿入**: 以下2種類の図を出力に含める
+    - **Pie Chart**: 5カテゴリ（Structure/Compliance/Flow/Token/Security）の配点比率を視覚化
+    - **Gauge Chart**: 総合スコア（0-100）の進捗状況を視覚化
+  - **出力先**: workflow 状態ファイルの `audit_report` フィールドに md テキストを格納
+  - **ユーザー可視化**: ユーザーが md ファイルを Canva/Markdown ビューアで開くと図が自動レンダリング
+- **セクション構成**:
+  1. タイトル・日時
+  2. 総合スコア + Gauge Chart
+  3. カテゴリ別得点 + Pie Chart
+  4. 詳細判定（Critical/Warn/Pass）
+  5. 改善提案
+
 ### Claude Code公式フック仕様への準拠（2026-02-19）
 - hooks/ 配下の複数スクリプト（session-init.sh, check-docs.sh, check-approval.sh, hooks.json）をClaude Code公式フック仕様に準拠させる一連の修正を実施
 - QAレビュー推奨修正も適用済み
@@ -198,6 +215,7 @@
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-19 | plugin-audit レポート出力をマーメイド図付き md ファイル形式に変更。Pie Chart（カテゴリ配点比率）と Gauge Chart（総合スコア）を含む視覚化対応 |
 | 2026-02-19 | SKILL.mdファイルのハードコードパス（~/.claude/fractal-workflow/）をworkflow-manager.sh経由（bash scripts/workflow-manager.sh get-dir）に修正するよう指示 |
 | 2026-02-19 | session-init.sh のフォールバック削除（既にコミット済みで不要）、workflow-manager.sh に get-dir コマンドを追加してworktreeスコープのディレクトリパス取得を可能にするよう指示 |
 | 2026-02-19 | Slice 5: scoring-rubric.md 作成。5カテゴリ（Structure/Compliance/Flow/Token/Security）各20点合計100点のスコアリング基準を詳細定義。PASS/WARN/FAILの閾値、各サブ項目の採点条件、SeverityマッピングをSKILL.mdから参照される形式で整備 |
