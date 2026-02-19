@@ -39,7 +39,7 @@ digraph failure_memory {
 
 ## Memory Storage
 
-Location: `~/.claude/fractal-workflow/failure-memory.json`
+Location: `$(bash scripts/workflow-manager.sh get-dir)/failure-memory.json`
 
 ```json
 {

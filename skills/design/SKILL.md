@@ -333,7 +333,8 @@ src/components/{feature}/
 #### state への記録
 判定結果は workflow state に記録:
 ```bash
-jq '.phases["3"].has_breaking_changes = true' ~/.claude/fractal-workflow/{workflow-id}.json > /tmp/wf.json && mv /tmp/wf.json ~/.claude/fractal-workflow/{workflow-id}.json
+WFDIR=$(bash scripts/workflow-manager.sh get-dir)
+jq '.phases["3"].has_breaking_changes = true' "$WFDIR/{workflow-id}.json" > /tmp/wf.json && mv /tmp/wf.json "$WFDIR/{workflow-id}.json"
 ```
 
 #### 判定フロー

@@ -332,7 +332,7 @@ TeamDelete
 
 ### 状態更新
 
-バナー表示と同時に、wf-*.json を更新:
+バナー表示と同時に、workflow-manager.sh 経由でワークフロー状態を更新:
 - Phase 5の `currentSlice` を該当Slice番号に設定
 - 該当Sliceの `status` を `"in_progress"` に設定
 - 該当Sliceの `startedAt` を現在時刻に設定

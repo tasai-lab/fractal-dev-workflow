@@ -48,7 +48,7 @@ description: 開発タスクを受けた時、機能実装・バグ修正・リ�
 
 ### 状態更新
 
-バナー表示と同時に、wf-*.json を更新:
+バナー表示と同時に、workflow-manager.sh 経由でワークフロー状態を更新:
 - `currentPhase` を該当Phase番号に設定
 - 該当Phaseの `status` を `"in_progress"` に設定
 - 該当Phaseの `startedAt` を現在時刻に設定
@@ -917,7 +917,7 @@ Phase 8 完了 → Phase 9 開始（自動）
 
 フェーズ完了時に確認:
 - [ ] 完了条件をすべて満たしているか
-- [ ] 状態ファイルを更新したか (`~/.claude/fractal-workflow/{id}.json`)
+- [ ] 状態ファイルを更新したか (`bash scripts/workflow-manager.sh get {id}`)
 - [ ] Phase 4, 7: codex-delegate を起動したか（必須、スキップ不可）
 - [ ] Phase 4, 7: Codex利用不可の場合、qaフォールバックを実行したか
 
@@ -967,7 +967,7 @@ Phase 8 完了 → Phase 9 開始（自動）
 ### failure-memory連携
 2回以上同じパターンの失敗が発生した場合:
 1. failure-memoryスキルを呼び出し
-2. `~/.claude/fractal-workflow/failure-memory.json` に記録
+2. `$(bash scripts/workflow-manager.sh get-dir)/failure-memory.json` に記録
 3. memoryにも要約を追記
 
 ---
@@ -1071,7 +1071,22 @@ Step 4: 実装（サブエージェント駆動）
 
 ## Workflow State Management
 
-State is stored in `~/.claude/fractal-workflow/{workflow-id}.json`:
+State is stored in worktree-scoped directory via `workflow-manager.sh`:
+
+```bash
+# ディレクトリ取得
+WFDIR=$(bash scripts/workflow-manager.sh get-dir)
+# ファイルパス: $WFDIR/{workflow-id}.json
+
+# 状態確認
+bash scripts/workflow-manager.sh get {workflow-id}
+
+# フェーズ更新
+bash scripts/workflow-manager.sh set-phase {workflow-id} {phase}
+
+# 承認記録
+bash scripts/workflow-manager.sh approve {workflow-id} {phase}
+```
 
 ```json
 {
