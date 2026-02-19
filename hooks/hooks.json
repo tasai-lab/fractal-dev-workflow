@@ -6,7 +6,7 @@
 					{
 						"type": "command",
 						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/session-init.sh",
-						"timeout": 5000
+						"timeout": 10
 					}
 				]
 			}
@@ -18,7 +18,7 @@
 					{
 						"type": "command",
 						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/check-approval.sh",
-						"timeout": 5000
+						"timeout": 10
 					}
 				]
 			},
@@ -28,7 +28,7 @@
 					{
 						"type": "command",
 						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/check-docs.sh",
-						"timeout": 5000
+						"timeout": 10
 					}
 				]
 			}
@@ -40,18 +40,18 @@
 					{
 						"type": "command",
 						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/check-commit-context.sh",
-						"timeout": 5000
+						"timeout": 10
 					}
 				]
 			}
 		],
-		"Stop": [
+		"SessionEnd": [
 			{
 				"hooks": [
 					{
 						"type": "command",
 						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/reinstall-plugin.sh",
-						"timeout": 5000
+						"timeout": 30
 					}
 				]
 			}
