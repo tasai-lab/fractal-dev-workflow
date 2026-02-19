@@ -4,7 +4,9 @@
 # stdin読み取り（フックプロトコル）
 cat > /dev/null
 
-WORKFLOW_DIR="$HOME/.claude/fractal-workflow"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/workflow-lib.sh"
+WORKFLOW_DIR=$(get_workflow_dir)
 
 # ディレクトリ作成
 mkdir -p "$WORKFLOW_DIR"

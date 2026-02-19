@@ -4,7 +4,9 @@
 # stdinからフック入力を読み取る（未使用だが消費必須）
 cat > /dev/null
 
-WORKFLOW_DIR="$HOME/.claude/fractal-workflow"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/workflow-lib.sh"
+WORKFLOW_DIR=$(get_workflow_dir)
 
 # アクティブなワークフローを探す
 find_active_workflow() {
