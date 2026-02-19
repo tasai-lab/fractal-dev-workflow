@@ -1,7 +1,7 @@
 {
   "name": "fractal-dev-workflow",
   "description": "フェーズ単位承認型の自律開発支援プラグイン。9フェーズワークフロー、サブエージェント駆動実装、Codex自動レビューを提供。",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "author": {
     "name": "fractal",
     "email": "fractal@example.com"
