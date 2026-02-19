@@ -1,17 +1,21 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-19（33435b9）
+最終更新: 2026-02-19（3c780cf）
 
 ## 現在の状態
 
-- **Phase**: 開発安定化フェーズ
-- **進行中タスク**: Slice 5 完了（scoring-rubric.md 作成）
-- **バージョン**: 0.5.1（push時にconventional commitsで自動バンプ）
+- **Phase**: ワークフロー完了、mainにマージ済み
+- **進行中タスク**: なし（安定稼働中）
+- **バージョン**: 0.6.0（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 3c780cf | 2026-02-19 | fix(codex-wrapper): macOS互換のtimeout実装に置換 | scripts/codex-wrapper.sh |
+| c9c23cf | 2026-02-19 | chore: bump version to 0.6.0 | - |
+| 7502d19 | 2026-02-19 | feat: plugin-auditスキル追加 + Phase表示バグ修正 | skills/, scripts/ |
+| 565b417 | 2026-02-19 | docs: CHANGELOG.md更新 - plugin-audit追加、workflow-manager修正 | CHANGELOG.md |
 | 33435b9 | 2026-02-19 | feat(plugin-audit): スコアリング基準定義を追加 | skills/plugin-audit/references/scoring-rubric.md |
 | 12f6927 | 2026-02-19 | feat(plugin-audit): 仕様準拠チェックルール定義を追加 | skills/plugin-audit/references/compliance-rules.md |
 | c223d10 | 2026-02-19 | feat(commands): plugin-auditコマンド定義を追加 | commands/plugin-audit.md |
@@ -110,6 +114,15 @@
 - **後方互換性**: `WORKFLOW_DIR` 環境変数が明示的に設定されている場合は引き続きその値を優先（既存テストは環境変数でオーバーライドするため互換性を維持）
 - **フォールバック**: `workflow-lib.sh` が見つからない場合は従来パス（`$HOME/.claude/fractal-workflow`）を維持
 - **テスト**: Test 9を追加（25/25 passed）
+
+### macOS互換のtimeout実装（2026-02-19）
+- **問題**: macOSには `timeout` コマンドが標準搭載されていないため、`codex-wrapper.sh` の `timeout codex ...` 呼び出しが `command not found` エラーになっていた
+- **解決**: バックグラウンドプロセス + `kill` による手動タイムアウト実装に置換
+  - Codexをバックグラウンド実行し、PIDを保持
+  - 指定秒数後に `kill $pid` でプロセスを強制終了
+  - `wait $pid` で終了コードを取得
+- **効果**: macOS（Homebrew `coreutils` 不要）でもLinuxと同等のタイムアウト動作を実現
+- **対象ファイル**: `scripts/codex-wrapper.sh`（24行追加、3行削除）
 
 ### parse_options の引数クォーティング問題（2026-02-19）
 - **問題**: `echo "${filtered_args[@]}"` を使用していたため、`eval` 実行時に日本語全角括弧等の特殊文字がシェル構文として解釈されエラーになっていた
