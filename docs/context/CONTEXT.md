@@ -1,17 +1,21 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-19（687164f）
+最終更新: 2026-02-19（114999c）
 
 ## 現在の状態
 
 - **Phase**: ワークフロー完了、mainにマージ済み
 - **進行中タスク**: なし（安定稼働中）
-- **バージョン**: 0.7.0（push時にconventional commitsで自動バンプ）
+- **バージョン**: 0.8.0（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 114999c | 2026-02-19 | test: エッジケーステストとフックスクリプトテストを追加 | tests/test-workflow-approval.sh, tests/test-hook-scripts.sh |
+| d28a5c1 | 2026-02-19 | feat(plugin-audit): 日本語・マーメイド図付き監査レポート自動生成に対応 | skills/plugin-audit/ |
+| 8a94072 | 2026-02-19 | chore: bump version to 0.8.0 | - |
+| 485dda5 | 2026-02-19 | docs(context): コンテキストドキュメント更新 - v0.7.0 CHANGELOG追加・バージョン更新 | docs/context/CONTEXT.md |
 | 687164f | 2026-02-19 | docs: CHANGELOG.md更新 - v0.7.0 get-dirコマンド追加・パス修正・audit図対応 | CHANGELOG.md |
 | e2f8b96 | 2026-02-19 | chore: bump version to 0.7.0 | - |
 | 828d160 | 2026-02-19 | docs(context): コンテキストドキュメント更新 - plugin-audit マーメイド図対応 | docs/context/CONTEXT.md |
@@ -218,6 +222,7 @@
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-19 | [テスト-11] test-workflow-approval.sh にエッジケーステスト4件追加（JSONインジェクション回帰・連番ID重複回避・不正IDフォーマット拒否・Tasks連携コマンド）。[テスト-12] test-hook-scripts.sh を新規作成（フックスクリプトのユニットテスト5件）。session-init.sh は WORKFLOW_DIR 環境変数を無視して get_workflow_dir() で決定することを確認し、テスト仕様を実態に合わせて調整 |
 | 2026-02-19 | plugin-audit レポート出力をマーメイド図付き md ファイル形式に変更。Pie Chart（カテゴリ配点比率）と Gauge Chart（総合スコア）を含む視覚化対応 |
 | 2026-02-19 | SKILL.mdファイルのハードコードパス（~/.claude/fractal-workflow/）をworkflow-manager.sh経由（bash scripts/workflow-manager.sh get-dir）に修正するよう指示 |
 | 2026-02-19 | session-init.sh のフォールバック削除（既にコミット済みで不要）、workflow-manager.sh に get-dir コマンドを追加してworktreeスコープのディレクトリパス取得を可能にするよう指示 |
