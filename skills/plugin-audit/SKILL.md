@@ -110,22 +110,81 @@ Task(subagent_type="fractal-dev-workflow:investigator", run_in_background=true):
 
 ### Step 4: レポート出力
 
-以下のフォーマットでレポートを生成する:
+レポートを `docs/audit-report.md` に出力する。マーメイド図でスコアを可視化する。
 
-```markdown
+出力ファイル: `docs/audit-report.md`
+
+レポートフォーマット:
+
+~~~markdown
 # Plugin Audit Report
+
 Generated: {date}
 Plugin: {name} v{version}
 
 ## Overall Score: XX / 100
 
+```mermaid
+%%{init: {'theme': 'default'}}%%
+pie title Score Distribution
+    "Structure" : {structure_score}
+    "Compliance" : {compliance_score}
+    "Flow" : {flow_score}
+    "Token" : {token_score}
+    "Security" : {security_score}
+```
+
 | Category    | Score | Status |
 |-------------|-------|--------|
-| Structure   | XX/20 | [PASS/WARN/FAIL] |
-| Compliance  | XX/20 | [PASS/WARN/FAIL] |
-| Flow        | XX/20 | [PASS/WARN/FAIL] |
-| Token       | XX/20 | [PASS/WARN/FAIL] |
-| Security    | XX/20 | [PASS/WARN/FAIL] |
+| Structure   | XX/20 | PASS/WARN/FAIL |
+| Compliance  | XX/20 | PASS/WARN/FAIL |
+| Flow        | XX/20 | PASS/WARN/FAIL |
+| Token       | XX/20 | PASS/WARN/FAIL |
+| Security    | XX/20 | PASS/WARN/FAIL |
+
+## Category Details
+
+```mermaid
+%%{init: {'theme': 'default'}}%%
+graph LR
+    subgraph Structure ["Structure XX/20"]
+        S1[plugin.json]
+        S2[Skills]
+        S3[Agents]
+        S4[Hooks]
+        S5[Naming]
+    end
+    subgraph Compliance ["Compliance XX/20"]
+        C1[SKILL.md]
+        C2[Agents]
+        C3[hooks.json]
+        C4[Commands]
+    end
+    subgraph Flow ["Flow XX/20"]
+        F1[Skill Refs]
+        F2[Agent-Skill]
+        F3[Hook-Script]
+        F4[Unused]
+    end
+    subgraph Token ["Token XX/20"]
+        T1[Size]
+        T2[References]
+        T3[SubAgents]
+        T4[Duplicates]
+    end
+    subgraph Security ["Security XX/20"]
+        SE1[Quoting]
+        SE2[PLUGIN_ROOT]
+        SE3[Self-ref]
+        SE4[Secrets]
+    end
+
+    style Structure fill:#f9f,stroke:#333
+    style Compliance fill:#bbf,stroke:#333
+    style Flow fill:#bfb,stroke:#333
+    style Token fill:#ffb,stroke:#333
+    style Security fill:#fbb,stroke:#333
+```
 
 ## Findings
 
@@ -135,10 +194,21 @@ Plugin: {name} v{version}
 - Issue: {具体的な問題}
 - Fix: {改善提案}
 
+## Severity Distribution
+
+```mermaid
+%%{init: {'theme': 'default'}}%%
+pie title Findings by Severity
+    "High" : {high_count}
+    "Medium" : {medium_count}
+    "Low" : {low_count}
+```
+
 ## Top Recommendations
+
 1. {最優先の改善提案}
 2. {次の改善提案}
-```
+~~~
 
 ### Step 5: 改善提案
 
@@ -155,6 +225,7 @@ Overall Score に基づいて優先度付きの改善提案を生成する:
 - [ ] Overall Score が計算されている
 - [ ] Findings に改善提案が記載されている
 - [ ] Top Recommendations が最低1件以上ある
+- [ ] `docs/audit-report.md` にレポートが出力されている
 
 ## Red Flags
 
