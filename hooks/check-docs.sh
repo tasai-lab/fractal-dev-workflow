@@ -56,11 +56,17 @@ if [[ ! -f "docs/workflow-flow.md" ]]; then
     WARNINGS="${WARNINGS}\n- docs/workflow-flow.md が存在しません"
 fi
 
-# 警告がある場合: stderrに出力してexit 2でClaudeにフィードバック
+# 警告がある場合: hookSpecificOutput形式でdenyを返す
 if [[ -n "$WARNINGS" ]]; then
     WARN_MSG=$(echo -e "$WARNINGS")
-    echo "mainへのpush前にドキュメントを確認してください:${WARN_MSG}" >&2
-    exit 2
+    jq -n --arg reason "mainへのpush前にドキュメントを確認してください:${WARN_MSG}" '{
+      hookSpecificOutput: {
+        hookEventName: "PreToolUse",
+        permissionDecision: "deny",
+        permissionDecisionReason: $reason
+      }
+    }'
+    exit 0
 fi
 
 exit 0

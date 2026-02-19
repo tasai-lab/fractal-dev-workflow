@@ -20,10 +20,12 @@ if [[ -n "$active_wf" ]]; then
     CONTEXT="Active workflow found. Use /dev status to check current state."
 fi
 
-# hookSpecificOutput形式で出力
-jq -n --arg ctx "$CONTEXT" '{
-  hookSpecificOutput: {
-    hookEventName: "SessionStart",
-    additionalContext: $ctx
-  }
-}'
+# hookSpecificOutput形式で出力（コンテキストがある場合のみ）
+if [[ -n "$CONTEXT" ]]; then
+    jq -n --arg ctx "$CONTEXT" '{
+      hookSpecificOutput: {
+        hookEventName: "SessionStart",
+        additionalContext: $ctx
+      }
+    }'
+fi
