@@ -58,6 +58,24 @@ assert_not_empty() {
     fi
 }
 
+assert_contains() {
+    local haystack="$1"
+    local needle="$2"
+    local message="${3:-}"
+
+    TESTS_RUN=$((TESTS_RUN + 1))
+
+    if echo "$haystack" | grep -q "$needle"; then
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        echo "  PASS: $message"
+    else
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        echo "  FAIL: $message"
+        echo "    Expected to contain: $needle"
+        echo "    Actual: $haystack"
+    fi
+}
+
 # Test 1: 9フェーズのワークフロー作成
 test_create_9_phase_workflow() {
     echo "Test 1: 9フェーズのワークフロー作成"
@@ -253,7 +271,72 @@ test_phase_8_transition_requires_approval() {
     assert_equals "8" "$phase" "2段階承認後にPhase 8に遷移できること"
 }
 
-# Test 9: WORKFLOW_DIR未設定時はget_workflow_dir()と同じパスを使う
+# Test 9: JSONインジェクション回帰テスト
+test_json_injection_resistance() {
+    echo "Test 9: JSONインジェクション回帰テスト"
+
+    # ダブルクォートを含む説明でworkflow作成
+    local wf_id=$(WORKFLOW_DIR="$TEST_WORKFLOW_DIR" $WORKFLOW_MANAGER create 'Task with "quotes" and $special chars')
+    # jqでパースできること（有効なJSON）
+    local state=$(WORKFLOW_DIR="$TEST_WORKFLOW_DIR" $WORKFLOW_MANAGER get "$wf_id")
+    local desc=$(echo "$state" | jq -r '.taskDescription')
+    assert_not_empty "$desc" "引用符を含む説明でもJSONが正常に生成されること"
+}
+
+# Test 10: 連番ID重複回避テスト
+test_sequential_id_no_collision() {
+    echo "Test 10: 連番ID重複回避テスト"
+
+    local id1=$(WORKFLOW_DIR="$TEST_WORKFLOW_DIR" $WORKFLOW_MANAGER create "Test 1")
+    local id2=$(WORKFLOW_DIR="$TEST_WORKFLOW_DIR" $WORKFLOW_MANAGER create "Test 2")
+    local id3=$(WORKFLOW_DIR="$TEST_WORKFLOW_DIR" $WORKFLOW_MANAGER create "Test 3")
+
+    if [[ "$id1" != "$id2" && "$id2" != "$id3" && "$id1" != "$id3" ]]; then
+        TESTS_RUN=$((TESTS_RUN + 1)); TESTS_PASSED=$((TESTS_PASSED + 1))
+        echo "  PASS: 連続作成でIDが重複しないこと"
+    else
+        TESTS_RUN=$((TESTS_RUN + 1)); TESTS_FAILED=$((TESTS_FAILED + 1))
+        echo "  FAIL: IDが重複した ($id1, $id2, $id3)"
+    fi
+}
+
+# Test 11: 不正IDフォーマット拒否テスト
+test_invalid_id_rejected() {
+    echo "Test 11: 不正IDフォーマット拒否テスト"
+
+    local result=$(WORKFLOW_DIR="$TEST_WORKFLOW_DIR" $WORKFLOW_MANAGER get "invalid-id" 2>&1 || true)
+    if echo "$result" | grep -q "ERROR"; then
+        TESTS_RUN=$((TESTS_RUN + 1)); TESTS_PASSED=$((TESTS_PASSED + 1))
+        echo "  PASS: 不正IDが拒否されること"
+    else
+        TESTS_RUN=$((TESTS_RUN + 1)); TESTS_FAILED=$((TESTS_FAILED + 1))
+        echo "  FAIL: 不正IDが受け入れられた"
+    fi
+}
+
+# Test 12: Tasks連携コマンドテスト
+test_tasks_commands() {
+    echo "Test 12: Tasks連携コマンドテスト"
+
+    local wf_id=$(WORKFLOW_DIR="$TEST_WORKFLOW_DIR" $WORKFLOW_MANAGER create "Tasks test")
+
+    # add-task
+    WORKFLOW_DIR="$TEST_WORKFLOW_DIR" $WORKFLOW_MANAGER add-task "$wf_id" "t1" "Task 1: 型定義" "5"
+    WORKFLOW_DIR="$TEST_WORKFLOW_DIR" $WORKFLOW_MANAGER add-task "$wf_id" "t2" "Task 2: API実装" "5"
+
+    # tasks でリスト取得
+    local tasks_json=$(WORKFLOW_DIR="$TEST_WORKFLOW_DIR" $WORKFLOW_MANAGER tasks "$wf_id")
+    local task_count=$(echo "$tasks_json" | jq '.tasks | length')
+    assert_equals "2" "$task_count" "add-taskで2件登録されること"
+
+    # update-task
+    WORKFLOW_DIR="$TEST_WORKFLOW_DIR" $WORKFLOW_MANAGER update-task "$wf_id" "t1" "completed"
+    local updated=$(WORKFLOW_DIR="$TEST_WORKFLOW_DIR" $WORKFLOW_MANAGER tasks "$wf_id")
+    local t1_status=$(echo "$updated" | jq -r '.tasks[] | select(.taskId == "t1") | .status')
+    assert_equals "completed" "$t1_status" "update-taskで状態が更新されること"
+}
+
+# Test 13: WORKFLOW_DIR未設定時はget_workflow_dir()と同じパスを使う
 test_default_workflow_dir_uses_get_workflow_dir() {
     echo "Test 9: WORKFLOW_DIR未設定時はget_workflow_dir()と同じパスを使う"
 
@@ -305,6 +388,10 @@ main() {
     test_is_approved_new_schema
     test_phase_transition_requires_approval
     test_phase_8_transition_requires_approval
+    test_json_injection_resistance
+    test_sequential_id_no_collision
+    test_invalid_id_rejected
+    test_tasks_commands
     test_default_workflow_dir_uses_get_workflow_dir
 
     teardown
