@@ -1,17 +1,22 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-19（1f566d7）
+最終更新: 2026-02-20（9a37e0f）
 
 ## 現在の状態
 
 - **Phase**: Phase 8（検証）完了、全16タスク完了、全テスト合格（66/66）
 - **進行中タスク**: なし（安定稼働中）
-- **バージョン**: 0.10.1（push時にconventional commitsで自動バンプ）
+- **バージョン**: 0.10.4（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 9a37e0f | 2026-02-20 | chore: bump version to 0.10.4 | .claude-plugin/plugin.json |
+| 9222849 | 2026-02-20 | fix(skills): スクリプト参照を絶対パスに統一しworktree独立性を確保 | skills/codex-review, skills/design, skills/dev-workflow, skills/failure-memory, skills/implementation, skills/investigation, skills/planning, skills/plugin-reinstall, skills/post-merge-execute, skills/using-workflow |
+| 7890e7b | 2026-02-20 | fix: プラグイン再インストールの自動化を強化 | hooks/ |
+| 7e5e22e | 2026-02-20 | fix: .claude-plugin/plugin.jsonの空ファイルを修復 | .claude-plugin/plugin.json |
+| cf5d79d | 2026-02-20 | chore: bump version to 0.10.3 | .claude-plugin/plugin.json |
 | 1f566d7 | 2026-02-19 | fix(agent): chrome-debuggerにChrome MCPツールを追加 | agents/chrome-debugger.md |
 | 822f3fd | 2026-02-19 | chore: bump version to 0.10.2 | .claude-plugin/plugin.json |
 | b0881f0 | 2026-02-19 | chore: bump version to 0.10.2 | .claude-plugin/plugin.json |
@@ -71,6 +76,22 @@
 | f289b42 | - | chore: バージョン0.4.0にアップデート | - |
 
 ## 重要な決定事項
+
+### スクリプト参照を絶対パスに統一（2026-02-20）
+- **問題**: worktreeや別ディレクトリから作業する際、スキルファイル内の相対パス（`scripts/workflow-manager.sh`等）でスクリプトが見つからないエラーが発生していた
+- **修正**: 全スキルファイルのスクリプト参照を、シンボリックリンク経由の絶対パス（`~/.claude/plugins/local/fractal-dev-workflow/scripts/`）に統一
+- **対象ファイル**: 10ファイル（33行変更）
+  - `skills/codex-review/SKILL.md`
+  - `skills/design/SKILL.md`
+  - `skills/dev-workflow/SKILL.md`
+  - `skills/failure-memory/SKILL.md`
+  - `skills/implementation/SKILL.md`
+  - `skills/investigation/SKILL.md`
+  - `skills/planning/SKILL.md`
+  - `skills/plugin-reinstall/SKILL.md`
+  - `skills/post-merge-execute/SKILL.md`
+  - `skills/using-workflow/SKILL.md`
+- **参照パターン**: `bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh <command>`
 
 ### chrome-debuggerエージェントへのChrome MCPツール追加（2026-02-19）
 - **問題**: `agents/chrome-debugger.md` のtools定義にChrome MCPツール（`mcp__claude-in-chrome__*`）が未定義だったため、chrome-debuggerエージェントがブラウザ操作ツールを利用できなかった
@@ -292,6 +313,7 @@
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-20 | worktreeや別ディレクトリからスクリプトが見つからないエラーの報告を受け、全スキルファイルのスクリプト参照を相対パスからシンボリックリンク経由の絶対パス（`~/.claude/plugins/local/fractal-dev-workflow/scripts/`）に統一するよう指示 |
 | 2026-02-19 | 「日本語で記述が必須」→ plugin-audit の全出力物（SKILL.md・レポート）を日本語化 |
 | 2026-02-19 | 「マーメイド図を用いたmdファイル生成が必要」→ Pie Chart・Gauge Chart・Flowchart の3種類のマーメイド図をテンプレート化し、docs/audits/YYYY-MM-DD.md に日付管理形式で保存 |
 | 2026-02-19 | 「workflow-manager.shをtasks統合」→ tasks/add-task/update-task サブコマンドを追加し、RANDOM ID 生成を連番方式に変更 |
