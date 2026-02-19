@@ -70,14 +70,36 @@ Task(subagent_type="fractal-dev-workflow:chrome-debugger", model="sonnet"):
 
 ## Step 1: 環境準備（親エージェントが実行）
 
-```bash
-# 1. devサーバーを起動
-#    ポート3100を試行、使用中なら3101-3199でフォールバック
-PORT=$(find_available_port)  # 後述のポート管理関数を使用
-npm run dev -- --port $PORT
+### サーバー起動ルール
+- **worktreeから起動すること**（Phase 5で作成したworktreeディレクトリ）
+- **ポートは3100固定**（フォールバックしない）
+- **ポート使用中の場合は待機**（他のChrome検証が完了するまで）
+- **作業完了後は必ずサーバーを停止**
 
-# ポート使用状況確認
-lsof -i :3100
+```bash
+# 1. worktreeディレクトリに移動
+cd /path/to/worktrees/<branch-name>
+
+# 2. ポート使用状況確認
+if lsof -i :3100 > /dev/null 2>&1; then
+    echo "Port 3100 is in use. Waiting..."
+    # 使用中の場合は待機（最大5分、30秒間隔）
+    for i in $(seq 1 10); do
+        sleep 30
+        if ! lsof -i :3100 > /dev/null 2>&1; then
+            echo "Port 3100 is now available."
+            break
+        fi
+        echo "Still waiting... ($i/10)"
+    done
+fi
+
+# 3. devサーバーを起動（バックグラウンド）
+npm run dev -- --port 3100 &
+DEV_SERVER_PID=$!
+
+# 4. サーバー起動完了を待機
+sleep 3
 ```
 
 ---
@@ -161,6 +183,18 @@ Task(subagent_type="fractal-dev-workflow:chrome-debugger", model="sonnet"):
 
 ---
 
+## Step 6: サーバー停止（親エージェントが実行）
+
+Phase 6の全検証が完了したら（問題修正サイクル含む）、必ずdevサーバーを停止する。
+
+```bash
+# devサーバーを停止
+kill $DEV_SERVER_PID 2>/dev/null || lsof -ti :3100 | xargs kill 2>/dev/null
+echo "Dev server stopped."
+```
+
+---
+
 ## Chrome MCP ツールリファレンス
 
 | カテゴリ | ツール | 用途 |
@@ -181,25 +215,28 @@ Task(subagent_type="fractal-dev-workflow:chrome-debugger", model="sonnet"):
 
 ---
 
-## Dev Server Port Management
+## Dev Server Management
 
+### 起動ルール
+| ルール | 内容 |
+|--------|------|
+| 起動場所 | worktreeディレクトリ（メインブランチではない） |
+| ポート | 3100固定（フォールバックなし） |
+| ポート競合時 | 待機（最大5分、30秒間隔でリトライ） |
+| 停止タイミング | Phase 6完了時に必ず停止 |
+
+### 停止手順
 ```bash
-# ポートフォールバックロジック
-find_available_port() {
-  for port in $(seq 3100 3199); do
-    if ! lsof -i :$port > /dev/null 2>&1; then
-      echo $port
-      return 0
-    fi
-  done
-  echo "ERROR: No available port in 3100-3199 range" >&2
-  return 1
-}
+# PIDで停止
+kill $DEV_SERVER_PID 2>/dev/null
 
-# 使用例
-PORT=$(find_available_port)
-npm run dev -- --port $PORT
+# PIDがない場合はポートで停止
+lsof -ti :3100 | xargs kill 2>/dev/null
 ```
+
+### 並列実行の禁止
+Chrome操作は逐次実行のみ。複数のchrome-debuggerエージェントを同時に起動してはいけない。
+理由: マウス/キーボード操作・タブグループ・ブラウザ状態が競合する。
 
 ---
 
@@ -210,6 +247,7 @@ npm run dev -- --port $PORT
 - [ ] コンソールにJSエラーがゼロ
 - [ ] ネットワークリクエストに4xx/5xxがゼロ
 - [ ] 問題発見時: 修正済みまたはレポート作成済み
+- [ ] devサーバーを停止済み（ポート3100が解放されている）
 
 ---
 
@@ -220,8 +258,12 @@ npm run dev -- --port $PORT
 | "ブラウザ確認は不要" | 全タスク必須 |
 | "テストが通っているから大丈夫" | テストでは検出できないUIバグがある |
 | "コンソールの警告は無視" | 警告も確認対象 |
-| "devサーバーが起動しない" | ポートフォールバックを使え |
+| "devサーバーが起動しない" | ポート3100が空くまで待機する |
 | "Chrome拡張が動かない" | セットアップを確認してから進行 |
+| "別のポートで起動すればいい" | ポート3100固定。待機して使う |
+| "サーバーは起動したままでいい" | 作業完了後は必ず停止 |
+| "メインブランチから起動" | worktreeから起動すること |
+| "並列でChrome検証" | 逐次実行のみ。並列禁止 |
 
 ---
 
