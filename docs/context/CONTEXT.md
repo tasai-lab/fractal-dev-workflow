@@ -1,17 +1,19 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-19（0823ae8）
+最終更新: 2026-02-19（443db7d）
 
 ## 現在の状態
 
 - **Phase**: Phase 8（検証）完了、全16タスク完了、全テスト合格（66/66）
 - **進行中タスク**: なし（安定稼働中）
-- **バージョン**: 0.10.0（push時にconventional commitsで自動バンプ）
+- **バージョン**: 0.10.1（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 443db7d | 2026-02-19 | docs: CHANGELOG.md更新 - v0.10.1 整合性修正 | CHANGELOG.md |
+| 4a01678 | 2026-02-19 | chore: bump version to 0.10.1 | .claude-plugin/plugin.json |
 | 0823ae8 | 2026-02-19 | chore: bump version to 0.10.0 | .claude-plugin/plugin.json |
 | d9ea8c4 | 2026-02-19 | chore: bump version to 0.9.0 | .claude-plugin/plugin.json |
 | f957afb | 2026-02-19 | docs: CHANGELOG.md更新 - v0.8.0 監査修正16件・Tasks統合 | CHANGELOG.md |
