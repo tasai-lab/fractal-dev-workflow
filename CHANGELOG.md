@@ -2,6 +2,34 @@
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-02-19
+
+### Added
+
+- workflow-manager.shにTasks連携コマンド追加（`tasks`/`add-task`/`update-task`）
+- design/SKILL.mdにClaude Code TaskCreate/TaskUpdate具体例追加
+- implementation/SKILL.mdにStrategy A/Bタスク進捗管理セクション追加
+- dev-workflow/SKILL.mdにPhase 3/5のTasks完了条件追加
+- plugin-auditスキルを日本語・マーメイド図3種類付きレポート出力に改修
+- 監査レポートの日付管理（`docs/audits/YYYY-MM-DD.md`）
+- テスト追加: test-hook-scripts.sh新規、test-workflow-approval.shエッジケース4件
+
+### Fixed
+
+- [C-1] workflow-manager.sh: create_workflow()のJSONインジェクション脆弱性修正（jq -n --arg使用）
+- [I-1] codex-wrapper.sh: run_with_retry()の終了コード消失修正
+- [I-2] hooks.json: SessionEndフックにreinstall-plugin.sh登録
+- [F-1] dev-status.md: フェーズ番号修正（4 and 6 → 4 and 7）
+- [F-2] using-workflow/SKILL.md: 存在しないスキル名・Phase名を仕様に整合
+- [F-3] marketplace.json: バージョン0.8.0・9フェーズ説明に更新
+- [M-1] reinstall-plugin.sh: ハードコードパスをスクリプト位置解決に変更
+
+### Changed
+
+- workflow-manager.sh: RANDOM ID生成を連番方式に改善（衝突回避）
+- chrome-debugger.md: toolsフロントマター追加
+- test-plugin-audit-skill.sh: 日本語化対応のテストパターン修正
+
 ## [0.7.0] - 2026-02-19
 
 ### Added
