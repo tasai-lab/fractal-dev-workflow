@@ -1,10 +1,10 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-19（114999c）
+最終更新: 2026-02-19（7b83258）
 
 ## 現在の状態
 
-- **Phase**: ワークフロー完了、mainにマージ済み
+- **Phase**: Phase 8（検証）完了、全16タスク完了、全テスト合格（66/66）
 - **進行中タスク**: なし（安定稼働中）
 - **バージョン**: 0.8.0（push時にconventional commitsで自動バンプ）
 
@@ -12,6 +12,8 @@
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 7b83258 | 2026-02-19 | fix: 監査レポートに基づくプラグイン修正16件 | workflow-manager.sh, codex-wrapper.sh, hooks.json, reinstall-plugin.sh, dev-status.md, marketplace.json, chrome-debugger.md, design/SKILL.md, implementation/SKILL.md, dev-workflow/SKILL.md, using-workflow/SKILL.md, docs/audits/2026-02-19.md |
+| 0b22e1d | 2026-02-19 | docs(context): コンテキストドキュメント更新 - テスト-11/12追加 | docs/context/CONTEXT.md |
 | 114999c | 2026-02-19 | test: エッジケーステストとフックスクリプトテストを追加 | tests/test-workflow-approval.sh, tests/test-hook-scripts.sh |
 | d28a5c1 | 2026-02-19 | feat(plugin-audit): 日本語・マーメイド図付き監査レポート自動生成に対応 | skills/plugin-audit/ |
 | 8a94072 | 2026-02-19 | chore: bump version to 0.8.0 | - |
@@ -60,6 +62,45 @@
 | f289b42 | - | chore: バージョン0.4.0にアップデート | - |
 
 ## 重要な決定事項
+
+### workflow-manager.sh Tasks連携コマンド追加（2026-02-19）
+- **目的**: Claude Code Tasks APIとワークフロー状態を連携させ、タスク管理を一元化する
+- **追加コマンド**:
+  - `tasks`: 現在のワークフローのタスク一覧を表示
+  - `add-task <title> [description]`: 新規タスクを追加（TaskCreate相当）
+  - `update-task <id> <status>`: タスクステータスを更新（TaskUpdate相当）
+- **ID生成**: RANDOM方式から連番方式（既存最大ID+1）に変更し、重複回避を強化
+- **対象ファイル**: `scripts/workflow-manager.sh`（108行追加・35行削除）
+
+### plugin-audit スキル改修（2026-02-19）
+- **目的**: 監査レポートを日本語・マーメイド図付きの md ファイルとして出力
+- **実装**: `skills/plugin-audit/SKILL.md` の出力仕様を更新
+  - 3種類のマーメイド図をテンプレート化（Pie Chart、Gauge Chart、Flowchart）
+  - 出力は日本語で統一
+- **保存先**: `docs/audits/YYYY-MM-DD.md` に日付管理形式で保存
+- **対象ファイル**: `skills/plugin-audit/SKILL.md`、`docs/audits/2026-02-19.md`
+
+### 監査レポート16件修正（2026-02-19）
+- **セキュリティ修正**:
+  - [C-1] `workflow-manager.sh`: `create_workflow()` の JSON インジェクション修正（`jq -n --arg` 使用）
+  - [I-1] `codex-wrapper.sh`: `run_with_retry()` の終了コード修正
+- **整合性修正**:
+  - [I-2] `hooks.json`: SessionEnd フック登録（reinstall-plugin.sh）
+  - [F-1] `dev-status.md`: フェーズ番号修正（4 and 6 → 4 and 7）
+  - [F-2] `using-workflow/SKILL.md`: スキル名・Phase 名を仕様に整合
+  - [F-3] `marketplace.json`: バージョン 0.8.0・9 フェーズ説明に更新
+  - [M-1] `reinstall-plugin.sh`: ハードコードパスをスクリプト位置解決に変更
+- **推奨修正**:
+  - `chrome-debugger.md`: tools フロントマター追加
+  - `workflow-manager.sh`: RANDOM ID 生成を連番方式に改善
+- **Tasks 統合**:
+  - `design/SKILL.md`: TaskCreate 具体例追加、TaskUpdate 誤記修正
+  - `implementation/SKILL.md`: Strategy A/B に TaskCreate/TaskUpdate 記述追加
+  - `dev-workflow/SKILL.md`: Phase 3/5 完了条件に Tasks 要件追加
+
+### サブエージェントのレポート出力ファイル保存（2026-02-19）
+- **問題**: サブエージェントがレポートを生成しても、ファイル保存されずに消えていた
+- **対策**: スキルに「レポートは `docs/audits/YYYY-MM-DD.md` に保存すること」を明記し、出力要件を強制化
 
 ### Phase Banner Protocol（2026-02-19）
 - **目的**: 各Phase開始時にバナー表示を必須化し、現在のPhaseを明確にする
@@ -211,6 +252,8 @@
 
 | 日付 | 内容 | 教訓 |
 |---|---|---|
+| 2026-02-19 | サブエージェントのレポート出力がファイル保存されていなかった | スキルに出力ファイルパス（docs/audits/YYYY-MM-DD.md）と保存コマンドを明記し、出力要件を強制化する |
+| 2026-02-19 | plugin-audit SKILL.md 日本語化でテストパターン不一致が発生した | スキル仕様変更時はテストの期待値も同時に更新し、日本語対応を徹底する |
 | 2026-02-19 | Chrome Debuggerへの委任設計時、サーバー管理ポリシーが不十分だった | サーバー操作を伴う機能は起動・停止・並列実行禁止を事前に明記し、ゲート化する |
 | 2026-02-19 | worktreeスコープ化を遅延実装していた | 複数worktree対応の際は実装当初からディレクトリスコープを設計に含める |
 | 2026-02-19 | `echo` で配列を渡した後 `eval` すると全角文字がシェル構文エラーになる | `eval` と組み合わせる場合は必ず `printf '%q '` を使用し、各引数をクォートする |
@@ -222,6 +265,10 @@
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-19 | 「日本語で記述が必須」→ plugin-audit の全出力物（SKILL.md・レポート）を日本語化 |
+| 2026-02-19 | 「マーメイド図を用いたmdファイル生成が必要」→ Pie Chart・Gauge Chart・Flowchart の3種類のマーメイド図をテンプレート化し、docs/audits/YYYY-MM-DD.md に日付管理形式で保存 |
+| 2026-02-19 | 「workflow-manager.shをtasks統合」→ tasks/add-task/update-task サブコマンドを追加し、RANDOM ID 生成を連番方式に変更 |
+| 2026-02-19 | 「プラグインのスキルで正しくtasksが使用できるようにすること」→ design/implementation/dev-workflow 各スキルに TaskCreate/TaskUpdate 指示を追加 |
 | 2026-02-19 | [テスト-11] test-workflow-approval.sh にエッジケーステスト4件追加（JSONインジェクション回帰・連番ID重複回避・不正IDフォーマット拒否・Tasks連携コマンド）。[テスト-12] test-hook-scripts.sh を新規作成（フックスクリプトのユニットテスト5件）。session-init.sh は WORKFLOW_DIR 環境変数を無視して get_workflow_dir() で決定することを確認し、テスト仕様を実態に合わせて調整 |
 | 2026-02-19 | plugin-audit レポート出力をマーメイド図付き md ファイル形式に変更。Pie Chart（カテゴリ配点比率）と Gauge Chart（総合スコア）を含む視覚化対応 |
 | 2026-02-19 | SKILL.mdファイルのハードコードパス（~/.claude/fractal-workflow/）をworkflow-manager.sh経由（bash scripts/workflow-manager.sh get-dir）に修正するよう指示 |
