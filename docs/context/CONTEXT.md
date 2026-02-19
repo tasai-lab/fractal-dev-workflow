@@ -1,17 +1,18 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-20（9a37e0f）
+最終更新: 2026-02-20（49a59fc）
 
 ## 現在の状態
 
 - **Phase**: Phase 8（検証）完了、全16タスク完了、全テスト合格（66/66）
 - **進行中タスク**: なし（安定稼働中）
-- **バージョン**: 0.10.4（push時にconventional commitsで自動バンプ）
+- **バージョン**: 0.10.5（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 49a59fc | 2026-02-20 | fix(hooks): バージョンバンプ時にinstallPathとキャッシュシンボリックリンクも同期 | hooks/check-docs.sh, CHANGELOG.md |
 | 9a37e0f | 2026-02-20 | chore: bump version to 0.10.4 | .claude-plugin/plugin.json |
 | 9222849 | 2026-02-20 | fix(skills): スクリプト参照を絶対パスに統一しworktree独立性を確保 | skills/codex-review, skills/design, skills/dev-workflow, skills/failure-memory, skills/implementation, skills/investigation, skills/planning, skills/plugin-reinstall, skills/post-merge-execute, skills/using-workflow |
 | 7890e7b | 2026-02-20 | fix: プラグイン再インストールの自動化を強化 | hooks/ |
@@ -76,6 +77,15 @@
 | f289b42 | - | chore: バージョン0.4.0にアップデート | - |
 
 ## 重要な決定事項
+
+### バージョンバンプ時のinstallPathと キャッシュシンボリックリンク同期（2026-02-20）
+- **問題**: バージョンバンプ時に installed_plugins.json の version フィールドのみ更新していたが、installPath のシンボリックリンク生成が並行して実行される場合に整合性が崩れる可能性があった
+- **修正**: check-docs.sh のバージョン更新処理に以下の処理を追加
+  1. 更新したバージョンを読み取り
+  2. installPath の対応先シンボリックリンク（`~/.claude/plugins/local/fractal-dev-workflow`）を再構築
+  3. installed_plugins.json の installPath フィールドを確認し、存在しない場合は作成
+- **対象ファイル**: `hooks/check-docs.sh`（check-version-and-sync セクション、15行追加）
+- **副作用**: 複数バージョンの並行管理時にシンボリックリンクが最新バージョンを指すことが保証される
 
 ### スクリプト参照を絶対パスに統一（2026-02-20）
 - **問題**: worktreeや別ディレクトリから作業する際、スキルファイル内の相対パス（`scripts/workflow-manager.sh`等）でスクリプトが見つからないエラーが発生していた
