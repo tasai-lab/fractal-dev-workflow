@@ -155,7 +155,7 @@ Task(subagent_type="implementer", model="sonnet"):
 | Phase | Name | Skill | Approval | 成果物 |
 |-------|------|-------|----------|--------|
 | 1 | 質問 + 要件定義 | questioning → requirements | Auto | MVP境界、受け入れ条件、「やらない」リスト |
-| 2 | 調査+ドメイン | investigation | Auto | 用語統一、ビジネスルール、境界責務 |
+| 2 | 調査+ドメイン | investigation | Auto | 用語統一、ビジネスルール、境界責務、Chrome挙動ベースライン（オプション） |
 | 3 | 契約設計 | design | **Required** | API仕様、DBスキーマ、エラー形式 |
 | 4 | Codex計画レビュー | codex-review | **Auto（Codex必須）** | レビュー結果（Codex 5.3 + xhigh） |
 | 5 | 実装 | implementation | **Required** | 動作するコード + テスト + コンポーネント |
@@ -325,6 +325,19 @@ questioning の流れ:
 | 同一組織内で名前重複は警告 | 登録可能だが警告表示 | - |
 ```
 
+#### C. Chrome挙動確認（オプショナル、existing-modificationモードのみ）
+
+**実行条件**: questioningフェーズで `chromeInvestigation: true` が設定されている場合のみ。
+
+- 変更対象の既存画面をRead-onlyで観察
+- 修正前の現在の動作をベースラインとして記録
+- Phase 6（Chromeデバッグ）との差異:
+  - **Phase 2**: 観察のみ（navigate / get_page_text / read_console_messages）
+  - **Phase 6**: 操作・修正・再検証サイクルあり（インタラクション含む）
+
+事前にdevサーバーを起動すること（`chrome-debug` スキルの Step 1 参照）。
+→ `investigation` スキルの Step 8 参照
+
 ### 成果物
 → `investigation` スキル参照
 
@@ -335,6 +348,7 @@ questioning の流れ:
 - [ ] 境界責務を明確化
 - [ ] 共通化可能なコンポーネント候補を特定
 - [ ] 「新規」と「既存拡張」を区別
+- [ ] **（オプショナル）Chrome挙動確認実施済み**（`chromeInvestigation: true` の場合のみ）
 
 ---
 
@@ -1030,6 +1044,7 @@ State is stored in `~/.claude/fractal-workflow/{workflow-id}.json`:
   "taskDescription": "タスクの説明",
   "status": "active",
   "mode": "new-creation | existing-modification",
+  "chromeInvestigation": false,
   "currentPhase": 3,
   "phases": {
     "1": {"status": "completed", "completedAt": "..."},

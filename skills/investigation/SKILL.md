@@ -211,6 +211,69 @@ Phase 3で参照する。
 - Identify reusable code/patterns
 - Decide: componentize vs standalone implementation
 
+### Step 8: Chrome挙動確認（オプショナル、existing-modificationモードのみ）
+
+**実行条件:**
+- `mode: "existing-modification"` かつ `chromeInvestigation: true` の場合のみ実行
+- いずれかが満たされない場合は **完全にスキップ** する
+
+**Phase 2 vs Phase 6 の差異:**
+
+| 観点 | Phase 2（本ステップ） | Phase 6（Chromeデバッグ） |
+|------|---------------------|--------------------------|
+| 目的 | 修正前のベースライン記録 | 実装後の動作検証 |
+| 操作 | Read-only観察のみ | インタラクション含む検証 |
+| 修正サイクル | なし | 最大3回の修正→再検証 |
+| ゲート条件 | なし（情報収集のみ） | コンソールエラーゼロが必須 |
+| 対象 | 変更予定の既存画面 | 実装した新規/修正済み画面 |
+
+**実行手順:**
+
+親エージェントがdevサーバーを起動した後、サブエージェントに観察を委譲する。
+devサーバー起動は `chrome-debug` スキルの Step 1 と同様のパターンを使用する。
+
+````
+Task(subagent_type="general-purpose", model="sonnet"):
+  ## Phase 2: Chrome挙動確認（Read-only観察）
+
+  ### 目的
+  修正前の既存UIの現在の挙動を記録する。修正後の比較ベースラインとして使用する。
+  ★操作・修正は一切行わないこと（Read-onlyのみ）
+
+  ### 対象URL
+  http://localhost:[PORT]/[変更対象の画面パス]
+
+  ### 観察項目
+
+  #### A. 画面表示確認
+  1. tabs_context_mcp でタブ情報を取得
+  2. navigate で対象ページを開く
+  3. computer(action="screenshot") で現在の表示状態を記録
+  4. get_page_text で表示テキストを記録
+
+  #### B. コンソールログ確認
+  1. read_console_messages(pattern="Error|Warning") で既存エラーを記録
+
+  #### C. ネットワーク確認
+  1. read_network_requests で既存APIコールパターンを記録
+
+  ### 報告形式
+  ## Chrome挙動確認結果（修正前ベースライン）
+  - 対象画面: [URL]
+  - 表示状態: [正常/問題あり（詳細）]
+  - 既存コンソールエラー: [0件 / N件（内容）]
+  - 既存ネットワークエラー: [0件 / N件（内容）]
+  - 観察した挙動: [箇条書き]
+  - Phase 6での注意点: [修正時に考慮すべき点]
+````
+
+**スキップ時の記録:**
+`chromeInvestigation: false` の場合は以下のみ記録して次へ進む:
+```
+## Chrome挙動確認: スキップ
+理由: questioningフェーズでスキップを選択
+```
+
 ## Results Format
 
 ```markdown
@@ -262,6 +325,12 @@ Phase 3で参照する。
 - [ ] **影響範囲マップ作成完了**
 - [ ] **既存テストの棚卸し完了**
 
+### Optional for existing-modification mode
+- [ ] **Chrome挙動確認実施済み**（`chromeInvestigation: true` の場合のみ）
+  - 対象画面の表示状態を記録
+  - 既存コンソールエラーを記録
+  - 既存ネットワークエラーを記録
+
 ### Verification Mechanism (必須)
 
 完了条件を自己申告に依存させない。以下の検証を実行:
@@ -281,6 +350,7 @@ Phase 3で参照する。
 - **差し戻し条件**: 以下のいずれかに該当する場合は却下
   - 「ファイル名から推測」「ディレクトリ構造から推測」等の憶測
   - 根拠不足: path:line参照・コマンド実行結果が欠けている
+- **注意**: Chrome挙動確認（Step 8）はオプショナルのため、未実施でも不合格にしない
 
 #### 3. 証拠の最小要件
 各ファイルの調査には以下を必須とする:
