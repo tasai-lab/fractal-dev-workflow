@@ -76,10 +76,23 @@ if [[ "$REPO_ROOT" == "$PLUGIN_ROOT" ]]; then
                 esac
                 NEW_VERSION="${V_MAJOR}.${V_MINOR}.${V_PATCH}"
 
-                # plugin.json 更新 + コミット
+                # plugin.json + installed_plugins.json 更新 + コミット
                 if [[ "$NEW_VERSION" != "$CURRENT_VERSION" ]]; then
                     jq --arg v "$NEW_VERSION" '.version = $v' "$PLUGIN_JSON" > "${PLUGIN_JSON}.tmp" && mv "${PLUGIN_JSON}.tmp" "$PLUGIN_JSON"
                     git add "$PLUGIN_JSON" 2>/dev/null
+
+                    # installed_plugins.json のバージョンも同期
+                    INSTALLED_JSON="$HOME/.claude/plugins/installed_plugins.json"
+                    PLUGIN_KEY="fractal-dev-workflow@fractal-marketplace"
+                    if [[ -f "$INSTALLED_JSON" ]]; then
+                        COMMIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "")
+                        UPDATED_AT=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
+                        jq --arg v "$NEW_VERSION" --arg sha "$COMMIT_SHA" --arg ts "$UPDATED_AT" --arg key "$PLUGIN_KEY" \
+                            '.plugins[$key][0].version = $v | .plugins[$key][0].gitCommitSha = $sha | .plugins[$key][0].lastUpdated = $ts' \
+                            "$INSTALLED_JSON" > "${INSTALLED_JSON}.tmp" && mv "${INSTALLED_JSON}.tmp" "$INSTALLED_JSON"
+                        hook_log "check-docs" "installed_plugins.json synced to $NEW_VERSION"
+                    fi
+
                     git commit -m "chore: bump version to $NEW_VERSION" 2>/dev/null
                     hook_log "check-docs" "version bumped: $CURRENT_VERSION -> $NEW_VERSION ($BUMP_TYPE)"
                 fi
