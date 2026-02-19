@@ -24,12 +24,12 @@ description: 会話開始時に使用 - ワークフロースキルの検索・�
 |-------|------|---------------|
 | 1 | 質問 (Questioning) | Auto |
 | 2 | 調査 (Investigation) | Auto |
-| 3 | 設計 (Design) | Auto |
+| 3 | 契約設計 (Contract Design) | Auto |
 | 4 | 計画レビュー (Plan Review) | **Approval Required (2-stage)** |
 | 5 | 実装 (Implementation) | Auto |
 | 6 | Chromeデバッグ (Chrome Debug) | Auto |
 | 7 | コードレビュー (Code Review) | **Approval Required (2-stage)** |
-| 8 | テスト (Testing) | Auto |
+| 8 | 検証 (Verification) | Auto |
 | 9 | 運用設計 (Operations) | - |
 
 ## Skill Invocation
@@ -41,12 +41,11 @@ description: 会話開始時に使用 - ワークフロースキルの検索・�
 - `questioning` - Phase 1
 - `investigation` - Phase 2
 - `design` - Phase 3
-- `plan-review` - Phase 4
+- `codex-review` - Phase 4 / Phase 7
 - `implementation` - Phase 5
 - `chrome-debug` - Phase 6
-- `code-review` - Phase 7
 - `testing` - Phase 8
-- `operations` - Phase 9
+- `completion` - Phase 9
 
 ### Support Skills
 - `failure-memory` - Learn from failures

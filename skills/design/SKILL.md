@@ -344,8 +344,8 @@ jq '.phases["3"].has_breaking_changes = true' "$WFDIR/{workflow-id}.json" > /tmp
 4. 該当なし → has_breaking_changes = false
 
 #### 破壊的変更の有無
-- [ ] Yes → 破壊的変更を記録 → `TaskUpdate(id: workflow_id, status: "completed")`
-- [ ] No → 自動遷移 → `TaskUpdate(id: workflow_id, status: "completed")`
+- [ ] Yes → 破壊的変更を記録 → `bash scripts/workflow-manager.sh set-phase {workflow_id} {next_phase}`
+- [ ] No → 自動遷移 → `bash scripts/workflow-manager.sh set-phase {workflow_id} {next_phase}`
 
 ### 記録パス
 整合性チェック結果は以下のパスに保存:
@@ -519,6 +519,28 @@ Task 1 (型定義)
 - [ ] 依存関係が明示されている
 - [ ] 並列実行可能なグループが特定されている
 - [ ] TaskCreate で全タスクが登録される
+
+### Claude Code Tasks による登録（必須）
+
+タスク一覧確定後、TaskCreate で全タスクを登録し、TaskUpdate で依存関係を設定:
+
+```
+# 各タスクを登録
+TaskCreate: subject="Task 1: 型定義", description="types/contact.ts, types/contact.test.ts の作成"
+TaskCreate: subject="Task 2: API実装", description="api/contacts/route.ts の作成"
+TaskCreate: subject="Task 3: UI実装", description="components/ContactForm.tsx の作成"
+
+# 依存関係の設定
+TaskUpdate: Task 2 addBlockedBy: [Task 1]
+TaskUpdate: Task 3 addBlockedBy: [Task 1]
+
+# workflow-manager.sh にも登録（worktreeスコープ）
+bash scripts/workflow-manager.sh add-task {workflow_id} {taskId} "Task 1: 型定義" 5
+```
+
+**重要:** TaskCreate と workflow-manager.sh の add-task を両方実行すること。
+- TaskCreate: Claude Code のタスク進捗表示に使用
+- add-task: ワークフロー状態JSONに記録（worktreeスコープ）
 
 ---
 
@@ -705,7 +727,7 @@ git worktree remove ../fractal-worktrees/project-feature-ui
   - [ ] マージ順序が依存関係を反映
   - [ ] クリーンアップ手順記載
 
-**承認:** ★ユーザー承認必須 → `TaskUpdate(id: workflow_id, status: "pending_approval")`
+**承認:** ★ユーザー承認必須 → `bash scripts/workflow-manager.sh set-phase {workflow_id} {next_phase}`
 
 ---
 
@@ -726,7 +748,7 @@ git worktree remove ../fractal-worktrees/project-feature-ui
   - [ ] 依存関係が明示
   - [ ] TaskCreate で全タスク登録
 
-**承認:** ★ユーザー承認必須 → `TaskUpdate(id: workflow_id, status: "pending_approval")`
+**承認:** ★ユーザー承認必須 → `bash scripts/workflow-manager.sh set-phase {workflow_id} {next_phase}`
 
 ---
 

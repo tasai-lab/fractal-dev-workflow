@@ -113,6 +113,20 @@ Task(subagent_type="implementer", model="sonnet"):
 ...
 ```
 
+#### タスク進捗管理（全Strategy共通）
+
+各Slice開始時・完了時にタスク状態を更新:
+
+```
+# Slice開始時
+TaskUpdate: taskId={slice_task_id}, status="in_progress"
+bash scripts/workflow-manager.sh update-task {workflow_id} {slice_task_id} in_progress
+
+# Slice完了時（テスト・code-simplifier完了後）
+TaskUpdate: taskId={slice_task_id}, status="completed"
+bash scripts/workflow-manager.sh update-task {workflow_id} {slice_task_id} completed
+```
+
 ---
 
 ## Strategy B: Parallel Implementation（並列サブエージェント）
@@ -360,6 +374,17 @@ TeamDelete
 - [ ] 境界値対応
 - [ ] 空データ対応
 - [ ] 大量データ対応
+```
+
+### Slice登録
+
+設計完了後、各SliceをTaskCreateで登録:
+```
+TaskCreate: subject="Slice 1: 最小動作版", description="基本データ型 + 最小API + 最小UI + 正常系テスト"
+TaskCreate: subject="Slice 2: バリデーション", description="入力バリデーション + エラー型 + UIエラー表示"
+TaskCreate: subject="Slice 3: 権限・エッジケース", description="権限チェック + 監査ログ + 境界値対応"
+TaskUpdate: Slice 2 addBlockedBy: [Slice 1]
+TaskUpdate: Slice 3 addBlockedBy: [Slice 2]
 ```
 
 ---

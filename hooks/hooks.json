@@ -45,6 +45,16 @@
 				]
 			}
 		],
-		"SessionEnd": []
+		"SessionEnd": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/reinstall-plugin.sh",
+						"timeout": 30
+					}
+				]
+			}
+		]
 	}
 }

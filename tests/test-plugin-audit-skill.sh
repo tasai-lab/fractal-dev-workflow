@@ -102,11 +102,11 @@ echo ""
 
 # 5. レポートフォーマット確認
 echo "[Test Group 5] レポートフォーマット"
-assert_contains "Plugin Audit Report が含まれる" "$SKILL_FILE" "Plugin Audit Report"
+assert_contains "プラグイン監査レポート が含まれる" "$SKILL_FILE" "プラグイン監査レポート\|Plugin Audit Report"
 assert_contains "Overall Score が含まれる" "$SKILL_FILE" "Overall Score"
 assert_contains "PASS/WARN/FAILステータスが定義されている" "$SKILL_FILE" "PASS\|WARN\|FAIL"
 assert_contains "Findings セクションが含まれる" "$SKILL_FILE" "Findings"
-assert_contains "Top Recommendations が含まれる" "$SKILL_FILE" "Top Recommendations\|Recommendation"
+assert_contains "改善提案 が含まれる" "$SKILL_FILE" "改善提案\|Recommendation\|必須修正"
 
 echo ""
 

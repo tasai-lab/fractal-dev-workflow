@@ -18,7 +18,9 @@ LOCAL_PLUGIN="$HOME/.claude/plugins/local/$PLUGIN_NAME"
 if [[ -L "$LOCAL_PLUGIN" ]]; then
     SOURCE_DIR=$(readlink "$LOCAL_PLUGIN")
 else
-    SOURCE_DIR="/Users/t.asai/code/fractal-dev-workflow"
+    # フォールバック: スクリプト自身の位置から解決
+    SCRIPT_DIR_FALLBACK="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    SOURCE_DIR="$(cd "$SCRIPT_DIR_FALLBACK/.." && pwd)"
 fi
 VERSION=$(cat "$SOURCE_DIR/.claude-plugin/plugin.json" 2>/dev/null | jq -r '.version // "0.4.0"')
 

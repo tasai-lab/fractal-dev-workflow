@@ -85,8 +85,9 @@ run_with_retry() {
         while [[ $elapsed -lt $CODEX_TIMEOUT ]]; do
             if ! kill -0 $pid 2>/dev/null; then
                 # プロセス終了 - ステータスコード取得
-                wait $pid 2>/dev/null
-                return 0
+                wait $pid
+                local exit_code=$?
+                return $exit_code
             fi
             sleep 1
             local current_time=$(date +%s)

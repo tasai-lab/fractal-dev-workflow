@@ -1,6 +1,13 @@
 ---
 model: sonnet
 permission: plan
+tools:
+  - Read
+  - Glob
+  - Grep
+  - Bash
+  - Write
+  - Edit
 ---
 
 # Chrome Debugger Agent

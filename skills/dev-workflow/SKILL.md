@@ -477,6 +477,9 @@ questioning の流れ:
 - [ ] テストケース設計
 - [ ] コンポーネント化候補リスト
 - [ ] 重要な設計判断の記録（ADR）
+- [ ] TaskCreate で全タスクを登録済み
+- [ ] TaskUpdate で依存関係（blockedBy）を設定済み
+- [ ] workflow-manager.sh add-task で全タスクをワークフローに記録済み
 - [ ] 承認フロー → **Phase Transition Rules 参照**
 
 ---
@@ -602,6 +605,12 @@ Task(subagent_type="code-simplifier:code-simplifier", model="sonnet"):
 
 ### 成果物
 → `implementation` スキル参照
+
+### タスク進捗管理
+
+各Slice開始・完了時に以下を実行:
+- TaskUpdate で status を in_progress / completed に更新
+- workflow-manager.sh update-task で状態を同期
 
 ### 完了条件
 - [ ] 全タスク完了（縦スライス単位）

@@ -148,32 +148,86 @@ record_approval() {
 # 新規ワークフロー作成
 create_workflow() {
     local description="${1:-New workflow}"
-    local workflow_id="wf-$(date +%Y%m%d)-$(printf '%03d' $((RANDOM % 1000)))"
+    local today="$(date +%Y%m%d)"
+    local existing_count=$(find "$WORKFLOW_DIR" -name "wf-${today}-*.json" 2>/dev/null | wc -l | tr -d ' ')
+    local seq_num=$((existing_count + 1))
+    local workflow_id="wf-${today}-$(printf '%03d' $seq_num)"
     local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-    local initial_state
-    initial_state=$(cat <<EOF
-{
-    "workflowId": "$workflow_id",
-    "taskDescription": "$description",
-    "status": "active",
-    "currentPhase": 1,
-    "phases": {
-        "1": {"name": "質問", "status": "pending"},
-        "2": {"name": "調査", "status": "pending"},
-        "3": {"name": "設計", "status": "pending"},
-        "4": {"name": "計画レビュー", "status": "pending"},
-        "5": {"name": "実装", "status": "pending"},
-        "6": {"name": "Chromeデバッグ", "status": "pending"},
-        "7": {"name": "コードレビュー", "status": "pending"},
-        "8": {"name": "テスト", "status": "pending"},
-        "9": {"name": "運用設計", "status": "pending"}
-    },
-    "createdAt": "$timestamp"
-}
-EOF
-)
-    set_state "$workflow_id" "$initial_state"
+    local state_file="$WORKFLOW_DIR/$workflow_id.json"
+
+    jq -n \
+      --arg wfid "$workflow_id" \
+      --arg desc "$description" \
+      --arg ts "$timestamp" \
+      --arg mode "" \
+      '{
+        workflowId: $wfid,
+        taskDescription: $desc,
+        status: "active",
+        currentPhase: 1,
+        phases: {
+          "1": {name: "質問", status: "pending"},
+          "2": {name: "調査", status: "pending"},
+          "3": {name: "設計", status: "pending"},
+          "4": {name: "計画レビュー", status: "pending"},
+          "5": {name: "実装", status: "pending"},
+          "6": {name: "Chromeデバッグ", status: "pending"},
+          "7": {name: "コードレビュー", status: "pending"},
+          "8": {name: "テスト", status: "pending"},
+          "9": {name: "運用設計", status: "pending"}
+        },
+        createdAt: $ts,
+        mode: $mode
+      }' > "$state_file"
+
     echo "$workflow_id"
+}
+
+# タスク一覧取得
+tasks() {
+    local workflow_id="$1"
+    validate_workflow_id "$workflow_id"
+    local state=$(get_state "$workflow_id")
+    echo "$state" | jq '{
+      workflowId: .workflowId,
+      currentPhase: .currentPhase,
+      tasks: (.tasks // []),
+      phases: [.phases | to_entries[] | {phase: .key, name: .value.name, status: .value.status}]
+    }'
+}
+
+# タスク追加
+add_task() {
+    local workflow_id="$1"
+    validate_workflow_id "$workflow_id"
+    local task_id="$2"
+    local subject="$3"
+    local phase="${4:-}"
+
+    acquire_lock "$workflow_id"
+    local state=$(get_state "$workflow_id")
+    local updated=$(echo "$state" | jq \
+      --arg tid "$task_id" \
+      --arg subj "$subject" \
+      --arg ph "$phase" \
+      '.tasks = (.tasks // []) + [{taskId: $tid, subject: $subj, phase: ($ph | if . == "" then null else . end), status: "pending"}]')
+    set_state "$workflow_id" "$updated"
+}
+
+# タスク状態更新
+update_task() {
+    local workflow_id="$1"
+    validate_workflow_id "$workflow_id"
+    local task_id="$2"
+    local status="$3"
+
+    acquire_lock "$workflow_id"
+    local state=$(get_state "$workflow_id")
+    local updated=$(echo "$state" | jq \
+      --arg tid "$task_id" \
+      --arg st "$status" \
+      '(.tasks // []) |= map(if .taskId == $tid then .status = $st else . end)')
+    set_state "$workflow_id" "$updated"
 }
 
 # アクティブなワークフロー一覧
@@ -201,6 +255,9 @@ Commands:
   lock <workflow_id>        Acquire workflow lock
   list                      List active workflows
   get-dir                    Get workflow directory path (worktree-scoped)
+  tasks <id>                 List tasks in workflow
+  add-task <id> <taskId> <subject> [phase]  Add task to workflow
+  update-task <id> <taskId> <status>       Update task status
   help                      Show this help
 
 Examples:
@@ -221,6 +278,9 @@ case "${1:-help}" in
     lock) acquire_lock "${2:-}" ;;
     list) list_active ;;
     get-dir) echo "$WORKFLOW_DIR" ;;
+    tasks) tasks "${2:-}" ;;
+    add-task) add_task "${2:-}" "${3:-}" "${4:-}" "${5:-}" ;;
+    update-task) update_task "${2:-}" "${3:-}" "${4:-}" ;;
     help|--help|-h) show_help ;;
     *)
         echo "Unknown command: $1" >&2
