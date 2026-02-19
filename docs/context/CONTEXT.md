@@ -4,20 +4,22 @@
 
 ## 現在の状態
 
-- **Phase**: 開発安定化フェーズ（バグ修正・フック整備）
-- **進行中タスク**: なし（最新コミットでバグ修正完了）
+- **Phase**: 開発安定化フェーズ（サーバー管理ポリシー強化・Chrome Debugger統合）
+- **進行中タスク**: なし（最新コミットでChrome Debugger統合完了）
 - **バージョン**: 0.4.0
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| bb6e8cd | 2026-02-19 | feat(chrome-debug): サーバー管理ポリシーを強化 | skills/chrome-debug/SKILL.md |
+| 6bc0265 | 2026-02-19 | feat(skills): Chrome操作をchrome-debuggerエージェントに委任 | skills/ |
+| cbd0d79 | 2026-02-19 | feat(hooks): ワークフローディレクトリをworktreeスコープ化 | hooks/ |
+| 3e9b10c | 2026-02-19 | feat(agents): Chrome Debuggerエージェント定義を追加 | agents/ |
 | 9194228 | 2026-02-19 | fix(codex-wrapper): parse_optionsの引数クォーティングを修正 | scripts/codex-wrapper.sh |
 | 7ec80e5 | 2026-02-19 | fix(hooks): QAレビュー推奨修正を適用 | hooks/ |
 | a33174a | 2026-02-19 | fix(hooks): hooks.jsonとcheck-approval.shをClaude Code公式フック仕様に準拠 | hooks/ |
 | 4ac4e6a | 2026-02-19 | fix(hooks): Claude Code公式フック仕様に準拠 | hooks/ |
-| 71437b1 | 2026-02-19 | fix(hooks): check-docs.sh をClaude Code公式フック仕様に準拠させる | hooks/ |
-| 18b8806 | 2026-02-19 | fix(hooks): session-init.shをClaude Code公式フック仕様に準拠 | hooks/ |
 | 538a6be | 2026-02-19 | feat(investigation): Phase 2にChrome挙動確認（オプショナル）を追加 | skills/ |
 | 7505b65 | 2026-02-19 | feat(hooks): セッション終了時にプラグインを自動再インストールするStopフックを追加 | hooks/ |
 | 4af8cef | 2026-02-19 | feat(context): コミット毎のコンテキストドキュメント自動生成機構を追加 | hooks/ |
@@ -26,6 +28,31 @@
 | f289b42 | - | chore: バージョン0.4.0にアップデート | - |
 
 ## 重要な決定事項
+
+### サーバー管理ポリシー強化（2026-02-19）
+- **目的**: Chrome Debuggerエージェント統合時のサーバー管理を堅牢化
+- **内容**:
+  - ポート3100を固定利用
+  - worktree起動時のサーバー起動を必須化
+  - 完了後のサーバー停止を必須化
+  - 並列実行を禁止（単一サーバーインスタンスの原則）
+- **対象ファイル**: `skills/chrome-debug/SKILL.md`
+
+### Chrome操作の委任戦略（2026-02-19）
+- **背景**: Chrome自動化操作がgeneral-purposeエージェントで複雑化・肥大化していた
+- **施策**: 以下の操作をchrome-debuggerエージェントに委任
+  - スクリーンショット撮影
+  - フォーム入力・クリック
+  - ページナビゲーション
+  - 検証・確認
+- **効果**: スキル管理の簡潔化、役割分離の明確化
+- **実装ファイル**: `skills/dev-workflow/SKILL.md` など
+
+### ワークフローディレクトリのworktreeスコープ化（2026-02-19）
+- **目的**: 複数worktree間での干渉を防止
+- **実装**: `workflow-lib.sh` に `get_workflow_dir()` 関数を追加
+- **仕様**: `$HOME/.claude/workflows/<WORKFLOW_NAME>/<WORKTREE_NAME>/` 配下にスコープ
+- **対象**: セッション設定、テンプラスト、ログ等
 
 ### parse_options の引数クォーティング問題（2026-02-19）
 - **問題**: `echo "${filtered_args[@]}"` を使用していたため、`eval` 実行時に日本語全角括弧等の特殊文字がシェル構文として解釈されエラーになっていた
@@ -55,6 +82,8 @@
 
 | 日付 | 内容 | 教訓 |
 |---|---|---|
+| 2026-02-19 | Chrome Debuggerへの委任設計時、サーバー管理ポリシーが不十分だった | サーバー操作を伴う機能は起動・停止・並列実行禁止を事前に明記し、ゲート化する |
+| 2026-02-19 | worktreeスコープ化を遅延実装していた | 複数worktree対応の際は実装当初からディレクトリスコープを設計に含める |
 | 2026-02-19 | `echo` で配列を渡した後 `eval` すると全角文字がシェル構文エラーになる | `eval` と組み合わせる場合は必ず `printf '%q '` を使用し、各引数をクォートする |
 | 2026-02-19 | Claude Code公式フック仕様との非準拠が複数箇所で発生 | フック実装時は公式仕様を事前確認し、一括で準拠させる |
 
@@ -62,5 +91,6 @@
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-19 | Chrome Debuggerエージェント統合およびサーバー管理ポリシー強化を完了 |
 | 2026-02-19 | コンテキストドキュメント自動生成機構の追加を指示。コミット毎にdocs/context/CONTEXT.mdを更新する仕組みを実装 |
 | 2026-02-19 | codex-wrapper.shのparse_options関数で `echo` を `printf '%q '` に変更し、日本語全角括弧等の特殊文字対応を指示 |
