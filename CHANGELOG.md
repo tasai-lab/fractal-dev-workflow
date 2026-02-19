@@ -17,6 +17,7 @@
 ### Fixed
 
 - workflow-manager.shのWORKFLOW_DIRパス解決を修正（get_workflow_dir()に統一）
+- codex-wrapper.shのtimeout実装をmacOS互換に置換（バックグラウンドプロセス+手動タイムアウト管理）
 
 ## [0.4.0] - 2026-02-17
 
