@@ -253,6 +253,42 @@ test_phase_8_transition_requires_approval() {
     assert_equals "8" "$phase" "2段階承認後にPhase 8に遷移できること"
 }
 
+# Test 9: WORKFLOW_DIR未設定時はget_workflow_dir()と同じパスを使う
+test_default_workflow_dir_uses_get_workflow_dir() {
+    echo "Test 9: WORKFLOW_DIR未設定時はget_workflow_dir()と同じパスを使う"
+
+    # WORKFLOW_DIRを未設定にしてworkflow-manager.shを実行
+    local project_root
+    project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+    # workflow-lib.shのget_workflow_dir()が返すパスを取得
+    local expected_dir
+    expected_dir=$(bash -c "source '$project_root/hooks/workflow-lib.sh'; get_workflow_dir")
+
+    # WORKFLOW_DIR未設定でworkflow-manager.shを呼び出し、
+    # 実際に使われるディレクトリを確認するため一時的にワークフローを作成
+    local wf_id
+    wf_id=$(env -u WORKFLOW_DIR bash "$project_root/scripts/workflow-manager.sh" create "Test dir check")
+
+    # get_workflow_dir()が返したパスにJSONが作成されているはず
+    local state_file="$expected_dir/$wf_id.json"
+
+    if [[ -f "$state_file" ]]; then
+        TESTS_RUN=$((TESTS_RUN + 1))
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        echo "  PASS: WORKFLOW_DIR未設定時はget_workflow_dir()のパス($expected_dir)を使うこと"
+    else
+        TESTS_RUN=$((TESTS_RUN + 1))
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        echo "  FAIL: WORKFLOW_DIR未設定時にget_workflow_dir()のパスが使われていない"
+        echo "    Expected file: $state_file"
+        echo "    get_workflow_dir() returned: $expected_dir"
+    fi
+
+    # クリーンアップ
+    rm -f "$expected_dir/$wf_id.json"
+}
+
 # テスト実行
 main() {
     echo "==================================="
@@ -269,6 +305,7 @@ main() {
     test_is_approved_new_schema
     test_phase_transition_requires_approval
     test_phase_8_transition_requires_approval
+    test_default_workflow_dir_uses_get_workflow_dir
 
     teardown
 
