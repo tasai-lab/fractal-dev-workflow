@@ -39,9 +39,67 @@ if [[ "$RESOLVED_SOURCE" == *"/.claude/plugins/cache/"* ]]; then
     exit 0
 fi
 
-# 既にシンボリックリンクなら何もしない
+# temp_gitキャッシュのクリーンアップ
+# Claude Codeがtemp_git_*にクローンするとskills/docs以外のファイルが削除されるため除去する
+for d in "$HOME/.claude/plugins/cache"/temp_git_*; do
+    if [[ -d "$d" ]] && grep -q "fractal-dev-workflow" "$d/CHANGELOG.md" 2>/dev/null; then
+        rm -rf "$d"
+        echo "  cleaned temp_git cache: $(basename "$d")" >> "$LOG_FILE"
+    fi
+done
+
+# installed_plugins.json更新関数
+update_installed_plugins() {
+    local install_path="$1"
+    local git_sha="$2"
+    local now="$3"
+    local installed_plugins="$HOME/.claude/plugins/installed_plugins.json"
+    local plugin_key="${PLUGIN_NAME}@${MARKETPLACE}"
+
+    local entry
+    entry=$(jq -n \
+        --arg scope "user" \
+        --arg install_path "$install_path" \
+        --arg version "$VERSION" \
+        --arg now "$now" \
+        --arg git_sha "$git_sha" \
+        '{scope: $scope, installPath: $install_path, version: $version, installedAt: $now, lastUpdated: $now, gitCommitSha: $git_sha}')
+
+    if [[ ! -f "$installed_plugins" ]]; then
+        # ファイルが存在しない場合は新規作成
+        jq -n \
+            --arg key "$plugin_key" \
+            --argjson entry "$entry" \
+            '{version: 2, plugins: {($key): [$entry]}}' \
+            > "$installed_plugins" 2>> "$LOG_FILE"
+        echo "  installed_plugins.json created with $plugin_key" >> "$LOG_FILE"
+    else
+        # ファイルが存在する場合はエントリを追加または更新
+        local tmp_file
+        tmp_file=$(mktemp)
+        jq \
+            --arg key "$plugin_key" \
+            --argjson entry "$entry" \
+            '.plugins[$key] = [$entry]' \
+            "$installed_plugins" > "$tmp_file" 2>> "$LOG_FILE"
+        if [[ $? -eq 0 ]] && [[ -s "$tmp_file" ]]; then
+            mv "$tmp_file" "$installed_plugins"
+            echo "  installed_plugins.json updated: $plugin_key" >> "$LOG_FILE"
+        else
+            rm -f "$tmp_file"
+            echo "  ERROR: failed to update installed_plugins.json" >> "$LOG_FILE"
+        fi
+    fi
+}
+
+INSTALL_PATH="$CACHE_DIR/$VERSION"
+GIT_SHA=$(git -C "$SOURCE_DIR" rev-parse HEAD 2>/dev/null || echo "unknown")
+NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# 既にシンボリックリンクなら installed_plugins.json の更新のみ行ってスキップ
 if [[ -L "$CACHE_DIR/$VERSION" ]]; then
     echo "  SKIP: already symlinked" >> "$LOG_FILE"
+    update_installed_plugins "$INSTALL_PATH" "$GIT_SHA" "$NOW"
     exit 0
 fi
 
@@ -62,3 +120,6 @@ if [[ ! -d "$CACHE_DIR/$VERSION/hooks" ]]; then
     exit 1
 fi
 echo "  DONE: symlink created and verified at $CACHE_DIR/$VERSION -> $SOURCE_DIR" >> "$LOG_FILE"
+
+# installed_plugins.json の更新
+update_installed_plugins "$INSTALL_PATH" "$GIT_SHA" "$NOW"

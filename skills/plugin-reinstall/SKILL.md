@@ -1,55 +1,65 @@
 ---
 name: plugin-reinstall
-description: プラグインの変更を反映するための再インストール手順
+description: プラグインの再インストールとトラブルシューティング
 ---
 
 # プラグイン再インストール
 
-## 概要
+## 自動修復
 
-プラグインのスキル/エージェント/コマンドを変更した後、変更を反映するための手順。
+SessionEnd時に `reinstall-plugin.sh` が自動実行され、以下を行う:
+- fractal-dev-workflow関連のtemp_gitキャッシュを削除
+- キャッシュディレクトリにソースへのシンボリックリンクを作成
+- `installed_plugins.json` にエントリを追加/更新
 
-## 手順
+通常はセッション終了→再起動で自動復旧する。
 
-### 1. キャッシュをクリア
+## 手動トラブルシューティング
+
+### 健全性チェック
 
 ```bash
+bash ~/code/fractal-dev-workflow/scripts/plugin-health-check.sh
+```
+
+### よくある問題
+
+| 症状 | 原因 | 対処 |
+|------|------|------|
+| `/plugins` で "failed to load" | `plugin.json` が空 or キャッシュ破損 | 下記の手動修復を実行 |
+| `/plugins` に表示されない | `installed_plugins.json` にエントリなし | reinstall-plugin.sh を手動実行 |
+| スキル/フックが動かない | シンボリックリンク切れ | ローカルリンクを再作成 |
+
+### 手動修復ワンライナー
+
+```bash
+# 変数準備
+PLUGIN_DIR=$(readlink ~/.claude/plugins/local/fractal-dev-workflow)
+VERSION=$(jq -r '.version' "$PLUGIN_DIR/.claude-plugin/plugin.json")
+
+# temp_gitキャッシュ削除
+for d in ~/.claude/plugins/cache/temp_git_*; do grep -q "fractal-dev-workflow" "$d/CHANGELOG.md" 2>/dev/null && rm -rf "$d"; done
+
+# キャッシュにシンボリックリンク作成
 rm -rf ~/.claude/plugins/cache/fractal-marketplace/fractal-dev-workflow
-```
-
-### 2. シンボリックリンクを作成
-
-```bash
 mkdir -p ~/.claude/plugins/cache/fractal-marketplace/fractal-dev-workflow
-ln -s /Users/t.asai/code/fractal-dev-workflow ~/.claude/plugins/cache/fractal-marketplace/fractal-dev-workflow/0.3.0
+ln -s "$PLUGIN_DIR" ~/.claude/plugins/cache/fractal-marketplace/fractal-dev-workflow/"$VERSION"
 ```
 
-### 3. 確認
+修復後、Claude Codeを再起動して確認。
+
+### plugin.jsonが空の場合
 
 ```bash
-ls -la ~/.claude/plugins/cache/fractal-marketplace/fractal-dev-workflow/
+cat > ~/code/fractal-dev-workflow/.claude-plugin/plugin.json << 'PJSON'
+{
+  "name": "fractal-dev-workflow",
+  "version": "0.10.3",
+  "description": "9フェーズワークフロー、サブエージェント駆動実装を提供する自律開発支援プラグイン",
+  "author": { "name": "t.asai" },
+  "keywords": ["workflow", "development", "codex", "subagent"]
+}
+PJSON
 ```
 
-期待される出力:
-```
-0.3.0 -> /Users/t.asai/code/fractal-dev-workflow
-```
-
-## ワンライナー
-
-```bash
-rm -rf ~/.claude/plugins/cache/fractal-marketplace/fractal-dev-workflow && mkdir -p ~/.claude/plugins/cache/fractal-marketplace/fractal-dev-workflow && ln -s /Users/t.asai/code/fractal-dev-workflow ~/.claude/plugins/cache/fractal-marketplace/fractal-dev-workflow/0.3.0
-```
-
-## 注意事項
-
-- シンボリックリンク作成後、新しいClaude Codeセッションを開始すると変更が反映される
-- 現在のセッションには反映されない
-- バージョン番号（0.3.0）は `installed_plugins.json` の設定と一致させること
-
-## 開発ワークフロー
-
-1. スキル/エージェント/コマンドを編集
-2. 変更をコミット・プッシュ
-3. このスキルの手順でキャッシュを更新（初回のみ、以降はシンボリックリンクで自動反映）
-4. 新しいセッションを開始して動作確認
+バージョンはCHANGELOG.mdの最新に合わせること。
