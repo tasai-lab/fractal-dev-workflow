@@ -7,7 +7,7 @@
 ### Fixed
 
 - スキルファイル内のスクリプト参照を絶対パス（`~/.claude/plugins/local/fractal-dev-workflow/scripts/`）に統一 - worktreeや別ディレクトリからの実行時にスクリプトが見つからないエラーを解消
-- check-docs.shのバージョンバンプ時にinstallPathとキャッシュシンボリックリンクも同期するよう修正
+- check-docs.shのバージョンバンプ時に`installed_plugins.json`のinstallPathとキャッシュシンボリックリンクも即時同期するよう修正（SessionEnd待ちの不整合を解消）
 
 ## [0.10.3] - 2026-02-19
 

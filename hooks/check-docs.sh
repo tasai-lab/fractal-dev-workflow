@@ -87,10 +87,21 @@ if [[ "$REPO_ROOT" == "$PLUGIN_ROOT" ]]; then
                     if [[ -f "$INSTALLED_JSON" ]]; then
                         COMMIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "")
                         UPDATED_AT=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
-                        jq --arg v "$NEW_VERSION" --arg sha "$COMMIT_SHA" --arg ts "$UPDATED_AT" --arg key "$PLUGIN_KEY" \
-                            '.plugins[$key][0].version = $v | .plugins[$key][0].gitCommitSha = $sha | .plugins[$key][0].lastUpdated = $ts' \
+                        NEW_INSTALL_PATH="$HOME/.claude/plugins/cache/fractal-marketplace/fractal-dev-workflow/$NEW_VERSION"
+                        jq --arg v "$NEW_VERSION" --arg sha "$COMMIT_SHA" --arg ts "$UPDATED_AT" --arg key "$PLUGIN_KEY" --arg ip "$NEW_INSTALL_PATH" \
+                            '.plugins[$key][0].version = $v | .plugins[$key][0].installPath = $ip | .plugins[$key][0].gitCommitSha = $sha | .plugins[$key][0].lastUpdated = $ts' \
                             "$INSTALLED_JSON" > "${INSTALLED_JSON}.tmp" && mv "${INSTALLED_JSON}.tmp" "$INSTALLED_JSON"
                         hook_log "check-docs" "installed_plugins.json synced to $NEW_VERSION"
+                    fi
+
+                    # キャッシュのシンボリックリンクも新バージョンに更新
+                    CACHE_DIR="$HOME/.claude/plugins/cache/fractal-marketplace/fractal-dev-workflow"
+                    SOURCE_DIR=$(readlink "$HOME/.claude/plugins/local/fractal-dev-workflow" 2>/dev/null)
+                    if [[ -n "$SOURCE_DIR" ]] && [[ -d "$SOURCE_DIR" ]]; then
+                        rm -rf "$CACHE_DIR"
+                        mkdir -p "$CACHE_DIR"
+                        ln -s "$SOURCE_DIR" "$CACHE_DIR/$NEW_VERSION"
+                        hook_log "check-docs" "cache symlink updated to $NEW_VERSION"
                     fi
 
                     git commit -m "chore: bump version to $NEW_VERSION" 2>/dev/null
