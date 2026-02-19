@@ -1,17 +1,20 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-19（7b83258）
+最終更新: 2026-02-19（0823ae8）
 
 ## 現在の状態
 
 - **Phase**: Phase 8（検証）完了、全16タスク完了、全テスト合格（66/66）
 - **進行中タスク**: なし（安定稼働中）
-- **バージョン**: 0.8.0（push時にconventional commitsで自動バンプ）
+- **バージョン**: 0.10.0（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 0823ae8 | 2026-02-19 | chore: bump version to 0.10.0 | .claude-plugin/plugin.json |
+| d9ea8c4 | 2026-02-19 | chore: bump version to 0.9.0 | .claude-plugin/plugin.json |
+| f957afb | 2026-02-19 | docs: CHANGELOG.md更新 - v0.8.0 監査修正16件・Tasks統合 | CHANGELOG.md |
 | 7b83258 | 2026-02-19 | fix: 監査レポートに基づくプラグイン修正16件 | workflow-manager.sh, codex-wrapper.sh, hooks.json, reinstall-plugin.sh, dev-status.md, marketplace.json, chrome-debugger.md, design/SKILL.md, implementation/SKILL.md, dev-workflow/SKILL.md, using-workflow/SKILL.md, docs/audits/2026-02-19.md |
 | 0b22e1d | 2026-02-19 | docs(context): コンテキストドキュメント更新 - テスト-11/12追加 | docs/context/CONTEXT.md |
 | 114999c | 2026-02-19 | test: エッジケーステストとフックスクリプトテストを追加 | tests/test-workflow-approval.sh, tests/test-hook-scripts.sh |
