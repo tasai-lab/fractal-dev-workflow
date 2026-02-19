@@ -42,7 +42,7 @@ NO BROWSER CHECK = NO NEXT PHASE
 これにより親エージェントのコンテキストを汚さず、Chrome操作の詳細を隔離できる。
 
 ```
-Task(subagent_type="general-purpose", model="sonnet"):
+Task(subagent_type="fractal-dev-workflow:chrome-debugger", model="sonnet"):
   ## Phase 6: Chromeデバッグ
 
   ### 対象URL
@@ -87,7 +87,7 @@ lsof -i :3100
 親エージェントは以下のようにサブエージェントを起動する:
 
 ```
-Task(subagent_type="general-purpose", model="sonnet"):
+Task(subagent_type="fractal-dev-workflow:chrome-debugger", model="sonnet"):
   ## Chrome UIデバッグ検証
 
   ### 環境
@@ -149,7 +149,7 @@ Task(subagent_type="general-purpose", model="sonnet"):
      [問題の詳細と修正指示]
 
 3. 再検証用サブエージェントを起動（Step 2-4を再実行）
-   Task(subagent_type="general-purpose", model="sonnet"):
+   Task(subagent_type="fractal-dev-workflow:chrome-debugger", model="sonnet"):
      [再検証指示]
 
 4. 最大3回まで繰り返し

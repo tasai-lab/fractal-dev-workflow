@@ -233,7 +233,8 @@ Phase 3で参照する。
 devサーバー起動は `chrome-debug` スキルの Step 1 と同様のパターンを使用する。
 
 ````
-Task(subagent_type="general-purpose", model="sonnet"):
+Task(subagent_type="fractal-dev-workflow:chrome-debugger", model="sonnet"):
+  mode: observation
   ## Phase 2: Chrome挙動確認（Read-only観察）
 
   ### 目的

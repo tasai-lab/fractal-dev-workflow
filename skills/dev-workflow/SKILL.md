@@ -592,7 +592,7 @@ Task(subagent_type="code-simplifier:code-simplifier", model="sonnet"):
 親エージェントは環境準備とオーケストレーションのみ。
 
 ```
-Task(subagent_type="general-purpose", model="sonnet"):
+Task(subagent_type="fractal-dev-workflow:chrome-debugger", model="sonnet"):
   Chrome MCPツールでUI/挙動を検証
 ```
 
