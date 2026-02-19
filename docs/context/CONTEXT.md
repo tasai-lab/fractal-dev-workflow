@@ -1,17 +1,20 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-19（ada8f97）
+最終更新: 2026-02-19（8b2056c）
 
 ## 現在の状態
 
 - **Phase**: 開発安定化フェーズ（プラグイン基盤強化完了）
 - **進行中タスク**: なし
-- **バージョン**: 0.4.0（push時にconventional commitsで自動バンプ）
+- **バージョン**: 0.5.0（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 8b2056c | 2026-02-19 | fix(hooks): バージョンバンプ時にinstalled_plugins.jsonも自動同期 | hooks/check-docs.sh, installed_plugins.json |
+| 7eed319 | 2026-02-19 | chore: bump version to 0.5.0 | - |
+| e0d8ec5 | 2026-02-19 | docs(context): コンテキストドキュメント更新 - Phase/Sliceバナー表示必須化 | docs/context/ |
 | ada8f97 | 2026-02-19 | feat(skills): Phase/Sliceバナー表示の必須化 | skills/, hooks/, commands/ |
 | f9e4afc | 2026-02-19 | chore: bump version to 0.4.1 | - |
 | e80785b | 2026-02-19 | docs(context): コンテキストドキュメント更新 | docs/context/ |
@@ -115,6 +118,12 @@
 - BREAKING CHANGE → major, feat → minor, その他 → patch
 - fractal-dev-workflowリポジトリのpush時のみ動作
 - 二重バンプ防止: 直近コミットが`chore: bump version`の場合はスキップ
+
+### バージョンバンプ時のinstalled_plugins.json自動同期（2026-02-19）
+- **目的**: バージョン変更後、installed_plugins.jsonの`version`フィールドを自動更新
+- **実装**: check-docs.shがバージョン更新後、installed_plugins.jsonを読み込み→version更新→同じ内容を書き戻し
+- **タイミング**: バージョンバンプ直後（sed実行直後）
+- **対象ファイル**: hooks/check-docs.sh（バージョン更新処理の直後）
 
 ### 9Phase体制（2026-02-19時点）
 - Phase 1: 質問・要件確認
