@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-02-19
+
+### Added
+
+- workflow-manager.shに`get-dir`コマンド追加（worktreeスコープのワークフローディレクトリパス取得）
+- plugin-auditレポートをMermaid図付きmdファイル（`docs/audit-report.md`）として出力
+
+### Fixed
+
+- SKILL.md内のハードコードパス（`~/.claude/fractal-workflow/`）をworkflow-manager.sh経由に修正
+  - 対象: dev-workflow, using-workflow, design, failure-memory, implementation
+
 ## [0.6.0] - 2026-02-19
 
 ### Added
