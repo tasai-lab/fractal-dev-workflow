@@ -1,6 +1,6 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-19
+最終更新: 2026-02-19（5cc2e3e）
 
 ## 現在の状態
 
@@ -12,6 +12,7 @@
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 5cc2e3e | 2026-02-19 | fix(hooks): CHANGELOGチェックをorigin/mainベースに修正 | hooks/check-docs.sh |
 | 85379a6 | 2026-02-19 | feat(hooks): git push時にconventional commitsからバージョン自動更新 | hooks/check-docs.sh |
 | b995e9b | 2026-02-19 | fix(hooks): installPathをソース直接参照に変更しSessionEndフック廃止 | hooks/, installed_plugins.json |
 | 6f5041f | 2026-02-19 | fix(hooks): 公式フック仕様への準拠を強化 | hooks/ |
@@ -34,6 +35,17 @@
 | f289b42 | - | chore: バージョン0.4.0にアップデート | - |
 
 ## 重要な決定事項
+
+### CHANGELOGチェックのorigin/mainベース修正（2026-02-19）
+- **問題**: `git diff main` はローカルのmainブランチとの比較だったため、リモートへのpush前にローカルmainを更新していない場合に誤検知が発生していた
+- **修正**: `git rev-parse --abbrev-ref --symbolic-full-name @{u}` でリモートトラッキングブランチ（origin/main等）を動的に取得し、そのリファレンスに対して差分チェックするよう変更
+- **副作用**: リモートトラッキングブランチが存在しない場合はチェックをスキップするように条件分岐を追加
+- **対象ファイル**: `hooks/check-docs.sh`（CHANGELOGチェック部分、約91-105行目）
+
+### settings.jsonへのフック直接定義（2026-02-19）
+- **背景**: プラグインのPreToolUseフックに既知バグがあり、プラグインフック経由では正常に動作しないケースがある
+- **ワークアラウンド**: プロジェクトまたはユーザーの `settings.json` にフックを直接定義することで、プラグインフックのバグを回避
+- **対象**: PreToolUseフックを利用する機能全般
 
 ### サーバー管理ポリシー強化（2026-02-19）
 - **目的**: Chrome Debuggerエージェント統合時のサーバー管理を堅牢化
