@@ -1,6 +1,6 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-19（3c780cf）
+最終更新: 2026-02-19（9b47b1e）
 
 ## 現在の状態
 
@@ -12,6 +12,7 @@
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 9b47b1e | 2026-02-19 | feat(scripts): workflow-manager.sh に get-dir コマンドを追加 | scripts/workflow-manager.sh |
 | 3c780cf | 2026-02-19 | fix(codex-wrapper): macOS互換のtimeout実装に置換 | scripts/codex-wrapper.sh |
 | c9c23cf | 2026-02-19 | chore: bump version to 0.6.0 | - |
 | 7502d19 | 2026-02-19 | feat: plugin-auditスキル追加 + Phase表示バグ修正 | skills/, scripts/ |
@@ -108,6 +109,12 @@
 - **仕様**: `$HOME/.claude/workflows/<WORKFLOW_NAME>/<WORKTREE_NAME>/` 配下にスコープ
 - **対象**: セッション設定、テンプラスト、ログ等
 
+### workflow-manager.sh に get-dir コマンド追加（2026-02-19）
+- **目的**: スキルから `bash scripts/workflow-manager.sh get-dir` でworktreeスコープのワークフローディレクトリパスを取得できるようにする
+- **実装**: case文に `get-dir) echo "$WORKFLOW_DIR" ;;` を追加、ヘルプにも追記
+- **背景**: session-init.sh のフォールバック削除（worktreeスコープ設計維持）と合わせた整合性確保
+- **対象ファイル**: `scripts/workflow-manager.sh`（2行追加）
+
 ### workflow-manager.sh のWORKFLOW_DIR解決修正（2026-02-19）
 - **問題**: `workflow-manager.sh` が `$HOME/.claude/fractal-workflow` を直接参照していたため、`session-init.sh` が参照するmd5ハッシュベースのパスと不一致が発生。Phase情報が表示されないバグの原因だった
 - **修正**: `workflow-manager.sh` の冒頭で `hooks/workflow-lib.sh` を source し、`WORKFLOW_DIR` のデフォルト値を `get_workflow_dir()` の結果に変更
@@ -180,6 +187,7 @@
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-19 | session-init.sh のフォールバック削除（既にコミット済みで不要）、workflow-manager.sh に get-dir コマンドを追加してworktreeスコープのディレクトリパス取得を可能にするよう指示 |
 | 2026-02-19 | Slice 5: scoring-rubric.md 作成。5カテゴリ（Structure/Compliance/Flow/Token/Security）各20点合計100点のスコアリング基準を詳細定義。PASS/WARN/FAILの閾値、各サブ項目の採点条件、SeverityマッピングをSKILL.mdから参照される形式で整備 |
 | 2026-02-19 | Slice 4: compliance-rules.md 作成。Claude Code公式仕様に基づく6カテゴリ27ルールを定義し、Critical不合格時の自動FAIL判定ポリシーと証拠記録形式を規定 |
 | 2026-02-19 | Slice 3: plugin-audit コマンド定義追加。/plugin-auditスラッシュコマンドを定義し、fractal-dev-workflow:plugin-auditスキルをTaskツールで起動する仕様で実装 |
