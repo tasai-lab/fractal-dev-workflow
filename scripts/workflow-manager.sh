@@ -4,7 +4,17 @@
 
 set -euo pipefail
 
-WORKFLOW_DIR="${WORKFLOW_DIR:-$HOME/.claude/fractal-workflow}"
+# workflow-lib.sh をsource（worktreeごとのパス解決に使用）
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LIB_PATH="$SCRIPT_DIR/../hooks/workflow-lib.sh"
+if [[ -f "$LIB_PATH" ]]; then
+    source "$LIB_PATH"
+    WORKFLOW_DIR="${WORKFLOW_DIR:-$(get_workflow_dir)}"
+else
+    WORKFLOW_DIR="${WORKFLOW_DIR:-$HOME/.claude/fractal-workflow}"
+fi
+
+mkdir -p "$WORKFLOW_DIR"
 
 # workflow_id のフォーマット検証
 validate_workflow_id() {
