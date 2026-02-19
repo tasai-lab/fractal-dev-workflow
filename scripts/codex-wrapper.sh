@@ -69,15 +69,36 @@ parse_options() {
     printf '%q ' "${filtered_args[@]}"
 }
 
-# リトライ付き実行
+# リトライ付き実行 - macOS互換 timeout 実装
 run_with_retry() {
     local cmd="$1"
     local retries=0
 
     while [[ $retries -lt $MAX_RETRIES ]]; do
-        if timeout "$CODEX_TIMEOUT" bash -c "$cmd" 2>&1; then
-            return 0
+        # バックグラウンドで実行
+        bash -c "$cmd" 2>&1 &
+        local pid=$!
+        local elapsed=0
+        local start_time=$(date +%s)
+        
+        # timeout管理ループ
+        while [[ $elapsed -lt $CODEX_TIMEOUT ]]; do
+            if ! kill -0 $pid 2>/dev/null; then
+                # プロセス終了 - ステータスコード取得
+                wait $pid 2>/dev/null
+                return 0
+            fi
+            sleep 1
+            local current_time=$(date +%s)
+            elapsed=$((current_time - start_time))
+        done
+        
+        # timeout 超過時はプロセス終了
+        if kill -0 $pid 2>/dev/null; then
+            kill $pid 2>/dev/null || true
+            wait $pid 2>/dev/null || true
         fi
+        
         ((retries++))
         if [[ $retries -lt $MAX_RETRIES ]]; then
             echo "Retry $retries/$MAX_RETRIES..." >&2
