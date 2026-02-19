@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.10.3] - 2026-02-19
+
+### Fixed
+
+- chrome-debuggerエージェントにChrome MCPツール（mcp__claude-in-chrome__*）を追加 - ブラウザ操作が実行できない問題を修正
+
 ## [0.10.1] - 2026-02-19
 
 ### Fixed
