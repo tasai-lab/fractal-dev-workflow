@@ -1,17 +1,18 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-19（12f6927）
+最終更新: 2026-02-19（33435b9）
 
 ## 現在の状態
 
 - **Phase**: 開発安定化フェーズ
-- **進行中タスク**: Slice 4 完了（compliance-rules.md 作成）
+- **進行中タスク**: Slice 5 完了（scoring-rubric.md 作成）
 - **バージョン**: 0.5.1（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 33435b9 | 2026-02-19 | feat(plugin-audit): スコアリング基準定義を追加 | skills/plugin-audit/references/scoring-rubric.md |
 | 12f6927 | 2026-02-19 | feat(plugin-audit): 仕様準拠チェックルール定義を追加 | skills/plugin-audit/references/compliance-rules.md |
 | c223d10 | 2026-02-19 | feat(commands): plugin-auditコマンド定義を追加 | commands/plugin-audit.md |
 | a3f0c07 | 2026-02-19 | feat(skill): plugin-audit SKILL.md 作成 | skills/plugin-audit/SKILL.md, tests/test-plugin-audit-skill.sh |
@@ -166,6 +167,7 @@
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-19 | Slice 5: scoring-rubric.md 作成。5カテゴリ（Structure/Compliance/Flow/Token/Security）各20点合計100点のスコアリング基準を詳細定義。PASS/WARN/FAILの閾値、各サブ項目の採点条件、SeverityマッピングをSKILL.mdから参照される形式で整備 |
 | 2026-02-19 | Slice 4: compliance-rules.md 作成。Claude Code公式仕様に基づく6カテゴリ27ルールを定義し、Critical不合格時の自動FAIL判定ポリシーと証拠記録形式を規定 |
 | 2026-02-19 | Slice 3: plugin-audit コマンド定義追加。/plugin-auditスラッシュコマンドを定義し、fractal-dev-workflow:plugin-auditスキルをTaskツールで起動する仕様で実装 |
 | 2026-02-19 | Slice 2: plugin-audit SKILL.md 作成。5カテゴリ（Structure/Compliance/Flow/Token/Security）100点評価スキルをTDDで実装（31/31テストPASS） |
