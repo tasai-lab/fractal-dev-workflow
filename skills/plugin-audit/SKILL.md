@@ -95,13 +95,13 @@ Task(subagent_type="fractal-dev-workflow:investigator", run_in_background=true):
 
 各サブエージェントの結果を集計する:
 
-| カテゴリ    | スコア | ステータス |
-|------------|-------|----------|
-| Structure  | XX/20 | PASS/WARN/FAIL |
-| Compliance | XX/20 | PASS/WARN/FAIL |
-| Flow       | XX/20 | PASS/WARN/FAIL |
-| Token      | XX/20 | PASS/WARN/FAIL |
-| Security   | XX/20 | PASS/WARN/FAIL |
+| カテゴリ | スコア | 状態 |
+|----------|-------|------|
+| 1. 構造健全性 | XX/20 | PASS/WARN/FAIL |
+| 2. Claude Code仕様準拠 | XX/20 | PASS/WARN/FAIL |
+| 3. ワークフロー効率 | XX/20 | PASS/WARN/FAIL |
+| 4. トークン効率 | XX/20 | PASS/WARN/FAIL |
+| 5. セキュリティ | XX/20 | PASS/WARN/FAIL |
 
 ステータス判定:
 - **PASS**: 16〜20点
@@ -110,104 +110,157 @@ Task(subagent_type="fractal-dev-workflow:investigator", run_in_background=true):
 
 ### Step 4: レポート出力
 
-レポートを `docs/audit-report.md` に出力する。マーメイド図でスコアを可視化する。
+レポートを `docs/audits/YYYY-MM-DD.md`（実行日の日付）に出力する。マーメイド図3種類でスコアと問題を可視化する。
 
-出力ファイル: `docs/audit-report.md`
+出力ファイル: `docs/audits/{実行日付}.md`（例: `docs/audits/2026-02-19.md`）
 
 レポートフォーマット:
 
 ~~~markdown
-# Plugin Audit Report
+# プラグイン監査レポート - {YYYY-MM-DD}
 
-Generated: {date}
-Plugin: {name} v{version}
+**バージョン**: {version}
+**総合スコア**: {total}/100 ({PASS/WARN/FAIL})
 
-## Overall Score: XX / 100
+## スコアサマリー
 
-```mermaid
-%%{init: {'theme': 'default'}}%%
-pie title Score Distribution
-    "Structure" : {structure_score}
-    "Compliance" : {compliance_score}
-    "Flow" : {flow_score}
-    "Token" : {token_score}
-    "Security" : {security_score}
-```
-
-| Category    | Score | Status |
-|-------------|-------|--------|
-| Structure   | XX/20 | PASS/WARN/FAIL |
-| Compliance  | XX/20 | PASS/WARN/FAIL |
-| Flow        | XX/20 | PASS/WARN/FAIL |
-| Token       | XX/20 | PASS/WARN/FAIL |
-| Security    | XX/20 | PASS/WARN/FAIL |
-
-## Category Details
+| カテゴリ | スコア | 状態 |
+|----------|-------|------|
+| 1. 構造健全性 | {structure_score}/20 | PASS/WARN/FAIL |
+| 2. Claude Code仕様準拠 | {compliance_score}/20 | PASS/WARN/FAIL |
+| 3. ワークフロー効率 | {flow_score}/20 | PASS/WARN/FAIL |
+| 4. トークン効率 | {token_score}/20 | PASS/WARN/FAIL |
+| 5. セキュリティ | {security_score}/20 | PASS/WARN/FAIL |
 
 ```mermaid
-%%{init: {'theme': 'default'}}%%
-graph LR
-    subgraph Structure ["Structure XX/20"]
-        S1[plugin.json]
-        S2[Skills]
-        S3[Agents]
-        S4[Hooks]
-        S5[Naming]
-    end
-    subgraph Compliance ["Compliance XX/20"]
-        C1[SKILL.md]
-        C2[Agents]
-        C3[hooks.json]
-        C4[Commands]
-    end
-    subgraph Flow ["Flow XX/20"]
-        F1[Skill Refs]
-        F2[Agent-Skill]
-        F3[Hook-Script]
-        F4[Unused]
-    end
-    subgraph Token ["Token XX/20"]
-        T1[Size]
-        T2[References]
-        T3[SubAgents]
-        T4[Duplicates]
-    end
-    subgraph Security ["Security XX/20"]
-        SE1[Quoting]
-        SE2[PLUGIN_ROOT]
-        SE3[Self-ref]
-        SE4[Secrets]
-    end
-
-    style Structure fill:#f9f,stroke:#333
-    style Compliance fill:#bbf,stroke:#333
-    style Flow fill:#bfb,stroke:#333
-    style Token fill:#ffb,stroke:#333
-    style Security fill:#fbb,stroke:#333
+xychart-beta
+    title "カテゴリ別スコア (満点20点)"
+    x-axis ["構造健全性", "仕様準拠", "ワークフロー効率", "トークン効率", "セキュリティ"]
+    y-axis "スコア" 0 --> 20
+    bar [{structure_score}, {compliance_score}, {flow_score}, {token_score}, {security_score}]
 ```
 
-## Findings
+---
 
-### [{Category}] {Issue Title}
-- Severity: {High/Medium/Low}
-- File: {path:line}
-- Issue: {具体的な問題}
-- Fix: {改善提案}
+## 1. 構造健全性 ({structure_score}/20)
 
-## Severity Distribution
+### 良好
+- {良好な点を列挙}
+
+### 警告
+- {警告事項を列挙}
+
+### 致命的
+- {致命的な問題を列挙（なければセクション省略可）}
+
+---
+
+## 2. Claude Code仕様準拠 ({compliance_score}/20)
+
+### 良好
+- {良好な点を列挙}
+
+### 警告
+- {警告事項を列挙}
+
+### 致命的
+- {致命的な問題を列挙（なければセクション省略可）}
+
+---
+
+## 3. ワークフロー効率 ({flow_score}/20)
+
+### 良好
+- {良好な点を列挙}
+
+### 警告
+- {警告事項を列挙}
+
+---
+
+## 4. トークン効率 ({token_score}/20)
+
+### 良好
+- {良好な点を列挙}
+
+### 警告
+- {警告事項を列挙}
+
+### 致命的
+- {致命的な問題を列挙（なければセクション省略可）}
+
+---
+
+## 5. セキュリティ ({security_score}/20)
+
+### 良好
+- {良好な点を列挙}
+
+### 致命的
+
+**[C-1] {問題タイトル} - {path:line}**
+{具体的な問題内容}
+
+### 重要
+
+**[I-1] {問題タイトル} - {path:line}**
+{具体的な問題内容}
+
+### 軽微
+
+**[M-1] {問題タイトル}**
+{具体的な問題内容}
+
+---
 
 ```mermaid
-%%{init: {'theme': 'default'}}%%
-pie title Findings by Severity
-    "High" : {high_count}
-    "Medium" : {medium_count}
-    "Low" : {low_count}
+pie title 問題の重要度分布（全カテゴリ合計）
+    "致命的" : {critical_count}
+    "警告" : {warn_count}
+    "重要" : {important_count}
+    "軽微" : {minor_count}
 ```
 
-## Top Recommendations
+## 仕様との乖離
 
-1. {最優先の改善提案}
-2. {次の改善提案}
+| 項目 | 仕様 | 実際 | 状態 |
+|------|------|------|------|
+| {項目名} | {仕様の記述} | {実際の記述} | NG/OK |
+
+---
+
+```mermaid
+flowchart TD
+    C1["{最優先修正タイトル}\n{対象ファイル}\n優先度: 最高"]
+    C2["{次の修正タイトル}\n{対象ファイル}\n優先度: 高"]
+    I1["{重要修正タイトル}\n{対象ファイル}\n優先度: 高"]
+    F1["{整合性修正タイトル}\n優先度: 中"]
+
+    C1 -->|"修正後に回帰テスト"| I1
+    C1 -->|"依存関係"| C2
+
+    subgraph 第1優先バッチ["第1優先バッチ（セキュリティ）"]
+        C1
+        C2
+        I1
+    end
+
+    subgraph 第2優先バッチ["第2優先バッチ（整合性）"]
+        F1
+    end
+```
+
+## 必須修正 ({critical_fix_count}件)
+
+1. **{修正タイトル}** - `{path}` - {修正方法}
+
+## 推奨修正 ({recommended_fix_count}件)
+
+{推奨修正番号}. **{修正タイトル}** - {修正方法}
+
+## テスト追加 ({test_count}件)
+
+{テスト番号}. {追加すべきテストの説明}
 ~~~
 
 ### Step 5: 改善提案
@@ -222,10 +275,12 @@ Overall Score に基づいて優先度付きの改善提案を生成する:
 - [ ] プラグインルートが正しく特定されている
 - [ ] 5カテゴリすべての評価が完了している（未評価項目なし）
 - [ ] 各チェック項目に証拠（path:line）が付いている
-- [ ] Overall Score が計算されている
-- [ ] Findings に改善提案が記載されている
-- [ ] Top Recommendations が最低1件以上ある
-- [ ] `docs/audit-report.md` にレポートが出力されている
+- [ ] 総合スコアが計算されている
+- [ ] 全セクションが日本語で記述されている
+- [ ] 致命的・警告・重要・軽微の重要度ラベルを使用している
+- [ ] マーメイド図3種類（xychart-beta 棒グラフ・pie 円グラフ・flowchart TD フローチャート）が含まれている
+- [ ] 必須修正が最低1件以上記載されている
+- [ ] `docs/audits/YYYY-MM-DD.md` にレポートが出力されている（YYYY-MM-DDは実行日付）
 
 ## Red Flags
 
