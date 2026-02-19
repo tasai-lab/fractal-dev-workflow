@@ -1,6 +1,6 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-19（9b47b1e）
+最終更新: 2026-02-19（0ae3b85）
 
 ## 現在の状態
 
@@ -12,6 +12,7 @@
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 0ae3b85 | 2026-02-19 | fix(skills): ハードコードパスをworkflow-manager.sh経由に修正 | skills/dev-workflow, skills/using-workflow, skills/design, skills/failure-memory, skills/implementation |
 | 9b47b1e | 2026-02-19 | feat(scripts): workflow-manager.sh に get-dir コマンドを追加 | scripts/workflow-manager.sh |
 | 3c780cf | 2026-02-19 | fix(codex-wrapper): macOS互換のtimeout実装に置換 | scripts/codex-wrapper.sh |
 | c9c23cf | 2026-02-19 | chore: bump version to 0.6.0 | - |
@@ -109,6 +110,16 @@
 - **仕様**: `$HOME/.claude/workflows/<WORKFLOW_NAME>/<WORKTREE_NAME>/` 配下にスコープ
 - **対象**: セッション設定、テンプラスト、ログ等
 
+### SKILL.mdのハードコードパスをworkflow-manager.sh経由に修正（2026-02-19）
+- **目的**: 複数スキルでハードコードされていた `~/.claude/fractal-workflow/` パスをworktreeスコープ対応に統一
+- **修正箇所**:
+  - `skills/dev-workflow/SKILL.md`: 4箇所（状態更新説明、チェックリスト、failure-memory連携、Workflow State Managementセクション）
+  - `skills/using-workflow/SKILL.md`: State Files の2パス
+  - `skills/design/SKILL.md`: jqコマンド内のパスをWFDIR変数経由に変更
+  - `skills/failure-memory/SKILL.md`: LocationパスをGET-DIR経由に変更
+  - `skills/implementation/SKILL.md`: 状態更新説明をworkflow-manager.sh経由に変更
+- **統一パターン**: `$(bash scripts/workflow-manager.sh get-dir)/` をパスプレフィックスに使用
+
 ### workflow-manager.sh に get-dir コマンド追加（2026-02-19）
 - **目的**: スキルから `bash scripts/workflow-manager.sh get-dir` でworktreeスコープのワークフローディレクトリパスを取得できるようにする
 - **実装**: case文に `get-dir) echo "$WORKFLOW_DIR" ;;` を追加、ヘルプにも追記
@@ -187,6 +198,7 @@
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-19 | SKILL.mdファイルのハードコードパス（~/.claude/fractal-workflow/）をworkflow-manager.sh経由（bash scripts/workflow-manager.sh get-dir）に修正するよう指示 |
 | 2026-02-19 | session-init.sh のフォールバック削除（既にコミット済みで不要）、workflow-manager.sh に get-dir コマンドを追加してworktreeスコープのディレクトリパス取得を可能にするよう指示 |
 | 2026-02-19 | Slice 5: scoring-rubric.md 作成。5カテゴリ（Structure/Compliance/Flow/Token/Security）各20点合計100点のスコアリング基準を詳細定義。PASS/WARN/FAILの閾値、各サブ項目の採点条件、SeverityマッピングをSKILL.mdから参照される形式で整備 |
 | 2026-02-19 | Slice 4: compliance-rules.md 作成。Claude Code公式仕様に基づく6カテゴリ27ルールを定義し、Critical不合格時の自動FAIL判定ポリシーと証拠記録形式を規定 |
