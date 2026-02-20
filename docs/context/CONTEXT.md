@@ -1,17 +1,20 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-20（0246ba2）
+最終更新: 2026-02-20（0704650）
 
 ## 現在の状態
 
-- **Phase**: 安定稼働中（テスト実行と問題修正フェーズ完了）
+- **Phase**: 安定稼働中（フックスコープ修正完了）
 - **進行中タスク**: なし
-- **バージョン**: 0.12.0（push時にconventional commitsで自動バンプ）
+- **バージョン**: 0.12.2（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 0704650 | 2026-02-20 | chore: bump version to 0.12.2 | .claude-plugin/plugin.json |
+| 54a965f | 2026-02-20 | fix(hooks): reinstall-plugin.sh を fractal-dev-workflow リポジトリ内でのみ実行 | hooks/reinstall-plugin.sh |
+| 590fc5e | 2026-02-20 | chore: bump version to 0.12.1 | .claude-plugin/plugin.json |
 | 0246ba2 | 2026-02-20 | fix: プラグインテスト実行で発見した19件の問題を修正 | marketplace.json, check-approval.sh, check-commit-context.sh, hooks.json, reinstall-plugin.sh, session-init.sh, workflow-lib.sh, codex-wrapper.sh, workflow-manager.sh, failure-memory/SKILL.md, implementation/SKILL.md, post-merge-execute/SKILL.md, user-guide/SKILL.md, using-workflow/SKILL.md, test-workflow-approval.sh |
 | b48a094 | 2026-02-20 | chore: bump version to 0.12.0 | .claude-plugin/plugin.json |
 | 658c192 | 2026-02-20 | feat: Phase 1開始時にworktreeを作成し全Phaseで作業 | skills/dev-workflow/SKILL.md, skills/implementation/SKILL.md, skills/design/SKILL.md, skills/chrome-debug/SKILL.md, docs/workflow-flow.md, scripts/workflow-manager.sh, commands/dev-resume.md |
@@ -96,6 +99,12 @@
 | f289b42 | - | chore: バージョン0.4.0にアップデート | - |
 
 ## 重要な決定事項
+
+### reinstall-plugin.sh を fractal-dev-workflow リポジトリ内でのみ実行（2026-02-20）
+- **問題**: `hooks/reinstall-plugin.sh` はプラグイン自身のリポジトリ専用処理だが、他プロジェクトの SessionEnd フックでも実行されていた
+- **修正**: スクリプト冒頭で `git rev-parse --show-toplevel` で CURRENT_REPO を取得し、`SOURCE_DIR`（プラグインのソースディレクトリ）と物理パスで比較（`pwd -P` でシンボリックリンク解決）。一致しない場合は即 `exit 0` でスキップ
+- **実装パターン**: `check-docs.sh` と同様の CURRENT_REPO チェック方式を採用
+- **対象ファイル**: `hooks/reinstall-plugin.sh`（9行追加）
 
 ### プラグインテストで発見した19件の問題を修正（2026-02-20）
 
@@ -436,6 +445,7 @@
 | 2026-02-20 | check-approval.shがユーザー承認待ちのループに入り、自動遷移テストが全て失敗した | 承認フローのテストは自動遷移ケースを必ず含め、ロック状態を検出できるタイムアウトを設ける |
 | 2026-02-20 | post-merge-execute/SKILL.mdが存在しない `post-merge-create` エージェントを参照していた | エージェント参照はSKILL.md更新時に必ずagents/ディレクトリと照合して存在確認する |
 | 2026-02-20 | workflow-lib.shのget_workflow_dir()でcdが失敗すると空パスになり、ルートディレクトリ（/）配下にワークフローディレクトリが生成される危険があった | cdコマンドは必ず終了コードを確認し、失敗時はフォールバック先を明示的に指定する |
+| 2026-02-20 | reinstall-plugin.sh が他プロジェクトの SessionEnd でも実行されていた | フック冒頭で CURRENT_REPO と SOURCE_DIR を物理パス（pwd -P）で比較し、対象外リポジトリでは即 exit 0 するスコープガードを実装する（check-docs.sh と同パターン） |
 | 2026-02-20 | check-docs.shが他プロジェクトのワークツリーでも誤作動していた | フック冒頭でREPO_ROOTとPLUGIN_ROOTを比較し、対象外リポジトリでは即exit 0するスコープガードを実装する |
 | 2026-02-20 | コミットメッセージ内に「git push」を含むと、check-docs.shのgrepコマンド判定が誤検出する | grepでコマンド判定する際は、コマンド引数（コミットメッセージ等）の内容もマッチする可能性があることを常に考慮し、コマンド部分のみを抽出して比較する |
 | 2026-02-19 | サブエージェントのレポート出力がファイル保存されていなかった | スキルに出力ファイルパス（docs/audits/YYYY-MM-DD.md）と保存コマンドを明記し、出力要件を強制化する |
@@ -451,6 +461,7 @@
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-20 | reinstall-plugin.sh が他プロジェクトの SessionEnd でも実行されていた問題を修正。check-docs.sh と同様の CURRENT_REPO チェックを実装し、fractal-dev-workflow リポジトリ内でのみ動作するよう制限 |
 | 2026-02-20 | プラグインのテスト実行と問題点調査を実施し、19件の問題（P0:2件、P1:7件、P2:5件、P3:2件）を発見・修正。主な修正は承認ロジックのデッドロック解消、marketplace.jsonバージョン不整合、存在しないエージェント参照、workflow-lib.shの空パスリスク、codex-wrapper.shのインジェクション脆弱性、ドキュメント整合性修正、session-init.shのjq化、ワークフローID連番衝突防止、パス汎用化。テスト: test-workflow-approval.sh 29/29 PASS |
 | 2026-02-20 | worktree 作成タイミングを Phase 5 から Phase 1（ワークフロー開始直後）に前倒し。メインリポジトリでの並行作業ブロックを解消。ブランチ命名: workflow/{workflowId}、ベースディレクトリ: /Users/t.asai/code/fractal-worktrees |
 | 2026-02-20 | ワークフロー保存先を `~/.claude/fractal-workflow/{hash}/` から `{repo}/.git/fractal-workflow/` に変更。ワークツリー間共有のため `git rev-parse --git-common-dir` を使用する方式に変更 |
