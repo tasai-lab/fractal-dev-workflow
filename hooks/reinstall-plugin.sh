@@ -26,6 +26,15 @@ VERSION=$(cat "$SOURCE_DIR/.claude-plugin/plugin.json" 2>/dev/null | jq -r '.ver
 
 echo "  CACHE_DIR=$CACHE_DIR VERSION=$VERSION SOURCE_DIR=$SOURCE_DIR" >> "$LOG_FILE"
 
+# このプラグインのリポジトリ内でのみ動作（他プロジェクトではスキップ）
+CURRENT_REPO=$(git rev-parse --show-toplevel 2>/dev/null || echo "")
+RESOLVED_CURRENT=$(cd "$CURRENT_REPO" 2>/dev/null && pwd -P || echo "")
+RESOLVED_SOURCE_CHECK=$(cd "$SOURCE_DIR" 2>/dev/null && pwd -P || echo "")
+if [[ -z "$CURRENT_REPO" ]] || [[ "$RESOLVED_CURRENT" != "$RESOLVED_SOURCE_CHECK" ]]; then
+    echo "  SKIP: not in fractal-dev-workflow repo (current: $RESOLVED_CURRENT)" >> "$LOG_FILE"
+    exit 0
+fi
+
 # ソースディレクトリが存在しなければ何もしない
 if [[ ! -d "$SOURCE_DIR" ]]; then
     echo "  SKIP: SOURCE_DIR not found" >> "$LOG_FILE"
