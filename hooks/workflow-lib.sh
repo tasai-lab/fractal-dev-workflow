@@ -1,14 +1,17 @@
 #!/bin/bash
 # workflow-lib.sh - ワークフロー共通関数
 
-# ワークツリー固有のワークフローディレクトリを返す
+# リポジトリ共通のワークフローディレクトリを返す（ワークツリー間で共有）
+# git-common-dir は主リポジトリ・ワークツリーどちらからでも同じ .git を返す
 get_workflow_dir() {
-    local worktree_root
-    worktree_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-    local worktree_hash
-    worktree_hash=$(printf '%s' "$worktree_root" | md5 -q 2>/dev/null || printf '%s' "$worktree_root" | md5sum | cut -c1-12)
-    worktree_hash="${worktree_hash:0:12}"
-    echo "$HOME/.claude/fractal-workflow/$worktree_hash"
+    local git_common_dir
+    git_common_dir=$(git rev-parse --git-common-dir 2>/dev/null)
+    if [[ -n "$git_common_dir" ]]; then
+        # 相対パスを絶対パスに変換
+        echo "$(cd "$git_common_dir" && pwd)/fractal-workflow"
+    else
+        echo "$(pwd)/.git/fractal-workflow"
+    fi
 }
 
 # フック共通ログ関数

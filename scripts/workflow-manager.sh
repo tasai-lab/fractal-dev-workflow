@@ -11,7 +11,8 @@ if [[ -f "$LIB_PATH" ]]; then
     source "$LIB_PATH"
     WORKFLOW_DIR="${WORKFLOW_DIR:-$(get_workflow_dir)}"
 else
-    WORKFLOW_DIR="${WORKFLOW_DIR:-$HOME/.claude/fractal-workflow}"
+    GIT_COMMON=$(git rev-parse --git-common-dir 2>/dev/null)
+    WORKFLOW_DIR="${WORKFLOW_DIR:-${GIT_COMMON:-.git}/fractal-workflow}"
 fi
 
 mkdir -p "$WORKFLOW_DIR"
