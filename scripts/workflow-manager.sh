@@ -55,7 +55,15 @@ get_state() {
     validate_workflow_id "$workflow_id"
     local state_file="$WORKFLOW_DIR/$workflow_id.json"
     if [[ -f "$state_file" ]]; then
-        cat "$state_file"
+        local content
+        content=$(cat "$state_file")
+        # JSON整合性チェック（並列書き込みによる破損を防御）
+        if echo "$content" | jq empty 2>/dev/null; then
+            echo "$content"
+        else
+            echo "WARNING: Corrupted state file: $state_file, returning empty state" >&2
+            echo "{}"
+        fi
     else
         echo "{}"
     fi
@@ -67,7 +75,24 @@ set_state() {
     local new_state="$2"
     local state_file="$WORKFLOW_DIR/$workflow_id.json"
     mkdir -p "$WORKFLOW_DIR"
-    echo "$new_state" > "$state_file"
+
+    # アトミック書き込み: mktemp + mv パターン
+    # mv は同一ファイルシステム内では POSIX rename(2) でアトミック
+    local tmp_file
+    tmp_file=$(mktemp "$WORKFLOW_DIR/.tmp-${workflow_id}.XXXXXX")
+    if echo "$new_state" > "$tmp_file"; then
+        if jq empty "$tmp_file" 2>/dev/null; then
+            mv "$tmp_file" "$state_file"
+        else
+            rm -f "$tmp_file"
+            echo "ERROR: Invalid JSON in set_state for $workflow_id" >&2
+            return 1
+        fi
+    else
+        rm -f "$tmp_file"
+        echo "ERROR: Failed to write temp file for $workflow_id" >&2
+        return 1
+    fi
 }
 
 # 現在フェーズ取得
@@ -144,9 +169,32 @@ record_approval() {
     approve "$@"
 }
 
+# ワークフロー作成用グローバルロック（同時作成によるID重複を防止）
+acquire_create_lock() {
+    local lock_dir="$WORKFLOW_DIR/.create.lock"
+    mkdir -p "$WORKFLOW_DIR"
+    local max_attempts=20
+    local attempt=0
+    while ! mkdir "$lock_dir" 2>/dev/null; do
+        attempt=$((attempt + 1))
+        if [[ $attempt -ge $max_attempts ]]; then
+            echo "ERROR: Cannot acquire create lock after ${max_attempts} attempts" >&2
+            exit 1
+        fi
+        sleep 0.1
+    done
+}
+
+release_create_lock() {
+    rm -rf "$WORKFLOW_DIR/.create.lock"
+}
+
 # 新規ワークフロー作成
 create_workflow() {
     local description="${1:-New workflow}"
+
+    acquire_create_lock
+
     local today="$(date +%Y%m%d)"
     # 既存IDの最大連番+1（途中削除があっても衝突しない）
     local max_seq=0
@@ -166,7 +214,7 @@ create_workflow() {
     local worktree_path="$worktree_base/workflow-$workflow_id"
     local worktree_branch="workflow/$workflow_id"
 
-    jq -n \
+    if ! jq -n \
       --arg wfid "$workflow_id" \
       --arg desc "$description" \
       --arg ts "$timestamp" \
@@ -193,8 +241,13 @@ create_workflow() {
         },
         createdAt: $ts,
         mode: $mode
-      }' > "$state_file"
+      }' > "$state_file"; then
+        release_create_lock
+        echo "ERROR: Failed to create workflow state file for $workflow_id" >&2
+        exit 1
+    fi
 
+    release_create_lock
     echo "$workflow_id"
 }
 

@@ -57,6 +57,24 @@ for d in "$HOME/.claude/plugins/cache"/temp_git_*; do
     fi
 done
 
+# 並列セッション終了時の競合防止ロック
+REINSTALL_LOCK="/tmp/fractal-reinstall-plugin.lock"
+
+acquire_reinstall_lock() {
+    local max_attempts=30
+    local attempt=0
+    while ! mkdir "$REINSTALL_LOCK" 2>/dev/null; do
+        attempt=$((attempt + 1))
+        if [[ $attempt -ge $max_attempts ]]; then
+            echo "  WARN: Could not acquire reinstall lock after ${max_attempts} attempts, skipping" >> "$LOG_FILE"
+            exit 0  # 安全にスキップ（致命的ではない）
+        fi
+        sleep 0.2
+    done
+    trap "rm -rf '$REINSTALL_LOCK'" EXIT
+    echo "  lock acquired" >> "$LOG_FILE"
+}
+
 # installed_plugins.json更新関数
 update_installed_plugins() {
     local install_path="$1"
@@ -104,6 +122,9 @@ update_installed_plugins() {
 INSTALL_PATH="$CACHE_DIR/$VERSION"
 GIT_SHA=$(git -C "$SOURCE_DIR" rev-parse HEAD 2>/dev/null || echo "unknown")
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# 排他制御: 並列セッション終了時のキャッシュ操作競合を防止
+acquire_reinstall_lock
 
 # 既にシンボリックリンクなら installed_plugins.json の更新のみ行ってスキップ
 if [[ -L "$CACHE_DIR/$VERSION" ]]; then

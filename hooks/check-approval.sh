@@ -6,6 +6,15 @@ cat > /dev/null
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/workflow-lib.sh"
+
+# チームメンバーの場合はPhaseゲートをバイパス
+# TeamCreate で起動されたチームメンバーはリーダーの管理下で動作するため、
+# 個別のPhase承認チェックは不要
+if is_team_member; then
+    hook_log "check-approval" "SKIP: team member detected (team_name=${CLAUDE_CODE_TEAM_NAME:-} agent=${CLAUDE_CODE_AGENT_NAME:-}), bypassing phase gate"
+    exit 0
+fi
+
 WORKFLOW_DIR=$(get_workflow_dir)
 
 # アクティブなワークフローを探す

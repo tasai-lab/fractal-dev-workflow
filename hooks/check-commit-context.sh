@@ -5,6 +5,43 @@
 INPUT=$(cat)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/workflow-lib.sh" 2>/dev/null || true
+
+# === 追加: チームメンバー・スコープ制御 ===
+
+# 1. チームメンバーの場合はスキップ
+# チームメンバーは親エージェントが管理するため、個別のコンテキストドキュメント更新は不要
+if is_team_member; then
+    hook_log "check-commit-context" "SKIP: team member detected, skipping context update"
+    exit 0
+fi
+
+# 2. アクティブなワークフローが存在する場合のみ実行
+# ワークフロー外のgit commitでは不要
+WORKFLOW_DIR=$(get_workflow_dir 2>/dev/null || echo "")
+if [[ -n "$WORKFLOW_DIR" ]]; then
+    active_wf=$(find "$WORKFLOW_DIR" -name "wf-*.json" -exec grep -l '"status": "active"' {} \; 2>/dev/null | head -1)
+    if [[ -z "$active_wf" ]]; then
+        exit 0
+    fi
+fi
+
+# 3. デバウンス: 30秒以内の重複実行を防止
+# 複数の連続コミットで同じ指示が多重発火するのを防ぐ
+DEBOUNCE_FILE="/tmp/fractal-context-update-debounce"
+DEBOUNCE_SECONDS=30
+if [[ -f "$DEBOUNCE_FILE" ]]; then
+    last_ts=$(cat "$DEBOUNCE_FILE" 2>/dev/null || echo "0")
+    now_ts=$(date +%s)
+    elapsed=$((now_ts - last_ts))
+    if [[ $elapsed -lt $DEBOUNCE_SECONDS ]]; then
+        hook_log "check-commit-context" "SKIP: debounce (${elapsed}s < ${DEBOUNCE_SECONDS}s)"
+        exit 0
+    fi
+fi
+date +%s > "$DEBOUNCE_FILE"
+
+# === 追加ここまで ===
+
 TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null || true)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null || true)
 

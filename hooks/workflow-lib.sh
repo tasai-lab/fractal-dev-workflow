@@ -33,3 +33,36 @@ hook_error() {
     local message="$2"
     echo "$(date '+%Y-%m-%d %H:%M:%S') [$hook_name] ERROR: $message" >> "$HOOK_LOG_FILE"
 }
+
+# チームメンバー判定関数
+# エージェントチーム（TeamCreate）のチームメンバーとして動作しているかを判定する
+# 戻り値: 0=チームメンバー, 1=非チームメンバー（単独セッション）
+#
+# Claude Code がチームメンバーセッションに設定する可能性のある環境変数をチェックする
+# 環境変数が未設定の場合はフォールバックとしてマーカーファイルを確認する
+is_team_member() {
+    # 第1層: Claude Code 環境変数チェック
+    # TeamCreate で起動されたチームメンバーセッションにはこれらの環境変数が設定される
+    if [[ -n "${CLAUDE_CODE_TEAM_NAME:-}" ]]; then
+        return 0
+    fi
+    if [[ -n "${CLAUDE_CODE_AGENT_NAME:-}" ]]; then
+        return 0
+    fi
+    if [[ -n "${CLAUDE_CODE_PARENT_SESSION_ID:-}" ]]; then
+        return 0
+    fi
+
+    # 第2層: マーカーファイルチェック（環境変数が利用できない場合のフォールバック）
+    # SubagentStart フックまたは外部から登録されたセッションIDを確認する
+    local marker_dir="/tmp/fractal-team-sessions"
+    if [[ -d "$marker_dir" ]]; then
+        # 現在のプロセスIDをもとにマーカーを確認（セッションID不明の場合の代替）
+        # $$ はシェルのPID、$PPID は親プロセスID
+        if [[ -f "$marker_dir/$$" ]] || [[ -f "$marker_dir/$PPID" ]]; then
+            return 0
+        fi
+    fi
+
+    return 1  # 非チームメンバー（通常の単独セッション）
+}
