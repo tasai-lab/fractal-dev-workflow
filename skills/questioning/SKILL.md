@@ -63,24 +63,20 @@ AskUserQuestion:
 - "新規作成" → `mode: "new-creation"`
 - "既存修正" → `mode: "existing-modification"`
 
-#### Chrome挙動確認の要否（existing-modificationモードのみ）
+#### Chrome挙動確認の要否（existing-modificationモードのみ・Claude自律判断）
 
-**条件**: `mode: "existing-modification"` の場合のみ実行。`mode: "new-creation"` の場合はスキップ。
+**条件**: `mode: "existing-modification"` の場合のみ判断。`mode: "new-creation"` の場合はスキップ（`chromeInvestigation: false`）。
 
-````
-AskUserQuestion:
-  question: "Phase 2（調査）でChrome挙動確認を実施しますか？"
-  header: "Chrome確認"
-  options:
-    - label: "実施する（推奨）"
-      description: "既存UIの現在の動作を記録。修正前のベースライン確認やバグ再現に有効"
-    - label: "スキップする"
-      description: "UIに影響しない変更の場合。バックエンドのみの修正など"
-````
+Claudeが以下の基準で自律的に判断し、workflow stateの `chromeInvestigation` フィールドに保存する（ユーザーへの確認は不要）:
 
-回答を workflow state の `chromeInvestigation` フィールドに保存:
-- "実施する" → `chromeInvestigation: true`
-- "スキップする" → `chromeInvestigation: false`
+| 条件 | 判定 |
+|------|------|
+| UIコンポーネント・画面の変更を含む | `true` |
+| CSS・スタイル・レイアウトの変更を含む | `true` |
+| フロントエンドのロジック変更を含む | `true` |
+| バックエンドAPIのみの変更 | `false` |
+| DBスキーマのみの変更 | `false` |
+| 型定義・ユーティリティのみの変更 | `false` |
 
 #### モード別の質問観点
 
