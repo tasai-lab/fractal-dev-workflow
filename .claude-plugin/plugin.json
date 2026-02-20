@@ -1,6 +1,6 @@
 {
   "name": "fractal-dev-workflow",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "9フェーズワークフロー、サブエージェント駆動実装、Codexレビュー統合を提供する自律開発支援プラグイン",
   "author": {
     "name": "t.asai"
