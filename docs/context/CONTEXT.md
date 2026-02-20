@@ -1,10 +1,10 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-20（0704650）
+最終更新: 2026-02-20（a50bcdb）
 
 ## 現在の状態
 
-- **Phase**: 安定稼働中（フックスコープ修正完了）
+- **Phase**: 安定稼働中（Slice管理統合完了）
 - **進行中タスク**: なし
 - **バージョン**: 0.12.2（push時にconventional commitsで自動バンプ）
 
@@ -12,6 +12,8 @@
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| a50bcdb | 2026-02-20 | feat(workflow): Slice管理をworkflow-manager.shとtask listに統合 | scripts/workflow-manager.sh, skills/design/SKILL.md, skills/dev-workflow/SKILL.md, skills/implementation/SKILL.md |
+| 7576145 | 2026-02-20 | docs(context): コンテキストドキュメント更新 - reinstall-plugin.sh スコープ修正（v0.12.2） | docs/context/CONTEXT.md |
 | 0704650 | 2026-02-20 | chore: bump version to 0.12.2 | .claude-plugin/plugin.json |
 | 54a965f | 2026-02-20 | fix(hooks): reinstall-plugin.sh を fractal-dev-workflow リポジトリ内でのみ実行 | hooks/reinstall-plugin.sh |
 | 590fc5e | 2026-02-20 | chore: bump version to 0.12.1 | .claude-plugin/plugin.json |
@@ -99,6 +101,38 @@
 | f289b42 | - | chore: バージョン0.4.0にアップデート | - |
 
 ## 重要な決定事項
+
+### Slice管理をworkflow-manager.shとtask listに統合（2026-02-20）
+
+#### workflow-manager.sh への Slice コマンド追加
+- **追加コマンド**:
+  - `add-slice <id> <slice_num> <name> [taskId]`: Phase 5 の slices フィールドに Slice を登録
+  - `update-slice <id> <slice_num> <status>`: Slice の状態を更新（pending/in_progress/completed）
+    - `in_progress`: `currentSlice` フィールドと `startedAt` タイムスタンプも同時更新
+    - `completed`: `completedAt` タイムスタンプも同時更新
+  - `slices <id>`: Phase 5 の Slice 一覧を表示（currentSlice + slices フィールド）
+- **スキーマ変更**: `create_workflow()` の Phase 5 定義に `currentSlice: null, slices: {}` フィールドを追加
+- **対象ファイル**: `scripts/workflow-manager.sh`（66行追加・1行変更）
+
+#### design/SKILL.md の Slice 登録手順を再設計
+- **旧仕様**: TaskCreate でタスクを登録し、workflow-manager.sh add-task でワークフロー状態に記録
+- **新仕様**: Slice登録（TaskCreate + add-slice）を先に行い、その後 Slice 内の実装タスクを登録する2段階方式に変更
+- **TaskCreate の subject**: `[S1]` などのプレフィックスで所属 Slice を明示
+- **登録順序**:
+  1. Slice ごとに `TaskCreate` + `workflow-manager.sh add-slice` を実行
+  2. Slice 間依存関係を `TaskUpdate addBlockedBy` で設定
+  3. 各 Slice 内の実装タスクを `TaskCreate` で登録（`[S{n}]` プレフィックス付き）
+- **完了チェックリストに追加**: Slice 登録完了・Slice 間依存関係設定済みの2項目を追加（新規作成・既存修正の両モード）
+- **対象ファイル**: `skills/design/SKILL.md`（49行変更）
+
+#### dev-workflow/SKILL.md への Phase 5 開始時 Slice 確認手順追加
+- **追加内容**: Phase 5 開始前に `workflow-manager.sh slices {workflow_id}` で Phase 3 登録 Slice の存在を確認する手順
+- **未登録時**: `implementation/SKILL.md` の Slice 登録手順を参照するよう誘導
+- **対象ファイル**: `skills/dev-workflow/SKILL.md`（10行追加）
+
+#### implementation/SKILL.md への Slice 状態更新手順追加
+- **追加内容**: 各 Slice 開始時に `update-slice ... in_progress`、完了時に `update-slice ... completed` を実行する手順
+- **対象ファイル**: `skills/implementation/SKILL.md`（変更あり）
 
 ### reinstall-plugin.sh を fractal-dev-workflow リポジトリ内でのみ実行（2026-02-20）
 - **問題**: `hooks/reinstall-plugin.sh` はプラグイン自身のリポジトリ専用処理だが、他プロジェクトの SessionEnd フックでも実行されていた
@@ -461,6 +495,7 @@
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-20 | Slice管理を workflow-manager.sh と task list に統合。add-slice/update-slice/slices コマンドを workflow-manager.sh に追加し、Phase 5 のスキーマに currentSlice/slices フィールドを追加。design/SKILL.md の Slice 登録手順を Slice 先行登録 → タスク登録の2段階方式に変更。dev-workflow/SKILL.md に Phase 5 開始時の Slice 確認手順を追加 |
 | 2026-02-20 | reinstall-plugin.sh が他プロジェクトの SessionEnd でも実行されていた問題を修正。check-docs.sh と同様の CURRENT_REPO チェックを実装し、fractal-dev-workflow リポジトリ内でのみ動作するよう制限 |
 | 2026-02-20 | プラグインのテスト実行と問題点調査を実施し、19件の問題（P0:2件、P1:7件、P2:5件、P3:2件）を発見・修正。主な修正は承認ロジックのデッドロック解消、marketplace.jsonバージョン不整合、存在しないエージェント参照、workflow-lib.shの空パスリスク、codex-wrapper.shのインジェクション脆弱性、ドキュメント整合性修正、session-init.shのjq化、ワークフローID連番衝突防止、パス汎用化。テスト: test-workflow-approval.sh 29/29 PASS |
 | 2026-02-20 | worktree 作成タイミングを Phase 5 から Phase 1（ワークフロー開始直後）に前倒し。メインリポジトリでの並行作業ブロックを解消。ブランチ命名: workflow/{workflowId}、ベースディレクトリ: /Users/t.asai/code/fractal-worktrees |
