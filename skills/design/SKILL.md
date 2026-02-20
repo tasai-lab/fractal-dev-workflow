@@ -520,27 +520,46 @@ Task 1 (型定義)
 - [ ] 並列実行可能なグループが特定されている
 - [ ] TaskCreate で全タスクが登録される
 
-### Claude Code Tasks による登録（必須）
+### Slice登録（必須）
 
-タスク一覧確定後、TaskCreate で全タスクを登録し、TaskUpdate で依存関係を設定:
+各SliceをTaskCreateとworkflow-manager.sh add-sliceの**両方**に登録:
 
-```
-# 各タスクを登録
-TaskCreate: subject="Task 1: 型定義", description="types/contact.ts, types/contact.test.ts の作成"
-TaskCreate: subject="Task 2: API実装", description="api/contacts/route.ts の作成"
-TaskCreate: subject="Task 3: UI実装", description="components/ContactForm.tsx の作成"
+````
+TaskCreate(subject="Slice 1: 最小動作版 (MVP)", description="基本データ型 + 最小API + 最小UI + 正常系テスト", activeForm="Slice 1 実装中")
+TaskCreate(subject="Slice 2: エラーハンドリング", description="エラー型 + APIエラー + UIエラー表示 + 異常系テスト", activeForm="Slice 2 実装中")
+TaskCreate(subject="Slice 3: エッジケース", description="権限チェック + 監査ログ + 境界値対応 + Integration Test", activeForm="Slice 3 実装中")
+
+# Slice間依存関係
+TaskUpdate: Slice 2 addBlockedBy: [Slice 1]
+TaskUpdate: Slice 3 addBlockedBy: [Slice 2]
+
+# workflow-manager.sh にも登録（worktreeスコープ）
+bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh add-slice {workflow_id} 1 "最小動作版 (MVP)" {slice1_taskId}
+bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh add-slice {workflow_id} 2 "エラーハンドリング" {slice2_taskId}
+bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh add-slice {workflow_id} 3 "エッジケース" {slice3_taskId}
+````
+
+**重要:** TaskCreate と workflow-manager.sh の add-slice を両方実行すること。
+- TaskCreate: Claude Code のタスク進捗表示に使用
+- add-slice: ワークフロー状態JSONのPhase 5 slicesフィールドに記録
+
+### 実装タスク登録
+
+Slice登録完了後、各Slice内の実装タスクをTaskCreateで登録:
+
+````
+# 各タスクを登録（subject に [S1] プレフィックスで所属Sliceを明示）
+TaskCreate: subject="[S1] Task 1: 型定義", description="types/contact.ts, types/contact.test.ts の作成"
+TaskCreate: subject="[S1] Task 2: API実装", description="api/contacts/route.ts の作成"
+TaskCreate: subject="[S1] Task 3: UI実装", description="components/ContactForm.tsx の作成"
 
 # 依存関係の設定
 TaskUpdate: Task 2 addBlockedBy: [Task 1]
 TaskUpdate: Task 3 addBlockedBy: [Task 1]
 
 # workflow-manager.sh にも登録（worktreeスコープ）
-bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh add-task {workflow_id} {taskId} "Task 1: 型定義" 5
-```
-
-**重要:** TaskCreate と workflow-manager.sh の add-task を両方実行すること。
-- TaskCreate: Claude Code のタスク進捗表示に使用
-- add-task: ワークフロー状態JSONに記録（worktreeスコープ）
+bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh add-task {workflow_id} {taskId} "[S1] Task 1: 型定義" 5
+````
 
 ---
 
@@ -724,6 +743,8 @@ git worktree remove ../fractal-worktrees/project-feature-ui
   - [ ] 各タスクが1ファイル単位
   - [ ] 依存関係が明示
   - [ ] TaskCreate で全タスク登録
+  - [ ] Slice登録完了（TaskCreate + workflow-manager.sh add-slice）
+  - [ ] Slice間依存関係設定済み（TaskUpdate addBlockedBy）
 - [ ] **追加worktree計画完了**（並列実装が必要な場合のみ）
   - [ ] タスクグループに追加worktree割り当て（メインworktreeはPhase 1で作成済み）
   - [ ] マージ順序が依存関係を反映
@@ -749,6 +770,8 @@ git worktree remove ../fractal-worktrees/project-feature-ui
   - [ ] 各タスクが1ファイル単位
   - [ ] 依存関係が明示
   - [ ] TaskCreate で全タスク登録
+  - [ ] Slice登録完了（TaskCreate + workflow-manager.sh add-slice）
+  - [ ] Slice間依存関係設定済み（TaskUpdate addBlockedBy）
 
 **承認:** ★ユーザー承認必須 → `bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase {workflow_id} {next_phase}`
 

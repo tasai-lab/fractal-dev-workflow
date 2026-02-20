@@ -120,14 +120,16 @@ Task(subagent_type="fractal-dev-workflow:implementer", model="sonnet"):
 各Slice開始時・完了時にタスク状態を更新:
 
 ```
-# Slice開始時
+# Slice N 開始時
 TaskUpdate: taskId={slice_task_id}, status="in_progress"
-bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh update-task {workflow_id} {slice_task_id} in_progress
+bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh update-slice {workflow_id} {N} in_progress
 
-# Slice完了時（テスト・code-simplifier完了後）
+# Slice N 完了時（テスト・code-simplifier完了後）
 TaskUpdate: taskId={slice_task_id}, status="completed"
-bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh update-task {workflow_id} {slice_task_id} completed
+bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh update-slice {workflow_id} {N} completed
 ```
+
+`{N}` は Slice番号（1, 2, 3）。update-slice は currentSlice の更新と startedAt/completedAt の記録も自動で行う。
 
 ---
 
@@ -348,10 +350,15 @@ TeamDelete
 
 ### 状態更新
 
-バナー表示と同時に、workflow-manager.sh 経由でワークフロー状態を更新:
-- Phase 5の `currentSlice` を該当Slice番号に設定
-- 該当Sliceの `status` を `"in_progress"` に設定
-- 該当Sliceの `startedAt` を現在時刻に設定
+バナー表示と同時に以下を実行:
+
+```bash
+# TaskCreate UIの状態更新
+TaskUpdate: taskId={slice_task_id}, status="in_progress"
+
+# workflow-manager.sh でJSON状態更新（currentSlice + startedAt を自動設定）
+bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh update-slice {workflow_id} {N} in_progress
+```
 
 ---
 
@@ -380,13 +387,23 @@ TeamDelete
 
 ### Slice登録
 
-設計完了後、各SliceをTaskCreateで登録:
+**Phase 3（設計）完了時に登録済み**のはず。Phase 5開始時に登録状態を確認:
+
 ```
-TaskCreate: subject="Slice 1: 最小動作版", description="基本データ型 + 最小API + 最小UI + 正常系テスト"
-TaskCreate: subject="Slice 2: バリデーション", description="入力バリデーション + エラー型 + UIエラー表示"
-TaskCreate: subject="Slice 3: 権限・エッジケース", description="権限チェック + 監査ログ + 境界値対応"
+bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh slices {workflow_id}
+```
+
+未登録の場合のみ、以下を実行（Phase 3: design/SKILL.md のSlice登録手順を参照）:
+
+```
+TaskCreate(subject="Slice 1: 最小動作版 (MVP)", description="基本データ型 + 最小API + 最小UI + 正常系テスト", activeForm="Slice 1 実装中")
+TaskCreate(subject="Slice 2: エラーハンドリング", description="エラー型 + APIエラー + UIエラー表示 + 異常系テスト", activeForm="Slice 2 実装中")
+TaskCreate(subject="Slice 3: エッジケース", description="権限チェック + 監査ログ + 境界値対応 + Integration Test", activeForm="Slice 3 実装中")
 TaskUpdate: Slice 2 addBlockedBy: [Slice 1]
 TaskUpdate: Slice 3 addBlockedBy: [Slice 2]
+bash workflow-manager.sh add-slice {workflow_id} 1 "最小動作版 (MVP)" {slice1_taskId}
+bash workflow-manager.sh add-slice {workflow_id} 2 "エラーハンドリング" {slice2_taskId}
+bash workflow-manager.sh add-slice {workflow_id} 3 "エッジケース" {slice3_taskId}
 ```
 
 ---

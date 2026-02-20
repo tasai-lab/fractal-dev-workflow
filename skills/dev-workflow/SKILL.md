@@ -596,6 +596,16 @@ git rev-parse --git-dir  # .git ファイル（ディレクトリでない）で
 git worktree add /Users/t.asai/code/fractal-worktrees/{project}-{feature}-{group} -b feature/{feature}-{group}
 ```
 
+### Phase 5開始時のSlice確認
+
+Phase 5開始前に、Phase 3で登録されたSliceが存在することを確認:
+
+```bash
+bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh slices {workflow_id}
+```
+
+Sliceが未登録の場合は `implementation/SKILL.md` のSlice登録手順を参照。
+
 ### 縦切り実装の順序
 
 ```markdown
@@ -606,13 +616,13 @@ git worktree add /Users/t.asai/code/fractal-worktrees/{project}-{feature}-{group
 - [ ] 正常系Unit Test
 → **ここで一度動かす**
 
-## Slice 2: バリデーション + エラーハンドリング
+## Slice 2: エラーハンドリング
 - [ ] 入力バリデーション
 - [ ] エラー型追加
 - [ ] UIエラー表示
 - [ ] 異常系Unit Test
 
-## Slice 3: 権限・監査・エッジケース
+## Slice 3: エッジケース
 - [ ] 権限チェック
 - [ ] 監査ログ
 - [ ] 境界値対応
@@ -1194,9 +1204,9 @@ bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh ap
       "status": "pending",
       "currentSlice": null,
       "slices": {
-        "1": {"status": "pending"},
-        "2": {"status": "pending"},
-        "3": {"status": "pending"}
+        "1": {"status": "pending", "name": "最小動作版 (MVP)", "taskId": null},
+        "2": {"status": "pending", "name": "エラーハンドリング", "taskId": null},
+        "3": {"status": "pending", "name": "エッジケース", "taskId": null}
       }
     },
     "6": {"status": "pending"},

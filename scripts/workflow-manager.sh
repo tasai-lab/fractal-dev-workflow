@@ -185,7 +185,7 @@ create_workflow() {
           "2": {name: "調査", status: "pending"},
           "3": {name: "設計", status: "pending"},
           "4": {name: "計画レビュー", status: "pending"},
-          "5": {name: "実装", status: "pending"},
+          "5": {name: "実装", status: "pending", currentSlice: null, slices: {}},
           "6": {name: "Chromeデバッグ", status: "pending"},
           "7": {name: "コードレビュー", status: "pending"},
           "8": {name: "テスト", status: "pending"},
@@ -245,6 +245,64 @@ update_task() {
     set_state "$workflow_id" "$updated"
 }
 
+# Slice追加（Phase 5のslicesフィールドに登録）
+add_slice() {
+    local workflow_id="$1"
+    validate_workflow_id "$workflow_id"
+    local slice_num="$2"
+    local name="$3"
+    local task_id="${4:-}"
+
+    acquire_lock "$workflow_id"
+    local state=$(get_state "$workflow_id")
+    local updated=$(echo "$state" | jq \
+      --arg sn "$slice_num" \
+      --arg nm "$name" \
+      --arg tid "$task_id" \
+      '.phases["5"].slices[$sn] = {status: "pending", name: $nm, taskId: (if $tid == "" then null else $tid end)}')
+    set_state "$workflow_id" "$updated"
+}
+
+# Slice状態更新
+update_slice() {
+    local workflow_id="$1"
+    validate_workflow_id "$workflow_id"
+    local slice_num="$2"
+    local status="$3"
+
+    acquire_lock "$workflow_id"
+    local state=$(get_state "$workflow_id")
+    local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+    local updated
+    if [[ "$status" == "in_progress" ]]; then
+        updated=$(echo "$state" | jq \
+          --arg sn "$slice_num" --arg st "$status" --arg ts "$timestamp" \
+          '.phases["5"].currentSlice = ($sn | tonumber) | .phases["5"].slices[$sn].status = $st | .phases["5"].slices[$sn].startedAt = $ts')
+    elif [[ "$status" == "completed" ]]; then
+        updated=$(echo "$state" | jq \
+          --arg sn "$slice_num" --arg st "$status" --arg ts "$timestamp" \
+          '.phases["5"].slices[$sn].status = $st | .phases["5"].slices[$sn].completedAt = $ts')
+    else
+        updated=$(echo "$state" | jq \
+          --arg sn "$slice_num" --arg st "$status" \
+          '.phases["5"].slices[$sn].status = $st')
+    fi
+    set_state "$workflow_id" "$updated"
+}
+
+# Slice一覧表示
+list_slices() {
+    local workflow_id="$1"
+    validate_workflow_id "$workflow_id"
+    local state=$(get_state "$workflow_id")
+    echo "$state" | jq '{
+      workflowId: .workflowId,
+      currentSlice: .phases["5"].currentSlice,
+      slices: (.phases["5"].slices // {})
+    }'
+}
+
 # アクティブなワークフロー一覧
 list_active() {
     find "$WORKFLOW_DIR" -name "wf-*.json" -exec basename {} .json \; 2>/dev/null | while read -r wf; do
@@ -273,6 +331,9 @@ Commands:
   tasks <id>                 List tasks in workflow
   add-task <id> <taskId> <subject> [phase]  Add task to workflow
   update-task <id> <taskId> <status>       Update task status
+  add-slice <id> <slice_num> <name> [taskId]  Add slice to Phase 5
+  update-slice <id> <slice_num> <status>      Update slice status (pending/in_progress/completed)
+  slices <id>                                 List slices in Phase 5
   help                      Show this help
 
 Examples:
@@ -296,6 +357,9 @@ case "${1:-help}" in
     tasks) tasks "${2:-}" ;;
     add-task) add_task "${2:-}" "${3:-}" "${4:-}" "${5:-}" ;;
     update-task) update_task "${2:-}" "${3:-}" "${4:-}" ;;
+    add-slice) add_slice "${2:-}" "${3:-}" "${4:-}" "${5:-}" ;;
+    update-slice) update_slice "${2:-}" "${3:-}" "${4:-}" ;;
+    slices) list_slices "${2:-}" ;;
     help|--help|-h) show_help ;;
     *)
         echo "Unknown command: $1" >&2
