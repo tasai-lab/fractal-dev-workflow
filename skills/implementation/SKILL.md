@@ -17,23 +17,25 @@ description: 計画承認後、実際のコード実装を開始する時に使�
 - 独立タスクは並列化
 - **共通化できるものはコンポーネントにする**
 
-## Worktree Enforcement（必須）
+## Worktree確認（Phase 1で作成済み）
 
-**CRITICAL: Phase 5の実装はworktreeで行うこと。worktreeなしでの実装は禁止。**
+**worktreeはPhase 1開始前に作成済み。worktree内で作業していることを確認すること。**
 
-Phase 5開始時の最初のアクション:
 ```bash
-# 必ず最初に実行（スキップ不可）
-git worktree add /path/to/worktrees/<branch-name>
-# 以降の全作業はworktreeディレクトリで実行
+# Phase 5 開始時の確認（worktreeはPhase 1で作成済み）
+git rev-parse --git-dir  # .git ファイルであればworktree内
+```
+
+並列実装用の追加worktreeが必要な場合（Phase 3設計で計画済み）:
+```bash
+git worktree add /Users/t.asai/code/fractal-worktrees/{project}-{feature}-{group} -b feature/{feature}-{group}
 ```
 
 **Red Flags:**
 | Thought | Reality |
 |---------|---------|
-| "小さい変更だからworktree不要" | 全ての実装はworktreeで行う |
-| "もう実装を始めてしまった" | 変更をstash → worktree作成 → stash pop |
-| "worktreeの作成が面倒" | mainブランチの汚染の方が面倒 |
+| "worktreeから出て作業した" | 全Phase（1-9）をworktree内で実施 |
+| "追加worktreeは面倒" | 並列実装には追加worktreeが必要 |
 
 ## The Iron Law
 
@@ -593,7 +595,7 @@ Slice 3 バナー表示 → 実装 → テストPass → code-simplifier → コ
 
 ## Completion Criteria
 
-- [ ] worktreeで作業していることを確認
+- [ ] worktree内で作業していることを確認（Phase 1で作成済み）
 - [ ] 全タスク完了
 - [ ] 各タスクにテスト
 - [ ] 全テスト Pass

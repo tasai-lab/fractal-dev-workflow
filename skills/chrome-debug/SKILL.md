@@ -73,14 +73,14 @@ Task(subagent_type="fractal-dev-workflow:chrome-debugger", model="sonnet"):
 ## Step 1: 環境準備（親エージェントが実行）
 
 ### サーバー起動ルール
-- **worktreeから起動すること**（Phase 5で作成したworktreeディレクトリ）
+- **worktreeから起動すること**（Phase 1で作成したworktreeディレクトリ）
 - **ポートは3100固定**（フォールバックしない）
 - **ポート使用中の場合は待機**（他のChrome検証が完了するまで）
 - **作業完了後は必ずサーバーを停止**
 
 ```bash
-# 1. worktreeディレクトリに移動
-cd /path/to/worktrees/<branch-name>
+# 1. worktreeディレクトリに移動（Phase 1で作成済み: /Users/t.asai/code/fractal-worktrees/workflow-{workflowId}）
+cd /Users/t.asai/code/fractal-worktrees/workflow-{workflowId}
 
 # 2. ポート使用状況確認
 if lsof -i :3100 > /dev/null 2>&1; then

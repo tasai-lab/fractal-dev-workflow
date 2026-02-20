@@ -544,10 +544,12 @@ bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh ad
 
 ---
 
-## E. worktree計画
+## E. 追加worktree計画（並列実装用）
 
 ### 目的
-依存関係のないタスクグループを**Git worktree で分離**し、並列開発を可能にする。
+依存関係のないタスクグループを**追加Git worktree で分離**し、並列開発を可能にする。
+メインworktreeはPhase 1開始前に作成済み（`workflow/{workflowId}` ブランチ）。
+ここでは並列実装のための**追加worktree**を計画する（並列実装が不要な場合はスキップ可）。
 
 ### worktree の利点
 
@@ -684,7 +686,7 @@ git worktree remove ../fractal-worktrees/project-feature-ui
 ### 依存グラフ
 [テキストまたは図]
 
-## E. worktree計画
+## E. 追加worktree計画（並列実装が必要な場合のみ）
 
 ### worktree一覧
 | # | worktree名 | ブランチ | タスク | 担当 |
@@ -722,8 +724,8 @@ git worktree remove ../fractal-worktrees/project-feature-ui
   - [ ] 各タスクが1ファイル単位
   - [ ] 依存関係が明示
   - [ ] TaskCreate で全タスク登録
-- [ ] **worktree計画完了**
-  - [ ] タスクグループにworktree割り当て
+- [ ] **追加worktree計画完了**（並列実装が必要な場合のみ）
+  - [ ] タスクグループに追加worktree割り当て（メインworktreeはPhase 1で作成済み）
   - [ ] マージ順序が依存関係を反映
   - [ ] クリーンアップ手順記載
 

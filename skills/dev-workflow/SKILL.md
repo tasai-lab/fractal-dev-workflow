@@ -53,6 +53,19 @@ description: 開発タスクを受けた時、機能実装・バグ修正・リ�
 - 該当Phaseの `status` を `"in_progress"` に設定
 - 該当Phaseの `startedAt` を現在時刻に設定
 
+### Worktree作成（ワークフロー開始直後）
+
+**ワークフロー作成後、Phase 1バナー表示前に必ず実行（スキップ不可）:**
+
+```bash
+git worktree add /Users/t.asai/code/fractal-worktrees/workflow-{workflowId} -b workflow/{workflowId}
+cd /Users/t.asai/code/fractal-worktrees/workflow-{workflowId}
+```
+
+以降の全Phase（1-9）をworktreeで作業する。worktree作成前にPhaseの作業を開始してはいけない。
+
+理由: メインリポジトリのブロック防止（並行作業時のブロック回避）、変更の分離、安全なロールバック
+
 ### UIタスクリスト初期化（Phase 1開始時のみ）
 
 **Phase 1開始時に必ず実行**。全9フェーズのタスクをTaskCreateで登録し、UIパネルを表示させる:
@@ -62,7 +75,7 @@ TaskCreate(subject="Phase 1: 質問 + 要件定義", description="曖昧さ排�
 TaskCreate(subject="Phase 2: 調査 + ドメイン整理", description="既存実装棚卸し・用語統一・ビジネスルール整理", activeForm="コードベース調査中")
 TaskCreate(subject="Phase 3: 契約設計", description="API仕様・DBスキーマ・エラー形式を先に固める", activeForm="契約設計中")
 TaskCreate(subject="Phase 4: Codex計画レビュー", description="既存実装照合・要件カバレッジをCodexが批判的検証", activeForm="計画レビュー中")
-TaskCreate(subject="Phase 5: 実装", description="縦切りで薄く通して太くする・TDD・worktree必須", activeForm="実装中")
+TaskCreate(subject="Phase 5: 実装", description="縦切りで薄く通して太くする・TDD", activeForm="実装中")
 TaskCreate(subject="Phase 6: Chromeデバッグ", description="実装のUI/挙動を実機検証・JSエラー・ネットワークエラー確認", activeForm="Chrome検証中")
 TaskCreate(subject="Phase 7: Codexコードレビュー", description="コード品質・テストカバレッジ・セキュリティをCodexがレビュー", activeForm="コードレビュー中")
 TaskCreate(subject="Phase 8: 検証", description="テストピラミッド実施・Unit→Integration→E2E", activeForm="検証中")
@@ -155,10 +168,10 @@ Task(subagent_type="fractal-dev-workflow:investigator")
 - 結果のみを親エージェントに返す
 - コンテキスト循環: コミット経由で引継ぎ
 
-### 実装時はworktree必須
-Phase 5（実装）は必ずworktreeで作業する。
-git worktree add /path/to/worktrees/<branch-name>
-理由: 変更の分離、並列作業、安全なロールバック
+### 全Phaseでworktree必須
+ワークフロー開始直後にworktreeを作成し、全Phase（1-9）をworktreeで作業する。
+git worktree add /Users/t.asai/code/fractal-worktrees/workflow-{workflowId} -b workflow/{workflowId}
+理由: メインリポジトリのブロック防止、変更の分離、安全なロールバック
 
 ## Subagent Configuration
 
@@ -209,7 +222,7 @@ Task(subagent_type="implementer", model="sonnet"):
 │  ─────────────────────────────────────────────────────────  │
 │  1機能をUI→API→ドメイン→DBまで最小で通す → 肉付け            │
 │  TDD (RED→GREEN→REFACTOR) + コンポーネント化                 │
-│  ★worktree必須: git worktree add /path/to/worktrees/<branch> │
+│  ★worktreeはPhase 1開始前に作成済み                           │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -456,7 +469,7 @@ questioning の流れ:
 - [ ] コンポーネント設計（props型、状態管理、ディレクトリ構成）
 - [ ] DBスキーマ/マイグレーション
 - [ ] テスト設計
-- [ ] タスク分解 + worktree計画
+- [ ] タスク分解 + 追加worktree計画（並列実装が必要な場合）
 
 **承認:** ★ユーザー承認必須 → Phase 4 Codexレビューへ
 
@@ -569,29 +582,19 @@ Codexによる2観点の批判的レビューで品質を保証。
 - **TDD**: RED→GREEN→REFACTOR
 - **コンポーネント化**: 2箇所以上で使うものは共通化
 
-### worktree必須
+### worktree確認（Phase 1で作成済み）
 
-**CRITICAL: worktreeなしでの実装は禁止。以下を Phase 5 開始時に必ず実行すること:**
-
-```bash
-# Phase 5 開始時の最初のアクション（スキップ不可）
-git worktree add /path/to/worktrees/<branch-name>
-cd /path/to/worktrees/<branch-name>
-```
-
-**worktree作成前に実装コードを書いてはいけない。**
-
-実装は必ずworktreeで作業する:
+worktreeはPhase 1開始前に作成済み。Phase 5開始時は作業中のディレクトリがworktree内であることを確認する。
 
 ```bash
-git worktree add /path/to/worktrees/<branch-name>
-cd /path/to/worktrees/<branch-name>
+# Phase 5 開始時の確認（worktreeはPhase 1で作成済み）
+git rev-parse --git-dir  # .git ファイル（ディレクトリでない）であればworktree内
 ```
 
-理由:
-- 変更の分離（メインブランチを汚さない）
-- 並列作業の安全性
-- 安全なロールバック
+並列実装のために追加worktreeが必要な場合は、Phase 3設計の計画に基づき作成:
+```bash
+git worktree add /Users/t.asai/code/fractal-worktrees/{project}-{feature}-{group} -b feature/{feature}-{group}
+```
 
 ### 縦切り実装の順序
 
@@ -1144,7 +1147,7 @@ Step 4: 実装（サブエージェント駆動）
 | "簡単だからそのまま実装" | 質問と調査をスキップするな |
 | "現在のタスクに含めよう" | 影響調査なしで統合するな |
 | "親エージェントで直接やる" | サブエージェント駆動を守れ |
-| "worktreeは不要" | 追加実装もworktreeで作業 |
+| "worktreeは不要" | 追加実装も必ずworktree内で作業（Phase 1で作成済み） |
 
 ---
 
@@ -1173,6 +1176,8 @@ bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh ap
   "taskDescription": "タスクの説明",
   "status": "active",
   "mode": "new-creation | existing-modification",
+  "worktreePath": "/Users/t.asai/code/fractal-worktrees/workflow-{workflowId}",
+  "worktreeBranch": "workflow/{workflowId}",
   "chromeInvestigation": false,
   "currentPhase": 3,
   "currentSlice": null,

@@ -156,16 +156,24 @@ create_workflow() {
     local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     local state_file="$WORKFLOW_DIR/$workflow_id.json"
 
+    local worktree_base="${FRACTAL_WORKTREE_BASE:-/Users/t.asai/code/fractal-worktrees}"
+    local worktree_path="$worktree_base/workflow-$workflow_id"
+    local worktree_branch="workflow/$workflow_id"
+
     jq -n \
       --arg wfid "$workflow_id" \
       --arg desc "$description" \
       --arg ts "$timestamp" \
       --arg mode "" \
+      --arg wtp "$worktree_path" \
+      --arg wtb "$worktree_branch" \
       '{
         workflowId: $wfid,
         taskDescription: $desc,
         status: "active",
         currentPhase: 1,
+        worktreePath: $wtp,
+        worktreeBranch: $wtb,
         phases: {
           "1": {name: "質問", status: "pending"},
           "2": {name: "調査", status: "pending"},
