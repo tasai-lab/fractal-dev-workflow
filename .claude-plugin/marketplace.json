@@ -16,7 +16,7 @@
         "url": "https://github.com/tasai-lab/fractal-dev-workflow.git"
       },
       "description": "9フェーズワークフロー、サブエージェント駆動実装、Codexレビュー統合を提供する自律開発支援プラグイン",
-      "version": "0.8.0",
+      "version": "0.12.0",
       "strict": true
     }
   ]

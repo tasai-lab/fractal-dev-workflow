@@ -191,9 +191,9 @@ test_is_approved_new_schema() {
     assert_equals "true" "$result" "is_approved() がuserApprovedAtを正しく確認すること"
 }
 
-# Test 7: Phase 5への遷移で Phase 4の2段階承認チェック
+# Test 7: Phase 5への遷移で Phase 4のCodex承認チェック（Codex承認のみで自動遷移）
 test_phase_transition_requires_approval() {
-    echo "Test 7: Phase 5への遷移で Phase 4の2段階承認チェック"
+    echo "Test 7: Phase 5への遷移で Phase 4のCodex承認チェック"
 
     local wf_id=$($WORKFLOW_MANAGER create "Test workflow")
 
@@ -210,42 +210,24 @@ test_phase_transition_requires_approval() {
         echo "  FAIL: Phase 4の承認なしでPhase 5に遷移できてしまった"
     fi
 
-    # Codex承認のみでPhase 5に遷移を試みる（失敗するはず）
+    # Codex承認のみでPhase 5に遷移（成功するはず：自動遷移モード）
     local wf_id2=$($WORKFLOW_MANAGER create "Test workflow 2")
     $WORKFLOW_MANAGER approve "$wf_id2" "4" "codex"
 
-    local error_output2=$($WORKFLOW_MANAGER set-phase "$wf_id2" "5" 2>&1 || echo "ERROR_OCCURRED")
+    $WORKFLOW_MANAGER set-phase "$wf_id2" "5"
+    local phase=$($WORKFLOW_MANAGER phase "$wf_id2")
 
-    if echo "$error_output2" | grep -q "ERROR"; then
-        TESTS_RUN=$((TESTS_RUN + 1))
-        TESTS_PASSED=$((TESTS_PASSED + 1))
-        echo "  PASS: Codex承認のみではPhase 5に遷移できないこと"
-    else
-        TESTS_RUN=$((TESTS_RUN + 1))
-        TESTS_FAILED=$((TESTS_FAILED + 1))
-        echo "  FAIL: Codex承認のみでPhase 5に遷移できてしまった"
-    fi
-
-    # 2段階承認後にPhase 5に遷移（成功するはず）
-    local wf_id3=$($WORKFLOW_MANAGER create "Test workflow 3")
-    $WORKFLOW_MANAGER approve "$wf_id3" "4" "codex"
-    $WORKFLOW_MANAGER approve "$wf_id3" "4" "user"
-
-    $WORKFLOW_MANAGER set-phase "$wf_id3" "5"
-    local phase=$($WORKFLOW_MANAGER phase "$wf_id3")
-
-    assert_equals "5" "$phase" "2段階承認後にPhase 5に遷移できること"
+    assert_equals "5" "$phase" "Codex承認のみでPhase 5に遷移できること（自動遷移）"
 }
 
-# Test 8: Phase 8への遷移で Phase 7の2段階承認チェック
+# Test 8: Phase 8への遷移で Phase 7のCodex承認チェック（Codex承認のみで自動遷移）
 test_phase_8_transition_requires_approval() {
-    echo "Test 8: Phase 8への遷移で Phase 7の2段階承認チェック"
+    echo "Test 8: Phase 8への遷移で Phase 7のCodex承認チェック"
 
     local wf_id=$($WORKFLOW_MANAGER create "Test workflow")
 
-    # Phase 7まで進める（Phase 4は承認済みと仮定）
+    # Phase 7まで進める（Phase 4はCodex承認のみで可）
     $WORKFLOW_MANAGER approve "$wf_id" "4" "codex"
-    $WORKFLOW_MANAGER approve "$wf_id" "4" "user"
     $WORKFLOW_MANAGER set-phase "$wf_id" "7"
 
     # Phase 7の承認なしでPhase 8に遷移を試みる（失敗するはず）
@@ -261,14 +243,13 @@ test_phase_8_transition_requires_approval() {
         echo "  FAIL: Phase 7の承認なしでPhase 8に遷移できてしまった"
     fi
 
-    # 2段階承認後にPhase 8に遷移（成功するはず）
+    # Codex承認のみでPhase 8に遷移（成功するはず：自動遷移モード）
     $WORKFLOW_MANAGER approve "$wf_id" "7" "codex"
-    $WORKFLOW_MANAGER approve "$wf_id" "7" "user"
 
     $WORKFLOW_MANAGER set-phase "$wf_id" "8"
     local phase=$($WORKFLOW_MANAGER phase "$wf_id")
 
-    assert_equals "8" "$phase" "2段階承認後にPhase 8に遷移できること"
+    assert_equals "8" "$phase" "Codex承認のみでPhase 8に遷移できること（自動遷移）"
 }
 
 # Test 9: JSONインジェクション回帰テスト

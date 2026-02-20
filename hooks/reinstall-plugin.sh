@@ -42,7 +42,7 @@ fi
 # temp_gitキャッシュのクリーンアップ
 # Claude Codeがtemp_git_*にクローンするとskills/docs以外のファイルが削除されるため除去する
 for d in "$HOME/.claude/plugins/cache"/temp_git_*; do
-    if [[ -d "$d" ]] && grep -q "fractal-dev-workflow" "$d/CHANGELOG.md" 2>/dev/null; then
+    if [[ -d "$d" ]] && [[ "$(jq -r '.name // empty' "$d/.claude-plugin/plugin.json" 2>/dev/null)" == "fractal-dev-workflow" ]]; then
         rm -rf "$d"
         echo "  cleaned temp_git cache: $(basename "$d")" >> "$LOG_FILE"
     fi

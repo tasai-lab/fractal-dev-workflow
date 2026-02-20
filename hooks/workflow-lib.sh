@@ -8,7 +8,12 @@ get_workflow_dir() {
     git_common_dir=$(git rev-parse --git-common-dir 2>/dev/null)
     if [[ -n "$git_common_dir" ]]; then
         # 相対パスを絶対パスに変換
-        echo "$(cd "$git_common_dir" && pwd)/fractal-workflow"
+        local abs_dir
+        abs_dir=$(cd "$git_common_dir" 2>/dev/null && pwd) || {
+            echo "$(pwd)/.git/fractal-workflow"
+            return
+        }
+        echo "$abs_dir/fractal-workflow"
     else
         echo "$(pwd)/.git/fractal-workflow"
     fi

@@ -13,8 +13,8 @@ if [[ "$TOOL_NAME" != "Bash" ]]; then
     exit 0
 fi
 
-# git commitコマンドでなければ無視
-if ! echo "$COMMAND" | grep -qE 'git\s+commit'; then
+# git commitコマンドでなければ無視（echo等の誤検知を防ぐためコマンド先頭からマッチ）
+if ! echo "$COMMAND" | grep -qE '(^|\s*&&\s*|;\s*)git\s+commit'; then
     exit 0
 fi
 

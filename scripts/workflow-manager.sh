@@ -86,22 +86,20 @@ set_phase() {
     local current=$(get_state "$workflow_id")
     local current_phase=$(echo "$current" | jq -r '.currentPhase // 0')
 
-    # Phase 5への遷移: Phase 4の2段階承認が必要
+    # Phase 5への遷移: Phase 4のCodex承認が必要（自動遷移のためユーザー承認不要）
     if [[ "$phase" -ge 5 ]] && [[ "$current_phase" -lt 5 ]]; then
         local p4_codex=$(echo "$current" | jq -r '.phases["4"].codexApprovedAt // empty')
-        local p4_user=$(echo "$current" | jq -r '.phases["4"].userApprovedAt // empty')
-        if [[ -z "$p4_codex" ]] || [[ -z "$p4_user" ]]; then
-            echo "ERROR: Phase 4の承認が完了していません" >&2
+        if [[ -z "$p4_codex" ]]; then
+            echo "ERROR: Phase 4のCodex承認が完了していません" >&2
             exit 1
         fi
     fi
 
-    # Phase 8への遷移: Phase 7の2段階承認が必要
+    # Phase 8への遷移: Phase 7のCodex承認が必要（自動遷移のためユーザー承認不要）
     if [[ "$phase" -ge 8 ]] && [[ "$current_phase" -lt 8 ]]; then
         local p7_codex=$(echo "$current" | jq -r '.phases["7"].codexApprovedAt // empty')
-        local p7_user=$(echo "$current" | jq -r '.phases["7"].userApprovedAt // empty')
-        if [[ -z "$p7_codex" ]] || [[ -z "$p7_user" ]]; then
-            echo "ERROR: Phase 7の承認が完了していません" >&2
+        if [[ -z "$p7_codex" ]]; then
+            echo "ERROR: Phase 7のCodex承認が完了していません" >&2
             exit 1
         fi
     fi
@@ -150,13 +148,21 @@ record_approval() {
 create_workflow() {
     local description="${1:-New workflow}"
     local today="$(date +%Y%m%d)"
-    local existing_count=$(find "$WORKFLOW_DIR" -name "wf-${today}-*.json" 2>/dev/null | wc -l | tr -d ' ')
-    local seq_num=$((existing_count + 1))
+    # 既存IDの最大連番+1（途中削除があっても衝突しない）
+    local max_seq=0
+    while IFS= read -r f; do
+        local fname
+        fname=$(basename "$f" .json)
+        local seq="${fname##*-}"
+        local n=$((10#${seq}))
+        [[ $n -gt $max_seq ]] && max_seq=$n
+    done < <(find "$WORKFLOW_DIR" -name "wf-${today}-*.json" 2>/dev/null)
+    local seq_num=$((max_seq + 1))
     local workflow_id="wf-${today}-$(printf '%03d' $seq_num)"
     local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     local state_file="$WORKFLOW_DIR/$workflow_id.json"
 
-    local worktree_base="${FRACTAL_WORKTREE_BASE:-/Users/t.asai/code/fractal-worktrees}"
+    local worktree_base="${FRACTAL_WORKTREE_BASE:-$HOME/code/fractal-worktrees}"
     local worktree_path="$worktree_base/workflow-$workflow_id"
     local worktree_branch="workflow/$workflow_id"
 

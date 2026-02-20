@@ -55,14 +55,11 @@ if [[ $current_phase -lt 5 ]]; then
         fi
     fi
 
-    # Phase 4（計画レビュー）の2段階承認チェック
+    # Phase 4（計画レビュー）のCodex承認チェック（自動遷移のためユーザー承認不要）
     if [[ $current_phase -eq 4 ]]; then
         phase4_codex=$(echo "$state" | jq --arg p "4" -r '.phases[$p].codexApprovedAt // empty')
-        phase4_user=$(echo "$state" | jq --arg p "4" -r '.phases[$p].userApprovedAt // empty')
-        if [[ -z "$phase4_codex" ]] || [[ -z "$phase4_user" ]]; then
-            codex_status=$(if [[ -n "$phase4_codex" ]]; then echo "approved"; else echo "pending"; fi)
-            user_status=$(if [[ -n "$phase4_user" ]]; then echo "approved"; else echo "pending"; fi)
-            jq -n --arg reason "Implementation blocked: Phase 4 (計画レビュー) のCodex承認とユーザー承認が必要です。Current approvals - Codex: $codex_status, User: $user_status" '{
+        if [[ -z "$phase4_codex" ]]; then
+            jq -n --arg reason "Implementation blocked: Phase 4 (計画レビュー) のCodex承認が必要です。'bash scripts/workflow-manager.sh approve {id} 4 codex' で承認してください。" '{
               hookSpecificOutput: {
                 hookEventName: "PreToolUse",
                 permissionDecision: "deny",
@@ -74,14 +71,11 @@ if [[ $current_phase -lt 5 ]]; then
     fi
 fi
 
-# Phase 8以降は Phase 7（コードレビュー）の2段階承認が必要
+# Phase 8以降は Phase 7（コードレビュー）のCodex承認が必要（自動遷移のためユーザー承認不要）
 if [[ $current_phase -ge 8 ]]; then
     phase7_codex=$(echo "$state" | jq --arg p "7" -r '.phases[$p].codexApprovedAt // empty')
-    phase7_user=$(echo "$state" | jq --arg p "7" -r '.phases[$p].userApprovedAt // empty')
-    if [[ -z "$phase7_codex" ]] || [[ -z "$phase7_user" ]]; then
-        codex_status=$(if [[ -n "$phase7_codex" ]]; then echo "approved"; else echo "pending"; fi)
-        user_status=$(if [[ -n "$phase7_user" ]]; then echo "approved"; else echo "pending"; fi)
-        jq -n --arg reason "Implementation blocked: Phase 7 (コードレビュー) のCodex承認とユーザー承認が必要です。Current approvals - Codex: $codex_status, User: $user_status" '{
+    if [[ -z "$phase7_codex" ]]; then
+        jq -n --arg reason "Implementation blocked: Phase 7 (コードレビュー) のCodex承認が必要です。'bash scripts/workflow-manager.sh approve {id} 7 codex' で承認してください。" '{
           hookSpecificOutput: {
             hookEventName: "PreToolUse",
             permissionDecision: "deny",

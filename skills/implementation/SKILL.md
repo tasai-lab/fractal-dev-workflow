@@ -52,7 +52,7 @@ NO TASK COMPLETION WITHOUT REVIEW
 **Sonnet 4.5 を積極的に使用する：**
 
 ```
-Task(subagent_type="implementer", model="sonnet"):
+Task(subagent_type="fractal-dev-workflow:implementer", model="sonnet"):
   ...
 ```
 
@@ -99,17 +99,17 @@ Task 1 → Review → Commit → Task 2 → Review → Commit → ...
 
 ### 実行パターン
 ```
-Task(subagent_type="implementer", model="sonnet"):
+Task(subagent_type="fractal-dev-workflow:implementer", model="sonnet"):
   Implement Task 1 with TDD
 
 [Wait for completion]
 
-Task(subagent_type="code-reviewer", model="sonnet"):
+Task(subagent_type="fractal-dev-workflow:qa", model="sonnet"):
   Review Task 1
 
 [Commit Task 1]
 
-Task(subagent_type="implementer", model="sonnet"):
+Task(subagent_type="fractal-dev-workflow:implementer", model="sonnet"):
   Implement Task 2 with TDD
 
 ...
@@ -170,13 +170,13 @@ bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh up
 ### 実行パターン
 ```
 # === Group A: 並列実行（Sonnet 4.5）===
-Task(subagent_type="implementer", model="sonnet", run_in_background=true, name="impl-types"):
+Task(subagent_type="fractal-dev-workflow:implementer", model="sonnet", run_in_background=true, name="impl-types"):
   Task 1: 型定義を作成
 
-Task(subagent_type="implementer", model="sonnet", run_in_background=true, name="impl-fixtures"):
+Task(subagent_type="fractal-dev-workflow:implementer", model="sonnet", run_in_background=true, name="impl-fixtures"):
   Task 2: テストフィクスチャを作成
 
-Task(subagent_type="implementer", model="sonnet", run_in_background=true, name="impl-utils"):
+Task(subagent_type="fractal-dev-workflow:implementer", model="sonnet", run_in_background=true, name="impl-utils"):
   Task 3: ユーティリティ関数を作成
 
 # === Group A 完了待ち ===
@@ -184,11 +184,11 @@ Task(subagent_type="implementer", model="sonnet", run_in_background=true, name="
 [Each task commits independently]
 
 # === Group B: 並列実行（Sonnet 4.5）===
-Task(subagent_type="implementer", model="sonnet", run_in_background=true, name="impl-api"):
+Task(subagent_type="fractal-dev-workflow:implementer", model="sonnet", run_in_background=true, name="impl-api"):
   Task 4: API ハンドラを作成
   Context: Task 1, 3 のコミットを参照
 
-Task(subagent_type="implementer", model="sonnet", run_in_background=true, name="impl-ui"):
+Task(subagent_type="fractal-dev-workflow:implementer", model="sonnet", run_in_background=true, name="impl-ui"):
   Task 5: UI コンポーネントを作成
   Context: Task 1, 2 のコミットを参照
 
@@ -255,11 +255,11 @@ TaskUpdate: Task 3 blockedBy: [Task 1]
 TaskUpdate: Task 4 blockedBy: [Task 2, Task 3]
 
 # 4. チームメンバー起動
-Task(subagent_type="implementer", team_name="impl-[feature]", name="backend-dev"):
+Task(subagent_type="fractal-dev-workflow:implementer", team_name="impl-[feature]", name="backend-dev"):
   あなたは Backend 担当です。
   TaskList でタスクを確認し、backend 関連のタスクを担当してください。
 
-Task(subagent_type="implementer", team_name="impl-[feature]", name="frontend-dev"):
+Task(subagent_type="fractal-dev-workflow:implementer", team_name="impl-[feature]", name="frontend-dev"):
   あなたは Frontend 担当です。
   TaskList でタスクを確認し、frontend 関連のタスクを担当してください。
 
@@ -478,7 +478,7 @@ packages/
 
 ### タスク単位レビュー
 ```
-Task(subagent_type="code-reviewer"):
+Task(subagent_type="fractal-dev-workflow:qa"):
   Review the following changes:
   - Files: [list of changed files]
   - Tests: [test file locations]
@@ -493,13 +493,13 @@ Task(subagent_type="code-reviewer"):
 ### 並列レビュー（複数タスク完了時）
 ```
 # 複数タスクを並列レビュー
-Task(subagent_type="code-reviewer", run_in_background=true):
+Task(subagent_type="fractal-dev-workflow:qa", run_in_background=true):
   Review Task 1 changes
 
-Task(subagent_type="code-reviewer", run_in_background=true):
+Task(subagent_type="fractal-dev-workflow:qa", run_in_background=true):
   Review Task 2 changes
 
-Task(subagent_type="code-reviewer", run_in_background=true):
+Task(subagent_type="fractal-dev-workflow:qa", run_in_background=true):
   Review Task 3 changes
 ```
 

@@ -125,7 +125,11 @@ codex_exec() {
 
     echo "Using model: $CODEX_MODEL, reasoning: $CODEX_REASONING_EFFORT" >&2
 
-    local cmd="cd '$project_dir' && codex exec --full-auto '$safe_prompt'"
+    local quoted_dir
+    quoted_dir=$(printf '%q' "$project_dir")
+    local quoted_prompt
+    quoted_prompt=$(printf '%q' "$safe_prompt")
+    local cmd="cd $quoted_dir && codex exec --full-auto $quoted_prompt"
 
     if run_with_retry "$cmd"; then
         return 0

@@ -24,13 +24,13 @@ description: 会話開始時に使用 - ワークフロースキルの検索・�
 |-------|------|---------------|
 | 1 | 質問 (Questioning) | Auto |
 | 2 | 調査 (Investigation) | Auto |
-| 3 | 契約設計 (Contract Design) | Auto |
-| 4 | 計画レビュー (Plan Review) | **Approval Required (2-stage)** |
+| 3 | 契約設計 (Contract Design) | **User Approval Required** |
+| 4 | Codex計画レビュー (Plan Review) | Auto (Codex承認のみ) |
 | 5 | 実装 (Implementation) | Auto |
 | 6 | Chromeデバッグ (Chrome Debug) | Auto |
-| 7 | コードレビュー (Code Review) | **Approval Required (2-stage)** |
+| 7 | Codexコードレビュー (Code Review) | Auto (Codex承認のみ) |
 | 8 | 検証 (Verification) | Auto |
-| 9 | 運用設計 (Operations) | - |
+| 9 | 運用設計 (Operations) | Auto |
 
 ## Skill Invocation
 
@@ -44,7 +44,7 @@ description: 会話開始時に使用 - ワークフロースキルの検索・�
 - `codex-review` - Phase 4 / Phase 7
 - `implementation` - Phase 5
 - `chrome-debug` - Phase 6
-- `testing` - Phase 8
+- `verification` - Phase 8
 - `completion` - Phase 9
 
 ### Support Skills
@@ -57,7 +57,8 @@ description: 会話開始時に使用 - ワークフロースキルの検索・�
 1. Receive development task
 2. Invoke `dev-workflow` skill
 3. Follow phase progression
-4. Wait for approvals at Phases 4 and 7 (2-stage: Codex + User)
+4. Wait for user approval at Phase 3 (Contract Design)
+5. Phases 4 and 7 auto-transition after Codex review
 5. Complete workflow
 
 ## Red Flags

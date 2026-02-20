@@ -11,8 +11,14 @@ WORKFLOW_DIR=$(get_workflow_dir)
 # ディレクトリ作成
 mkdir -p "$WORKFLOW_DIR"
 
-# アクティブなワークフローを確認
-active_wf=$(find "$WORKFLOW_DIR" -name "wf-*.json" -exec grep -l '"status": "active"' {} \; 2>/dev/null | head -1)
+# アクティブなワークフローを確認（jqで正確にフィルタリング）
+active_wf=""
+while IFS= read -r f; do
+    if jq -e '.status == "active"' "$f" > /dev/null 2>&1; then
+        active_wf="$f"
+        break
+    fi
+done < <(find "$WORKFLOW_DIR" -name "wf-*.json" 2>/dev/null | head -10)
 
 # コンテキスト文字列を構築
 CONTEXT=""

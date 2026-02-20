@@ -103,6 +103,6 @@ Before implementing:
 ## Integration
 
 Used automatically by:
-- systematic-debugging skill
+- superpowers:systematic-debugging skill
 - implementation skill (preventive check)
 - codex-review skill (known issues check)

@@ -501,7 +501,7 @@ Task(subagent_type="fractal-dev-workflow:coder", model="sonnet"):
 
 このスキルは以下と連携:
 
-- `post-merge-create`: タスクファイル作成
+- `post-merge-tasks`: タスクファイル作成
 - `context-circulation`: マージ後のコンテキスト共有
 - `completion`: リリース後の完了確認
 
@@ -574,7 +574,7 @@ Task(subagent_type="fractal-dev-workflow:coder", model="sonnet"):
 
 ## Related Skills
 
-- `post-merge-create` - タスクファイル作成
+- `post-merge-tasks` - タスクファイル作成
 - `verification` - 検証プロセス
 - `completion` - 完了確認
 - `context-circulation` - コンテキスト共有
