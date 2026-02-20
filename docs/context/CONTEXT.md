@@ -1,17 +1,19 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-20（a50bcdb）
+最終更新: 2026-02-20（77f2ff6）
 
 ## 現在の状態
 
-- **Phase**: 安定稼働中（Slice管理統合完了）
-- **進行中タスク**: なし
-- **バージョン**: 0.12.2（push時にconventional commitsで自動バンプ）
+- **Phase**: 実装完了（エージェントチーム実行時のプラグイン干渉修正完了）
+- **進行中タスク**: なし（PRレビュー待ち）
+- **バージョン**: 0.13.0（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 77f2ff6 | 2026-02-20 | fix(hooks): エージェントチーム実行時のプラグイン干渉を修正 | hooks/check-approval.sh, hooks/check-commit-context.sh, hooks/reinstall-plugin.sh, hooks/workflow-lib.sh, scripts/workflow-manager.sh |
+| 543868e | 2026-02-20 | chore: bump version to 0.13.0 | .claude-plugin/plugin.json |
 | a50bcdb | 2026-02-20 | feat(workflow): Slice管理をworkflow-manager.shとtask listに統合 | scripts/workflow-manager.sh, skills/design/SKILL.md, skills/dev-workflow/SKILL.md, skills/implementation/SKILL.md |
 | 7576145 | 2026-02-20 | docs(context): コンテキストドキュメント更新 - reinstall-plugin.sh スコープ修正（v0.12.2） | docs/context/CONTEXT.md |
 | 0704650 | 2026-02-20 | chore: bump version to 0.12.2 | .claude-plugin/plugin.json |
@@ -101,6 +103,44 @@
 | f289b42 | - | chore: バージョン0.4.0にアップデート | - |
 
 ## 重要な決定事項
+
+### エージェントチーム実行時のプラグイン干渉修正（2026-02-20）
+
+#### チームメンバー判定方式（workflow-lib.sh）
+- **追加関数**: `is_team_member()` — TeamCreate で起動されたチームメンバーセッションかどうかを判定する
+- **第1層（環境変数チェック）**: `CLAUDE_CODE_TEAM_NAME`、`CLAUDE_CODE_AGENT_NAME`、`CLAUDE_CODE_PARENT_SESSION_ID` のいずれかが設定されていればチームメンバーと判定
+- **第2層（マーカーファイルチェック）**: `/tmp/fractal-team-sessions/$$/` または `/tmp/fractal-team-sessions/$PPID/` が存在する場合のフォールバック
+- **対象ファイル**: `hooks/workflow-lib.sh`（33行追加）
+
+#### check-approval.sh へのチームメンバーバイパス追加
+- **問題**: TeamCreate のチームメンバーが Phase ゲート（check-approval.sh）に引っかかり、承認待ちループが発生していた
+- **修正**: `is_team_member` が true の場合、Phase ゲートチェックを即 `exit 0` でスキップ
+- **理由**: チームメンバーはリーダーの管理下で動作するため個別の Phase 承認チェックは不要
+- **対象ファイル**: `hooks/check-approval.sh`（9行追加）
+
+#### check-commit-context.sh のスコープ制御とデバウンス機構
+- **問題1 チームメンバー干渉**: チームメンバーが git commit するたびにコンテキストドキュメント更新が多重起動されていた
+  - **修正**: `is_team_member` が true の場合は即 `exit 0` でスキップ
+- **問題2 アクティブWFなし**: ワークフロー外の git commit でも不必要にフックが実行されていた
+  - **修正**: アクティブな `wf-*.json` が存在する場合のみ実行
+- **問題3 多重起動**: 連続コミットで同じフックが短時間内に多重発火していた
+  - **修正**: `/tmp/fractal-context-update-debounce` ファイルにタイムスタンプを記録し、30秒以内の重複実行をスキップ（デバウンス機構）
+- **対象ファイル**: `hooks/check-commit-context.sh`（37行追加）
+
+#### reinstall-plugin.sh への排他制御ロック追加
+- **問題**: 複数のチームメンバーセッションが同時終了した際、`reinstall-plugin.sh` が並列実行されてキャッシュ操作の競合が発生していた
+- **修正**: `mkdir` による競合防止ロック（`/tmp/fractal-reinstall-plugin.lock`）を実装
+  - 最大30回（0.2秒間隔 = 計6秒）リトライし、取得できない場合は安全にスキップ（`exit 0`）
+  - `trap "rm -rf '$REINSTALL_LOCK'" EXIT` でロックを確実に解放
+- **対象ファイル**: `hooks/reinstall-plugin.sh`（21行追加）
+
+#### workflow-manager.sh の並列安全性強化
+- **アトミック書き込み**: `set_state()` を `echo > file` から `mktemp + mv` パターンに変更
+  - `mv` は POSIX `rename(2)` でアトミック（同一ファイルシステム内）
+  - 書き込み前に `jq empty` で JSON 整合性チェック
+- **JSON整合性チェック**: `get_state()` に読み込み時の JSON 検証を追加（破損ファイルは `{}` を返す）
+- **ワークフロー作成ロック**: `acquire_create_lock()` / `release_create_lock()` 関数を追加し、`create_workflow()` の並列実行による ID 重複を防止
+- **対象ファイル**: `scripts/workflow-manager.sh`（61行追加・4行変更）
 
 ### Slice管理をworkflow-manager.shとtask listに統合（2026-02-20）
 
@@ -495,6 +535,7 @@
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-20 | エージェントチーム（TeamCreate）実行時にプラグインフックが干渉する問題を修正。workflow-lib.sh に is_team_member() 関数を追加し、check-approval.sh・check-commit-context.sh でチームメンバーをバイパス。check-commit-context.sh に30秒デバウンス機構とアクティブWF存在チェックを追加。reinstall-plugin.sh に並列セッション終了時の排他制御ロックを追加。workflow-manager.sh を mktemp+mv のアトミック書き込みとワークフロー作成ロックで並列安全化 |
 | 2026-02-20 | Slice管理を workflow-manager.sh と task list に統合。add-slice/update-slice/slices コマンドを workflow-manager.sh に追加し、Phase 5 のスキーマに currentSlice/slices フィールドを追加。design/SKILL.md の Slice 登録手順を Slice 先行登録 → タスク登録の2段階方式に変更。dev-workflow/SKILL.md に Phase 5 開始時の Slice 確認手順を追加 |
 | 2026-02-20 | reinstall-plugin.sh が他プロジェクトの SessionEnd でも実行されていた問題を修正。check-docs.sh と同様の CURRENT_REPO チェックを実装し、fractal-dev-workflow リポジトリ内でのみ動作するよう制限 |
 | 2026-02-20 | プラグインのテスト実行と問題点調査を実施し、19件の問題（P0:2件、P1:7件、P2:5件、P3:2件）を発見・修正。主な修正は承認ロジックのデッドロック解消、marketplace.jsonバージョン不整合、存在しないエージェント参照、workflow-lib.shの空パスリスク、codex-wrapper.shのインジェクション脆弱性、ドキュメント整合性修正、session-init.shのjq化、ワークフローID連番衝突防止、パス汎用化。テスト: test-workflow-approval.sh 29/29 PASS |
