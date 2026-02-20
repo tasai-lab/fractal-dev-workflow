@@ -1,17 +1,20 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-20（3efe125）
+最終更新: 2026-02-20（6305b15）
 
 ## 現在の状態
 
 - **Phase**: Phase 8（検証）完了、全16タスク完了、全テスト合格（66/66）
 - **進行中タスク**: なし（安定稼働中）
-- **バージョン**: 0.10.9（push時にconventional commitsで自動バンプ）
+- **バージョン**: 0.11.0（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 6305b15 | 2026-02-20 | chore: bump version to 0.11.0 | .claude-plugin/plugin.json |
+| 0bf2797 | 2026-02-20 | feat: 自律判断原則追加・Chrome調査の自律化 | skills/dev-workflow/SKILL.md, skills/questioning/SKILL.md |
+| 191cf8a | 2026-02-20 | docs(context): コンテキストドキュメント更新 - v0.10.9リリース | docs/context/CONTEXT.md |
 | 3efe125 | 2026-02-20 | docs: CHANGELOG更新 - v0.10.9 | CHANGELOG.md |
 | c0948ed | 2026-02-20 | chore: bump version to 0.10.9 | .claude-plugin/plugin.json |
 | 4645d59 | 2026-02-20 | docs(context): コンテキストドキュメント更新 - Chrome deferred toolsロード・UIタスクリスト自動作成 | docs/context/CONTEXT.md |
@@ -86,6 +89,20 @@
 | f289b42 | - | chore: バージョン0.4.0にアップデート | - |
 
 ## 重要な決定事項
+
+### 自律判断原則追加（Phase 3設計承認は唯一のユーザー確認ゲート）（2026-02-20）
+- **背景**: ワークフロー実行中に各Phase遷移のたびにユーザー確認を挟む実装があり、自律性が損なわれていた
+- **決定**: Phase 3（設計・ユーザー承認）のみを唯一のユーザー確認ゲートとし、それ以外の全Phase遷移はエージェントが自律判断で実行する原則を明文化
+- **実装**: `skills/dev-workflow/SKILL.md` に「自律判断原則」セクションを追加（27行追加）
+- **意図**: ユーザーの介入を最小化し、開発フローを高速化する
+- **対象ファイル**: `skills/dev-workflow/SKILL.md`
+
+### Chrome調査をAskUserQuestion廃止・自律判断化（2026-02-20）
+- **背景**: Phase 2のChrome調査において、調査の要否を毎回 `AskUserQuestion` でユーザーに確認する実装になっていた
+- **決定**: Chrome調査の要否はエージェントが自律判断する。ユーザーへの確認（`AskUserQuestion`）を廃止し、タスク内容・ログ・エラーメッセージからChrome調査の必要性をエージェントが判断する
+- **判断基準**: UIバグ・レイアウト崩れ・ブラウザ固有エラー等が疑われる場合はChrome調査を実施
+- **実装**: `skills/questioning/SKILL.md` の Phase 2 Chrome調査セクションを更新（28行変更）
+- **対象ファイル**: `skills/questioning/SKILL.md`
 
 ### Chrome deferred toolsロード必須化（2026-02-20）
 - **問題**: `mcp__claude-in-chrome__*` は deferred tools のため、宣言されていても使用前に ToolSearch でロードしないとツールが見つからないエラーが発生していた
