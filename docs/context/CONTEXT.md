@@ -1,17 +1,20 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-20（a10b2df）
+最終更新: 2026-02-20（3efe125）
 
 ## 現在の状態
 
 - **Phase**: Phase 8（検証）完了、全16タスク完了、全テスト合格（66/66）
 - **進行中タスク**: なし（安定稼働中）
-- **バージョン**: 0.10.8（push時にconventional commitsで自動バンプ）
+- **バージョン**: 0.10.9（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 3efe125 | 2026-02-20 | docs: CHANGELOG更新 - v0.10.9 | CHANGELOG.md |
+| c0948ed | 2026-02-20 | chore: bump version to 0.10.9 | .claude-plugin/plugin.json |
+| 4645d59 | 2026-02-20 | docs(context): コンテキストドキュメント更新 - Chrome deferred toolsロード・UIタスクリスト自動作成 | docs/context/CONTEXT.md |
 | a10b2df | 2026-02-20 | fix: Chrome deferred toolsロード・UIタスクリスト自動作成を追加 | agents/chrome-debugger.md, skills/chrome-debug/SKILL.md, skills/dev-workflow/SKILL.md |
 | c79c2df | 2026-02-20 | chore: bump version to 0.10.8 | .claude-plugin/plugin.json |
 | 9b8d1e6 | 2026-02-20 | docs(context): コンテキストドキュメント更新 - check-docs.shスコープ修正 | docs/context/CONTEXT.md |
