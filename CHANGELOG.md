@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-02-20
+
+### Fixed
+
+- ワークフロー保存先を `~/.claude/fractal-workflow/{hash}/` から `{repo}/.git/fractal-workflow/` に変更
+  - `git rev-parse --git-common-dir` を使用することでワークツリー間でワークフロー状態を共有
+  - `.git/` 内のため `.gitignore` 不要、作業ディレクトリを汚染しない
+
 ## [0.10.9] - 2026-02-20
 
 ### Fixed
