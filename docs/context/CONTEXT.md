@@ -1,6 +1,6 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-20（6305b15）
+最終更新: 2026-02-20（bae3896）
 
 ## 現在の状態
 
@@ -12,6 +12,8 @@
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| bae3896 | 2026-02-20 | fix: ワークフロー保存先をリポジトリの .git/fractal-workflow/ に変更 | hooks/workflow-lib.sh, scripts/workflow-manager.sh |
+| 4c63c5b | 2026-02-20 | docs(context): コンテキストドキュメント更新 - 自律判断原則追加・Chrome調査の自律化 | docs/context/CONTEXT.md |
 | 6305b15 | 2026-02-20 | chore: bump version to 0.11.0 | .claude-plugin/plugin.json |
 | 0bf2797 | 2026-02-20 | feat: 自律判断原則追加・Chrome調査の自律化 | skills/dev-workflow/SKILL.md, skills/questioning/SKILL.md |
 | 191cf8a | 2026-02-20 | docs(context): コンテキストドキュメント更新 - v0.10.9リリース | docs/context/CONTEXT.md |
@@ -89,6 +91,15 @@
 | f289b42 | - | chore: バージョン0.4.0にアップデート | - |
 
 ## 重要な決定事項
+
+### ワークフロー保存先をリポジトリの .git/fractal-workflow/ に変更（2026-02-20）
+- **背景**: ユーザーから「ワークフローを作業リポジトリで完結してほしい」という要求があった
+- **旧設計**: `~/.claude/fractal-workflow/{md5hash}/` — ホームディレクトリのグローバルな場所に保存していたため、リポジトリと紐付けが弱かった
+- **新設計**: `{repo}/.git/fractal-workflow/` — リポジトリの .git ディレクトリ内に保存することで、リポジトリと1対1で管理
+- **ワークツリー対応**: ユーザーから「ワークツリーを作ったら同期されないのでは？」という指摘を受け、`git rev-parse --git-common-dir` を使用することでワークツリー間で同じ .git ディレクトリを参照し、共有できる方式に変更
+  - 主リポジトリ・ワークツリーのどちらから実行しても同じパスを返す
+- **フォールバック**: `workflow-lib.sh` が見つからない場合は `git rev-parse --git-common-dir` を直接呼び出して解決
+- **対象ファイル**: `hooks/workflow-lib.sh`（get_workflow_dir 関数の実装変更）、`scripts/workflow-manager.sh`（フォールバック処理の更新）
 
 ### 自律判断原則追加（Phase 3設計承認は唯一のユーザー確認ゲート）（2026-02-20）
 - **背景**: ワークフロー実行中に各Phase遷移のたびにユーザー確認を挟む実装があり、自律性が損なわれていた
@@ -393,6 +404,7 @@
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-20 | ワークフロー保存先を `~/.claude/fractal-workflow/{hash}/` から `{repo}/.git/fractal-workflow/` に変更。ワークツリー間共有のため `git rev-parse --git-common-dir` を使用する方式に変更 |
 | 2026-02-20 | Chrome deferred toolsロードの必須化と、dev-workflowスキルへのUIタスクリスト自動作成機能の追加を実施。Phase 4/7のCodexレビュー後にworkflow-manager.sh approveを必須実行するよう明記 |
 | 2026-02-20 | check-docs.shフックをプラグインリポジトリ内のみに限定する修正を指示。コミットメッセージ内の「git push」がフックのgrep誤検出を起こすバグも発見された |
 | 2026-02-20 | worktreeや別ディレクトリからスクリプトが見つからないエラーの報告を受け、全スキルファイルのスクリプト参照を相対パスからシンボリックリンク経由の絶対パス（`~/.claude/plugins/local/fractal-dev-workflow/scripts/`）に統一するよう指示 |
