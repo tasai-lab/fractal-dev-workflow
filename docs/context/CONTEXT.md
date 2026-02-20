@@ -1,17 +1,20 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-20（856cfc2）
+最終更新: 2026-02-20（a10b2df）
 
 ## 現在の状態
 
 - **Phase**: Phase 8（検証）完了、全16タスク完了、全テスト合格（66/66）
 - **進行中タスク**: なし（安定稼働中）
-- **バージョン**: 0.10.7（push時にconventional commitsで自動バンプ）
+- **バージョン**: 0.10.8（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| a10b2df | 2026-02-20 | fix: Chrome deferred toolsロード・UIタスクリスト自動作成を追加 | agents/chrome-debugger.md, skills/chrome-debug/SKILL.md, skills/dev-workflow/SKILL.md |
+| c79c2df | 2026-02-20 | chore: bump version to 0.10.8 | .claude-plugin/plugin.json |
+| 9b8d1e6 | 2026-02-20 | docs(context): コンテキストドキュメント更新 - check-docs.shスコープ修正 | docs/context/CONTEXT.md |
 | 856cfc2 | 2026-02-20 | fix(hooks): check-docs.shをプラグインリポジトリ内のみに限定 | hooks/check-docs.sh |
 | e0ee416 | 2026-02-20 | chore: bump version to 0.10.6 | .claude-plugin/plugin.json |
 | 45e9494 | 2026-02-20 | docs(context): コンテキストドキュメント更新 - バージョンバンプ時のシンボリックリンク同期 | docs/context/CONTEXT.md |
@@ -80,6 +83,37 @@
 | f289b42 | - | chore: バージョン0.4.0にアップデート | - |
 
 ## 重要な決定事項
+
+### Chrome deferred toolsロード必須化（2026-02-20）
+- **問題**: `mcp__claude-in-chrome__*` は deferred tools のため、宣言されていても使用前に ToolSearch でロードしないとツールが見つからないエラーが発生していた
+- **修正**: `agents/chrome-debugger.md` の観察手順・検証手順の両方に「Step 0: deferred tools のロード（必須）」を追加
+  - ToolSearch("mcp__claude-in-chrome") を実行してChromeツールをロード
+  - ツールが返ってきたことを確認してから次Stepへ進む
+- **同期対象**: `skills/chrome-debug/SKILL.md` の chrome-debugger サブエージェント起動プロンプトにも同様の Step 1（deferred tools ロード）を追加
+- **対象ファイル**: `agents/chrome-debugger.md`（14行追加）、`skills/chrome-debug/SKILL.md`（5行追加）
+
+### UIタスクリスト自動作成（Phase 1開始時）（2026-02-20）
+- **目的**: dev-workflow スキルでワークフロー開始時にClaude Code Tasks UIパネルを自動表示し、全9Phaseの進捗を可視化する
+- **実装**: `skills/dev-workflow/SKILL.md` の「UIタスクリスト初期化（Phase 1開始時のみ）」セクションを新設
+  - Phase 1開始時に TaskCreate で全9Phaseのタスクを一括登録
+  - 各Phase開始時に TaskUpdate で該当タスクを `in_progress` に更新
+  - 各Phase完了時に TaskUpdate で `completed` に更新
+- **登録タスク**: Phase 1〜9の全Phase（質問・要件定義/調査/契約設計/Codexレビュー/実装/Chrome検証/コードレビュー/検証/運用設計）
+- **対象ファイル**: `skills/dev-workflow/SKILL.md`（26行追加）
+
+### Phase 4/7: workflow-manager.sh approve の実行必須化（2026-02-20）
+- **問題**: Phase 4・Phase 7のCodexレビュー完了後に `workflow-manager.sh approve` が実行されず、ワークフロー状態が更新されないままPhase遷移するケースがあった
+- **修正**: 以下の箇所に「レビュー完了後（APPROVED/NEEDS_CHANGES問わず）必ず実行」として approve コマンドの実行指示を追加
+  - Phase 3→4遷移ルールの末尾（Phase 4完了後の approve + set-phase 5）
+  - Phase 6→7遷移ルールの末尾（Phase 7完了後の approve + set-phase 8）
+  - codex-delegate サブエージェントプロンプト内（Phase 4・7それぞれ）
+  - Red Flags チェックリストに「Phase 4, 7: レビュー完了後に approve を実行したか」を追加
+- **実行コマンドパターン**:
+  ```bash
+  bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh approve {workflow-id} {phase} codex
+  bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase {workflow-id} {next-phase}
+  ```
+- **対象ファイル**: `skills/dev-workflow/SKILL.md`（17行追加）
 
 ### check-docs.shのプラグインリポジトリ内限定化（2026-02-20）
 - **問題**: check-docs.shフックはプラグイン自身のリポジトリ専用だが、他プロジェクトのワークツリーでBashツールが実行される際にも発動し、ドキュメントチェックやバージョンバンプが誤って実行されていた
@@ -339,6 +373,7 @@
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-20 | Chrome deferred toolsロードの必須化と、dev-workflowスキルへのUIタスクリスト自動作成機能の追加を実施。Phase 4/7のCodexレビュー後にworkflow-manager.sh approveを必須実行するよう明記 |
 | 2026-02-20 | check-docs.shフックをプラグインリポジトリ内のみに限定する修正を指示。コミットメッセージ内の「git push」がフックのgrep誤検出を起こすバグも発見された |
 | 2026-02-20 | worktreeや別ディレクトリからスクリプトが見つからないエラーの報告を受け、全スキルファイルのスクリプト参照を相対パスからシンボリックリンク経由の絶対パス（`~/.claude/plugins/local/fractal-dev-workflow/scripts/`）に統一するよう指示 |
 | 2026-02-19 | 「日本語で記述が必須」→ plugin-audit の全出力物（SKILL.md・レポート）を日本語化 |
