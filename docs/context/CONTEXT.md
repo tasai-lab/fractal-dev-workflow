@@ -1,17 +1,19 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-20（658c192）
+最終更新: 2026-02-20（0246ba2）
 
 ## 現在の状態
 
-- **Phase**: Phase 8（検証）完了、全16タスク完了、全テスト合格（66/66）
-- **進行中タスク**: なし（安定稼働中）
-- **バージョン**: 0.11.1（push時にconventional commitsで自動バンプ）
+- **Phase**: 安定稼働中（テスト実行と問題修正フェーズ完了）
+- **進行中タスク**: なし
+- **バージョン**: 0.12.0（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 0246ba2 | 2026-02-20 | fix: プラグインテスト実行で発見した19件の問題を修正 | marketplace.json, check-approval.sh, check-commit-context.sh, hooks.json, reinstall-plugin.sh, session-init.sh, workflow-lib.sh, codex-wrapper.sh, workflow-manager.sh, failure-memory/SKILL.md, implementation/SKILL.md, post-merge-execute/SKILL.md, user-guide/SKILL.md, using-workflow/SKILL.md, test-workflow-approval.sh |
+| b48a094 | 2026-02-20 | chore: bump version to 0.12.0 | .claude-plugin/plugin.json |
 | 658c192 | 2026-02-20 | feat: Phase 1開始時にworktreeを作成し全Phaseで作業 | skills/dev-workflow/SKILL.md, skills/implementation/SKILL.md, skills/design/SKILL.md, skills/chrome-debug/SKILL.md, docs/workflow-flow.md, scripts/workflow-manager.sh, commands/dev-resume.md |
 | 299524d | 2026-02-20 | chore: bump version to 0.11.1 | .claude-plugin/plugin.json, CHANGELOG.md |
 | e654f11 | 2026-02-20 | docs(context): コンテキストドキュメント更新 - ワークフロー保存先を .git/fractal-workflow/ に変更 | docs/context/CONTEXT.md |
@@ -94,6 +96,34 @@
 | f289b42 | - | chore: バージョン0.4.0にアップデート | - |
 
 ## 重要な決定事項
+
+### プラグインテストで発見した19件の問題を修正（2026-02-20）
+
+#### P0: 致命的バグ修正
+- **承認ロジックのデッドロック解消**: `workflow-manager.sh` と `check-approval.sh` の Phase4→5、Phase7→8 遷移条件をcodex承認のみに変更（ユーザー承認要求を削除）。SKILL.mdの「自動遷移」定義とスクリプト実装が矛盾していたバグを解消
+- **marketplace.json バージョン同期**: 0.8.0 → 0.12.0 に同期
+
+#### P1: 重大バグ修正
+- **存在しないエージェント参照の修正**:
+  - `implementation/SKILL.md`: `code-reviewer` → `qa`、implementerサブエージェントに `fractal-dev-workflow:` プレフィックス追加
+  - `failure-memory/SKILL.md`: `systematic-debugging` → `superpowers:systematic-debugging`
+  - `post-merge-execute/SKILL.md`: `post-merge-create` → `post-merge-tasks`
+- **workflow-lib.sh**: `get_workflow_dir()` の `cd` 失敗時に空パスでルートディレクトリ生成する危険を修正
+- **codex-wrapper.sh**: シングルクォートインジェクション脆弱性を `printf '%q'` で修正
+- **hooks.json**: check-docs.sh のタイムアウトを 10秒→30秒 に延長
+
+#### P2: 整合性修正
+- `user-guide/SKILL.md`: Phase 7/8 の名称・担当エージェント情報を現行仕様に更新
+- `using-workflow/SKILL.md`: Phase 3/4/7 の承認方式を現行仕様（自動遷移）に更新
+- `session-init.sh`: アクティブWF検出を `grep` → `jq` に変更（フォーマット非依存化）
+- `workflow-manager.sh`: ワークフローID生成を最大連番+1方式に変更（削除後の衝突防止）
+- `workflow-manager.sh`: `FRACTAL_WORKTREE_BASE` のデフォルトをハードコードから `$HOME` ベースに変更
+
+#### P3: 軽微な改善
+- `check-commit-context.sh`: `git commit` 検出パターンの誤検知を防止
+- `reinstall-plugin.sh`: `temp_git` 判定を CHANGELOG.md テキスト → `plugin.json` の `name` フィールドに変更
+
+- **テスト結果**: `test-workflow-approval.sh` で 29/29 PASS（承認ロジック自動遷移テスト追加）
 
 ### worktree作成をPhase 5からPhase 1に前倒し（2026-02-20）
 - **背景**: メインリポジトリで並行作業（計画等）を行う際、Phase 5まで worktree が作成されないためブロックが発生していた
@@ -402,6 +432,10 @@
 
 | 日付 | 内容 | 教訓 |
 |---|---|---|
+| 2026-02-20 | SKILL.mdが「自動遷移」と定義していたPhase4→5、7→8遷移で、スクリプトがユーザー承認を要求するデッドロックが発生していた | スクリプト実装とSKILL.md仕様の整合性を定期的に照合し、承認ロジックの実装はSKILL.mdのGolden Ruleを唯一の定義源とする |
+| 2026-02-20 | check-approval.shがユーザー承認待ちのループに入り、自動遷移テストが全て失敗した | 承認フローのテストは自動遷移ケースを必ず含め、ロック状態を検出できるタイムアウトを設ける |
+| 2026-02-20 | post-merge-execute/SKILL.mdが存在しない `post-merge-create` エージェントを参照していた | エージェント参照はSKILL.md更新時に必ずagents/ディレクトリと照合して存在確認する |
+| 2026-02-20 | workflow-lib.shのget_workflow_dir()でcdが失敗すると空パスになり、ルートディレクトリ（/）配下にワークフローディレクトリが生成される危険があった | cdコマンドは必ず終了コードを確認し、失敗時はフォールバック先を明示的に指定する |
 | 2026-02-20 | check-docs.shが他プロジェクトのワークツリーでも誤作動していた | フック冒頭でREPO_ROOTとPLUGIN_ROOTを比較し、対象外リポジトリでは即exit 0するスコープガードを実装する |
 | 2026-02-20 | コミットメッセージ内に「git push」を含むと、check-docs.shのgrepコマンド判定が誤検出する | grepでコマンド判定する際は、コマンド引数（コミットメッセージ等）の内容もマッチする可能性があることを常に考慮し、コマンド部分のみを抽出して比較する |
 | 2026-02-19 | サブエージェントのレポート出力がファイル保存されていなかった | スキルに出力ファイルパス（docs/audits/YYYY-MM-DD.md）と保存コマンドを明記し、出力要件を強制化する |
@@ -417,6 +451,7 @@
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-20 | プラグインのテスト実行と問題点調査を実施し、19件の問題（P0:2件、P1:7件、P2:5件、P3:2件）を発見・修正。主な修正は承認ロジックのデッドロック解消、marketplace.jsonバージョン不整合、存在しないエージェント参照、workflow-lib.shの空パスリスク、codex-wrapper.shのインジェクション脆弱性、ドキュメント整合性修正、session-init.shのjq化、ワークフローID連番衝突防止、パス汎用化。テスト: test-workflow-approval.sh 29/29 PASS |
 | 2026-02-20 | worktree 作成タイミングを Phase 5 から Phase 1（ワークフロー開始直後）に前倒し。メインリポジトリでの並行作業ブロックを解消。ブランチ命名: workflow/{workflowId}、ベースディレクトリ: /Users/t.asai/code/fractal-worktrees |
 | 2026-02-20 | ワークフロー保存先を `~/.claude/fractal-workflow/{hash}/` から `{repo}/.git/fractal-workflow/` に変更。ワークツリー間共有のため `git rev-parse --git-common-dir` を使用する方式に変更 |
 | 2026-02-20 | Chrome deferred toolsロードの必須化と、dev-workflowスキルへのUIタスクリスト自動作成機能の追加を実施。Phase 4/7のCodexレビュー後にworkflow-manager.sh approveを必須実行するよう明記 |
