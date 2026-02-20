@@ -118,6 +118,11 @@ Task(subagent_type="fractal-dev-workflow:chrome-debugger", model="sonnet"):
   - URL: http://localhost:${PORT}
   - 対象画面: [Phase 1で定義した主要画面リスト]
 
+  ### Step 1: deferred tools ロード（必須・最初に実行）
+  mcp__claude-in-chrome__* は deferred tools のため、使用前に必ず実行:
+  1. ToolSearch("mcp__claude-in-chrome") でChromeツールをロード
+  2. ツールリストが返ってきたことを確認してからStep 2へ進む
+
   ### Step 2: UI表示確認
   以下のChrome MCPツールを使用して検証してください:
 

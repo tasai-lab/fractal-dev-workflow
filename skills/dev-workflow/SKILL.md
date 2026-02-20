@@ -53,6 +53,32 @@ description: 開発タスクを受けた時、機能実装・バグ修正・リ�
 - 該当Phaseの `status` を `"in_progress"` に設定
 - 該当Phaseの `startedAt` を現在時刻に設定
 
+### UIタスクリスト初期化（Phase 1開始時のみ）
+
+**Phase 1開始時に必ず実行**。全9フェーズのタスクをTaskCreateで登録し、UIパネルを表示させる:
+
+```
+TaskCreate(subject="Phase 1: 質問 + 要件定義", description="曖昧さ排除・MVP境界・ユースケース・受け入れ条件を定義する", activeForm="要件定義中")
+TaskCreate(subject="Phase 2: 調査 + ドメイン整理", description="既存実装棚卸し・用語統一・ビジネスルール整理", activeForm="コードベース調査中")
+TaskCreate(subject="Phase 3: 契約設計", description="API仕様・DBスキーマ・エラー形式を先に固める", activeForm="契約設計中")
+TaskCreate(subject="Phase 4: Codex計画レビュー", description="既存実装照合・要件カバレッジをCodexが批判的検証", activeForm="計画レビュー中")
+TaskCreate(subject="Phase 5: 実装", description="縦切りで薄く通して太くする・TDD・worktree必須", activeForm="実装中")
+TaskCreate(subject="Phase 6: Chromeデバッグ", description="実装のUI/挙動を実機検証・JSエラー・ネットワークエラー確認", activeForm="Chrome検証中")
+TaskCreate(subject="Phase 7: Codexコードレビュー", description="コード品質・テストカバレッジ・セキュリティをCodexがレビュー", activeForm="コードレビュー中")
+TaskCreate(subject="Phase 8: 検証", description="テストピラミッド実施・Unit→Integration→E2E", activeForm="検証中")
+TaskCreate(subject="Phase 9: 運用設計", description="マイグレーション・ロールバック・Feature Flag・アラート設定", activeForm="運用設計中")
+```
+
+各Phase開始時に対応するタスクを `in_progress` に更新:
+```
+TaskUpdate(taskId="...", status="in_progress")
+```
+
+各Phase完了時に `completed` に更新:
+```
+TaskUpdate(taskId="...", status="completed")
+```
+
 ## Overview
 
 開発タスクを9つのフェーズで体系的に進行させるオーケストレーター。
@@ -810,6 +836,11 @@ Task(subagent_type="fractal-dev-workflow:chrome-debugger", model="sonnet"):
 - Codexレビュー完了 → Critical Issuesがあれば自動修正 → 自動遷移
 - Codex利用不可 → qaエージェントでフォールバック → 自動遷移
 - ユーザー承認不要
+- **レビュー完了後（APPROVED/NEEDS_CHANGES問わず）必ず実行:**
+  ```bash
+  bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh approve {workflow-id} 4 codex
+  bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase {workflow-id} 5
+  ```
 
 #### Phase 5 → Phase 6
 
@@ -830,6 +861,11 @@ Task(subagent_type="fractal-dev-workflow:chrome-debugger", model="sonnet"):
 - Codexコードレビュー完了 → Critical Issuesがあれば自動修正 → 自動遷移
 - Codex利用不可 → qaエージェントでフォールバック → 自動遷移
 - ユーザー承認不要
+- **レビュー完了後（APPROVED/NEEDS_CHANGES問わず）必ず実行:**
+  ```bash
+  bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh approve {workflow-id} 7 codex
+  bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase {workflow-id} 8
+  ```
 
 ---
 
@@ -881,6 +917,9 @@ Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
   - Review 1 (既存実装照合): [結果]
   - Review 2 (要件カバレッジ): [結果]
   - Verdict: [APPROVED / NEEDS CHANGES]
+
+  レビュー完了後（Verdict問わず）、必ず以下を実行:
+  bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh approve {workflow-id} 4 codex
 ```
 
 ### Phase 5 → Phase 6 遷移（Chromeデバッグ）
@@ -907,6 +946,9 @@ Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
   Task(subagent_type="fractal-dev-workflow:qa"):
     ## QA Code Review (Codex Fallback)
     実装コードの品質・テストカバレッジ・セキュリティをレビュー
+
+  レビュー完了後（Verdict問わず）、必ず以下を実行:
+  bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh approve {workflow-id} 7 codex
 ```
 
 ### 遷移フローチャート
@@ -929,6 +971,7 @@ Phase 8 完了 → Phase 9 開始（自動）
 - [ ] 状態ファイルを更新したか (`bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh get {id}`)
 - [ ] Phase 4, 7: codex-delegate を起動したか（必須、スキップ不可）
 - [ ] Phase 4, 7: Codex利用不可の場合、qaフォールバックを実行したか
+- [ ] Phase 4, 7: レビュー完了後に `workflow-manager.sh approve {id} {phase} codex` を実行したか
 
 ---
 

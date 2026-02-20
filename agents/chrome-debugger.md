@@ -59,6 +59,13 @@ NO INTERACTION / NO MODIFICATION
 
 #### 観察手順
 
+**Step 0: deferred tools のロード（必須）**
+```
+mcp__claude-in-chrome__* は deferred tools のため、使用前に必ず ToolSearch でロードすること:
+1. ToolSearch("mcp__claude-in-chrome") を実行してChromeツールをロード
+2. ツールが返ってきたことを確認してからStep 1へ進む
+```
+
 **Step 1: ブラウザ環境の確認**
 ```
 1. tabs_context_mcp でブラウザ状態を確認
@@ -104,6 +111,13 @@ ZERO CONSOLE ERRORS IS THE GATE
 - 問題を発見した場合はレポートに記録して報告する
 
 #### 検証手順
+
+**Step 0: deferred tools のロード（必須）**
+```
+mcp__claude-in-chrome__* は deferred tools のため、使用前に必ず ToolSearch でロードすること:
+1. ToolSearch("mcp__claude-in-chrome") を実行してChromeツールをロード
+2. ツールが返ってきたことを確認してからStep 1へ進む
+```
 
 **Step 1: ブラウザ環境の確認**
 ```
