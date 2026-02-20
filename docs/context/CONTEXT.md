@@ -1,6 +1,6 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-20（299524d）
+最終更新: 2026-02-20（658c192）
 
 ## 現在の状態
 
@@ -12,6 +12,7 @@
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 658c192 | 2026-02-20 | feat: Phase 1開始時にworktreeを作成し全Phaseで作業 | skills/dev-workflow/SKILL.md, skills/implementation/SKILL.md, skills/design/SKILL.md, skills/chrome-debug/SKILL.md, docs/workflow-flow.md, scripts/workflow-manager.sh, commands/dev-resume.md |
 | 299524d | 2026-02-20 | chore: bump version to 0.11.1 | .claude-plugin/plugin.json, CHANGELOG.md |
 | e654f11 | 2026-02-20 | docs(context): コンテキストドキュメント更新 - ワークフロー保存先を .git/fractal-workflow/ に変更 | docs/context/CONTEXT.md |
 | bae3896 | 2026-02-20 | fix: ワークフロー保存先をリポジトリの .git/fractal-workflow/ に変更 | hooks/workflow-lib.sh, scripts/workflow-manager.sh |
@@ -93,6 +94,16 @@
 | f289b42 | - | chore: バージョン0.4.0にアップデート | - |
 
 ## 重要な決定事項
+
+### worktree作成をPhase 5からPhase 1に前倒し（2026-02-20）
+- **背景**: メインリポジトリで並行作業（計画等）を行う際、Phase 5まで worktree が作成されないためブロックが発生していた
+- **変更**: worktree 作成タイミングを Phase 5（実装開始時）から Phase 1（ワークフロー開始直後）に前倒し
+- **ブランチ命名**: `workflow/{workflowId}` 形式で統一
+- **ベースディレクトリ**: `/Users/t.asai/code/fractal-worktrees`（環境変数 `FRACTAL_WORKTREE_BASE` で変更可）
+- **Phase 5の変更**: 「Worktree Enforcement（作成必須）」から「Worktree確認（Phase 1で作成済み）」に変更
+- **dev-resume.mdの変更**: 再開手順に worktree パス復元ステップを追加
+- **workflow-manager.sh の変更**: `create_workflow()` に `worktreePath`/`worktreeBranch` フィールドを追加（ワークフロー作成と同時に worktree 情報を記録）
+- **影響ファイル**: 7ファイル（285行挿入・419行削除）
 
 ### ワークフロー保存先をリポジトリの .git/fractal-workflow/ に変更（2026-02-20）
 - **背景**: ユーザーから「ワークフローを作業リポジトリで完結してほしい」という要求があった
@@ -377,7 +388,7 @@
 - Phase 2: 調査（Chrome挙動確認をオプショナルで追加）
 - Phase 3: 計画作成・ユーザー承認
 - Phase 4: Codexレビュー
-- Phase 5: 実装（worktree必須）
+- Phase 5: 実装（worktree確認、Phase 1で作成済み）
 - Phase 6: Chromeデバッグ
 - Phase 7: QAレビュー
 - Phase 8: 完了・PR作成
@@ -406,6 +417,7 @@
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-20 | worktree 作成タイミングを Phase 5 から Phase 1（ワークフロー開始直後）に前倒し。メインリポジトリでの並行作業ブロックを解消。ブランチ命名: workflow/{workflowId}、ベースディレクトリ: /Users/t.asai/code/fractal-worktrees |
 | 2026-02-20 | ワークフロー保存先を `~/.claude/fractal-workflow/{hash}/` から `{repo}/.git/fractal-workflow/` に変更。ワークツリー間共有のため `git rev-parse --git-common-dir` を使用する方式に変更 |
 | 2026-02-20 | Chrome deferred toolsロードの必須化と、dev-workflowスキルへのUIタスクリスト自動作成機能の追加を実施。Phase 4/7のCodexレビュー後にworkflow-manager.sh approveを必須実行するよう明記 |
 | 2026-02-20 | check-docs.shフックをプラグインリポジトリ内のみに限定する修正を指示。コミットメッセージ内の「git push」がフックのgrep誤検出を起こすバグも発見された |
