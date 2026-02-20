@@ -1,17 +1,19 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-20（bae3896）
+最終更新: 2026-02-20（299524d）
 
 ## 現在の状態
 
 - **Phase**: Phase 8（検証）完了、全16タスク完了、全テスト合格（66/66）
 - **進行中タスク**: なし（安定稼働中）
-- **バージョン**: 0.11.0（push時にconventional commitsで自動バンプ）
+- **バージョン**: 0.11.1（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 299524d | 2026-02-20 | chore: bump version to 0.11.1 | .claude-plugin/plugin.json, CHANGELOG.md |
+| e654f11 | 2026-02-20 | docs(context): コンテキストドキュメント更新 - ワークフロー保存先を .git/fractal-workflow/ に変更 | docs/context/CONTEXT.md |
 | bae3896 | 2026-02-20 | fix: ワークフロー保存先をリポジトリの .git/fractal-workflow/ に変更 | hooks/workflow-lib.sh, scripts/workflow-manager.sh |
 | 4c63c5b | 2026-02-20 | docs(context): コンテキストドキュメント更新 - 自律判断原則追加・Chrome調査の自律化 | docs/context/CONTEXT.md |
 | 6305b15 | 2026-02-20 | chore: bump version to 0.11.0 | .claude-plugin/plugin.json |
