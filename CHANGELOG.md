@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [0.10.9] - 2026-02-20
+
+### Fixed
+
+- Phase 4/7 Codexレビュー完了後に `workflow-manager.sh approve {id} {phase} codex` の呼び出しを必須化 - `set-phase` が `codexApprovedAt` 未設定でブロックされる問題を修正
+- Chrome in Claude deferred toolsロード手順を追加 - `mcp__claude-in-chrome__*` 使用前に `ToolSearch` でロードが必要なため `chrome-debugger` エージェントと `chrome-debug` スキルに Step 0/1 を追加
+
+### Added
+
+- `/dev` ワークフロー開始時（Phase 1）に全9フェーズを `TaskCreate` で一括登録 - UIタスクリストパネルがワークフロー開始直後から表示されるように
+- `docs/workflow-flow.md` を追加 - 9フェーズワークフローのフロー・ロジックをMermaid図で可視化（全体フロー・モード分岐・Codexレビューシーケンス・状態遷移図）
+
 ## [0.10.7] - 2026-02-20
 
 ### Fixed
