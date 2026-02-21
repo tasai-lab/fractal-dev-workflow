@@ -32,17 +32,6 @@ description: 開発タスクを受けた時、機能実装・バグ修正・リ�
 ========================================
 ```
 
-#### Plan Mode でのバナー形式
-workflowIdがBootstrap前は未確定なため以下の形式を使用:
-
-```
-========================================
-  Phase {N}: {Phase名称}
-  Workflow: (plan mode - bootstrap後に確定)
-  Mode: plan
-========================================
-```
-
 ### Phase名称マッピング
 
 | Phase | 名称 |
@@ -77,10 +66,6 @@ cd /Users/t.asai/code/fractal-worktrees/workflow-{workflowId}
 
 理由: メインリポジトリのブロック防止（並行作業時のブロック回避）、変更の分離、安全なロールバック
 
-#### Plan Mode の場合（重要）
-**Plan Modeではworktree作成をスキップする。** ExitPlanMode後のBootstrapで実行する。
-Plan Mode中はメインリポジトリで作業し、全成果物をplan fileに記録する。
-
 ### UIタスクリスト初期化（Phase 1開始時のみ）
 
 **Phase 1開始時に必ず実行**。全9フェーズのタスクをTaskCreateで登録し、UIパネルを表示させる:
@@ -109,30 +94,33 @@ TaskUpdate(taskId="...", status="completed")
 
 #### Plan Mode での注意
 TaskCreate/TaskUpdateはplan modeでも利用可能（セッションレベル操作）。
-Phase 1-3はplan modeでそのままUIタスク登録できる。
-ただし、workflow-manager.shへの登録はBootstrapで実行する。
+Phase 1-9のUIタスク登録はPhase 1（Normal Mode）で実行する。
+workflow-manager.shへのSlice登録もPhase 1（Normal Mode）で実行する。
 
 ## Execution Mode (Plan Mode vs Normal Mode)
 
 ### 判定ロジック
-以下の順で判定する:
-1. ExitPlanModeツールが利用可能（system-reminderに"Plan mode is active"が含まれる） → **Plan Mode**
-2. 上記以外 → **Normal Mode（既存フロー）**
+
+opusplan（model: "opusplan"）でセッションを開始した場合、以下のフローに従う。
 
 ### Plan Mode の動作原理
-opusplan（model: "opusplan"）でセッションを開始した場合:
 
-| フェーズ | Plan Mode での動作 |
-|---------|------------------|
-| Phase 1-3 | 全成果物をplan fileに記述（ファイル書き込み不可） |
-| ExitPlanMode | Phase 3承認ゲートとしてマッピング（ユーザー承認と等価） |
-| Bootstrap | ExitPlanMode承認後にworktree作成・成果物展開・状態初期化 |
-| Phase 4-9 | 通常フローに合流（変更なし） |
+Phase 1 は**常に Normal Mode**で実行する。これによりworktree作成・ワークフロー初期化を Phase 1 内で完了させ、ブランチベースのワークフロー解決を可能にする。
+
+| フェーズ | 実行モード | 動作 |
+|---------|-----------|------|
+| Phase 1 | **Normal Mode** | worktree作成・ワークフロー初期化・要件定義 → 末尾でEnterPlanMode呼出 |
+| Phase 2-3 | **Plan Mode** | 調査・設計成果物をplan fileに記述（ファイル書き込みはdocs/prd.md参照） |
+| ExitPlanMode | - | Phase 3承認ゲートとしてマッピング（ユーザー承認と等価） |
+| Mini-Bootstrap | Normal Mode | ExitPlanMode承認後に設計成果物を展開（worktree・ワークフローは作成済み） |
+| Phase 4-9 | Normal Mode | 通常フローに合流（変更なし） |
 
 **自然な対応関係:**
 ```
-Plan Mode (read-only)  →  Phase 1-3 (要件定義・調査・設計)
+Phase 1 (Normal Mode)  →  要件定義・worktree作成・workflow初期化 → EnterPlanMode
+Plan Mode              →  Phase 2-3 (調査・設計)
 ExitPlanMode           →  Phase 3承認ゲート（唯一のユーザー承認点）
+Mini-Bootstrap         →  設計成果物展開（worktree・workflow作成済み）
 acceptEdits Mode       →  Phase 4-9 (レビュー・実装・検証)
 ```
 
@@ -241,14 +229,14 @@ Task(subagent_type="implementer", model="sonnet"):
 
 ### Plan Mode での Subagent 選択
 
-Plan Modeではread-only制約があるため、サブエージェントも読み取り専用で動作する。
+Phase 1はNormal Modeのため制約なし。Phase 2-3がPlan Mode（read-only制約あり）。
 
-| Phase | Subagent | 理由 |
-|-------|----------|------|
-| Phase 1 | 不要（親エージェント） | AskUserQuestion中心、書き込み不要 |
-| Phase 2 | investigator (sonnet) | Read-onlyのため制約なし |
-| Phase 3 | 不要（親エージェント） | plan file編集は親エージェントのみ可能 |
-| Bootstrap後 | 通常通り | acceptEditsモードで全サブエージェント利用可能 |
+| Phase | 実行モード | Subagent | 理由 |
+|-------|-----------|----------|------|
+| Phase 1 | Normal | 通常通り（制約なし） | worktree作成・ワークフロー初期化が必要 |
+| Phase 2 | Plan | investigator (sonnet) | Read-onlyのため制約なし |
+| Phase 3 | Plan | 不要（親エージェント） | plan file編集は親エージェントのみ可能 |
+| Mini-Bootstrap後 | Normal | 通常通り | acceptEditsモードで全サブエージェント利用可能 |
 
 ## The Nine Phases（事故りにくい順）
 
@@ -354,8 +342,9 @@ AskUserQuestion:
 
 ## Plan File Template (Plan Mode 専用)
 
-opusplanでセッション開始時、Phase 1-3の全成果物をplan fileに記述する。
-plan fileはExitPlanMode後のBootstrapで実際のファイルに展開される。
+opusplanでPhase 1完了後にEnterPlanModeを呼び出した後、Phase 2-3の成果物をplan fileに記述する。
+plan fileはExitPlanMode後のMini-Bootstrapで実際のファイルに展開される。
+worktree作成・ワークフロー初期化はPhase 1（Normal Mode）で完了済み。
 
 ### テンプレート構造
 
@@ -366,35 +355,7 @@ plan fileはExitPlanMode後のBootstrapで実際のファイルに展開され�
 - Mode: {new-creation | existing-modification}
 - ChromeInvestigation: {true | false}
 - Created: {YYYY-MM-DD HH:mm}
-- WorkflowId: (Bootstrap後に確定)
-
----
-
-## Phase 1: 要件定義
-
-### MVP境界
-#### やること
-- ...
-
-#### やらないこと（スコープ外）
-- ...
-
-### 成功条件
-- ...
-
-### ユースケース
-| アクター | アクション | 目的 |
-|---------|----------|------|
-
-### 受け入れ条件
-- [ ] AC 1: Given [前提条件] / When [アクション] / Then [結果]
-
-### 非機能要件
-| 種別 | 要件 |
-|------|------|
-
-### 制約
-- ...
+- WorkflowId: {workflowId}  ← Phase 1で確定済み
 
 ---
 
@@ -493,19 +454,13 @@ plan fileはExitPlanMode後のBootstrapで実際のファイルに展開され�
 
 ---
 
-## Bootstrap Instructions
+## Mini-Bootstrap Instructions
 <!-- ExitPlanMode後に実行する手順書 -->
+<!-- worktree・ワークフロー初期化はPhase 1（Normal Mode）で完了済み -->
 
-### Step 1: worktree作成
-\`\`\`bash
-WFID="wf-$(date +%Y%m%d)-001"  # workflow-manager.sh createで確定
-git worktree add /Users/t.asai/code/fractal-worktrees/$WFID -b workflow/$WFID
-\`\`\`
-
-### Step 2: 設計成果物展開（ワークフローJSON作成前）
-<!-- この時点でワークフローJSONが存在しないため check-approval.sh がパスする -->
+### Step 1: 設計成果物展開（ワークフローJSON作成済みのためcheck-approval.shのパス確認不要）
 <!-- plan fileの各セクションを対応するファイルに書き出す -->
-- docs/prd.md ← Phase 1の要件定義
+- docs/prd.md（Phase 1で作成済み。Phase 2-3の補足があれば更新）
 - docs/investigation/{wfId}-inventory.md ← Phase 2のInventory
 - docs/design/{wfId}-architecture.md ← Phase 3Aのアーキ設計
 - docs/api_spec.yaml ← Phase 3BのAPI仕様
@@ -513,57 +468,35 @@ git worktree add /Users/t.asai/code/fractal-worktrees/$WFID -b workflow/$WFID
 - docs/design/{wfId}-tasks.md ← Phase 3Dのタスク分解
 - （new-creation）docs/mocks/{feature}-{screen}.html ← Phase 3F
 
-### Step 3: ワークフロー状態の初期化
+### Step 2: ワークフロー状態の更新
 \`\`\`bash
-# ワークフロー作成
-bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh create "{タスク説明}"
-WFID=$(bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh list | head -1 | awk '{print $1}')
-
-# Phase 1-3をcompletedとして記録
-bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase $WFID 1
+# Phase 2-3の完了を記録し、Phase 3承認とPhase 4への遷移を実行
+WFID={workflowId}  # Phase 1で確定済み
 bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase $WFID 2
 bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase $WFID 3
-
-# Phase 3のユーザー承認を記録（ExitPlanMode = ユーザー承認）
 bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh approve $WFID 3
-
-# Phase 4に遷移
-bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase $WFID 4
-\`\`\`
-
-### Step 4: UIタスクリストに全フェーズを登録
-\`\`\`
-TaskCreate(subject="Phase 1: 質問 + 要件定義", ..., status=completed)
-TaskCreate(subject="Phase 2: 調査 + ドメイン整理", ..., status=completed)
-TaskCreate(subject="Phase 3: 契約設計", ..., status=completed)
-TaskCreate(subject="Phase 4: Codex計画レビュー", ..., status=in_progress)
-TaskCreate(subject="Phase 5: 実装", ...)
-... 以下Phase 9まで
-\`\`\`
-
-### Step 5: Slice登録
-\`\`\`bash
 bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh add-slice $WFID 1 "最小動作版 (MVP)" {taskId}
 bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh add-slice $WFID 2 "エラーハンドリング" {taskId}
 bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh add-slice $WFID 3 "エッジケース" {taskId}
+bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase $WFID 4
 \`\`\`
 
-### Step 6: 初回コミット
+### Step 3: 初回コミット
 \`\`\`bash
 git add docs/
-git commit -m "docs(design): Phase 1-3 成果物展開 (plan mode bootstrap)
+git commit -m "docs(design): Phase 2-3 設計成果物展開 (plan mode mini-bootstrap)
 
 ## 作業状態
 - 現在のフェーズ: Phase 4 (Codex計画レビュー)
-- Plan Modeで完了: Phase 1-3
+- Plan Modeで完了: Phase 2-3
 - 次のタスク: Phase 4 Codex計画レビュー
 
-## Bootstrap情報
+## Mini-Bootstrap情報
 - ExitPlanModeで承認取得済み
 - ワークフロー: $WFID"
 \`\`\`
 
-### Step 7: Phase 4 開始（通常フローに合流）
+### Step 4: Phase 4 開始（通常フローに合流）
 \`\`\`
 Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
   Phase 4 Codex計画レビュー
@@ -668,6 +601,33 @@ questioning の流れ:
 - [ ] 非機能要件が特定
 - [ ] 制約が把握
 - [ ] 受け入れ条件が定義
+
+### Phase 1 → EnterPlanMode（Plan Mode専用）
+
+**Plan Mode（opusplan）で実行中の場合のみ**、Phase 1完了後に以下を実行:
+
+1. **docs/prd.md に要件定義を保存**
+   ```bash
+   # Phase 1の成果物をdocs/prd.mdに書き込む
+   # （worktree内でWrite toolを使用）
+   ```
+
+2. **ワークフロー状態をPhase 2に遷移**
+   ```bash
+   bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase {workflowId} 2
+   ```
+
+3. **初回コミット**
+   ```bash
+   git add docs/prd.md
+   git commit -m "docs(requirements): Phase 1 要件定義完了"
+   ```
+
+4. **EnterPlanModeを呼び出す**
+   ```
+   EnterPlanMode()
+   ```
+   → Phase 2（調査）からPlan Modeで開始する
 
 ---
 
@@ -1140,40 +1100,36 @@ Task(subagent_type="fractal-dev-workflow:chrome-debugger", model="sonnet"):
 
 ---
 
-## Post-ExitPlanMode Bootstrap Procedure (Plan Mode専用)
+## Post-ExitPlanMode Mini-Bootstrap Procedure (Plan Mode専用)
 
 ### 概要
-ExitPlanMode承認後に実行するBootstrap手順。
-plan fileに記述されたPhase 1-3の成果物を実際のファイルに展開し、
-ワークフロー状態を初期化してPhase 4を開始する。
+ExitPlanMode承認後に実行するMini-Bootstrap手順。
+worktree作成・ワークフロー初期化はPhase 1（Normal Mode）で完了済みのため、
+設計成果物の展開とワークフロー状態の更新のみを行う。
 
-### 核心技術
-`check-approval.sh` はワークフローJSONが存在しない場合にWrite/Editを許可する。
-この「隙間」を利用して、**ワークフロー作成前**に設計成果物を展開する。
+### 前提条件（Phase 1で完了済み）
+- worktreeが `/Users/t.asai/code/fractal-worktrees/{workflowId}` に作成済み
+- ワークフローJSONが作成済み（`workflow-manager.sh create` 実行済み）
+- docs/prd.md が作成済み（Phase 1の要件定義）
+- ブランチ `workflow/{workflowId}` が存在
+
+### 実行フロー
 
 ```
 ExitPlanMode承認
   ↓
-Step 1: worktree作成 (Bash)
+Step 1: 設計成果物展開 (Write - check-approval.shはPhase 3未承認のためパス)
   ↓
-Step 2: 設計成果物展開 (Write - ワークフローなし → check-approval.sh パス)
+Step 2: ワークフロー状態更新 (Bash: set-phase 2,3 → approve 3 → add-slice → set-phase 4)
   ↓
-Step 3: ワークフロー状態初期化 (Bash: create → set-phase 1,2,3 → approve 3 → set-phase 4)
+Step 3: 初回コミット (Bash)
   ↓
-Step 4: UIタスクリスト登録 (TaskCreate × 9)
-  ↓
-Step 5: Slice登録 (Bash: add-slice)
-  ↓
-Step 6: 初回コミット (Bash)
-  ↓
-Step 7: Phase 4 開始 (codex-delegate)
+Step 4: Phase 4 開始 (codex-delegate)
 ```
 
-### Bootstrap失敗時のリカバリ
-plan fileは永続的なため、Bootstrap全体を何度でも再実行できる。
-- worktree作成失敗 → `git worktree remove` 後に再実行
-- 成果物展開失敗 → ワークフローJSONが未作成なら再実行可能
-- ワークフロー作成失敗 → `workflow-manager.sh create` から再実行
+### Mini-Bootstrap失敗時のリカバリ
+- 成果物展開失敗 → Phase 3未承認状態なら再実行可能
+- ワークフロー状態更新失敗 → `workflow-manager.sh set-phase` から再実行
 
 ---
 
@@ -1191,15 +1147,23 @@ plan fileは永続的なため、Bootstrap全体を何度でも再実行でき�
 
 #### Phase 3 → Phase 4 (Plan Mode)
 
-**条件:** ExitPlanMode → Bootstrap → codex-delegate起動
-1. Phase 3設計完了 → ExitPlanModeを呼び出す（plan fileにBootstrap Instructionsが記述済みであること）
-2. ユーザー承認後 → Bootstrap Procedureを実行（上記参照）
-3. Bootstrap完了 → codex-delegateを起動してPhase 4開始
+**条件:** ExitPlanMode → Mini-Bootstrap → codex-delegate起動
+1. Phase 3設計完了 → ExitPlanModeを呼び出す（plan fileにMini-Bootstrap Instructionsが記述済みであること）
+2. ユーザー承認後 → Mini-Bootstrap Procedureを実行（上記参照）
+3. Mini-Bootstrap完了 → codex-delegateを起動してPhase 4開始
 
 **Phase 3完了後のチェックリスト（Plan Mode）:**
-- [ ] plan fileにPhase 1-3の全成果物が記述されている
-- [ ] plan fileのBootstrap Instructionsセクションが完成している
+- [ ] plan fileにPhase 2-3の全成果物が記述されている（Phase 1はdocs/prd.mdに保存済み）
+- [ ] plan fileのMini-Bootstrap Instructionsセクションが完成している
 - [ ] ExitPlanModeを呼び出した
+
+#### Phase 1 → EnterPlanMode (Plan Mode セッション)
+
+**条件:** Phase 1完了 → docs/prd.md保存 → ワークフロー状態更新 → EnterPlanMode呼出
+1. Phase 1（Normal Mode）でworktree作成・ワークフロー初期化・要件定義を完了
+2. docs/prd.md に要件定義を保存し、初回コミット
+3. ワークフロー状態をPhase 2に設定
+4. EnterPlanModeを呼び出してPhase 2-3をPlan Modeで実行
 
 #### Phase 4 → Phase 5
 
@@ -1325,14 +1289,19 @@ Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
 ### 遷移フローチャート
 
 ```
-Phase 1 完了 → Phase 2 開始（自動）
-Phase 2 完了 → Phase 3 開始（自動）
-Phase 3 完了 → ★ユーザー承認 → Phase 4 開始（codex-delegate 起動必須）
+[Normal Mode] Phase 1 完了 → Phase 2 開始（自動）
+[Normal Mode] Phase 2 完了 → Phase 3 開始（自動）
+[Normal Mode] Phase 3 完了 → ★ユーザー承認 → Phase 4 開始（codex-delegate 起動必須）
 Phase 4 完了 → Phase 5 開始（自動）
 Phase 5 完了 → Phase 6 開始（自動: Chromeデバッグ）
 Phase 6 完了 → Phase 7 開始（自動: codex-delegate 起動必須）
 Phase 7 完了 → Phase 8 開始（自動）
 Phase 8 完了 → Phase 9 開始（自動）
+
+[Plan Mode セッション]
+Phase 1 完了（Normal Mode）→ EnterPlanMode → Phase 2-3（Plan Mode）
+Phase 3 完了 → ★ExitPlanMode承認 → Mini-Bootstrap → Phase 4（codex-delegate 起動必須）
+Phase 4 以降 → 通常フローに合流
 ```
 
 ### トリガーチェックリスト

@@ -366,6 +366,16 @@ list_active() {
     done
 }
 
+# ブランチ名でワークフローを検索
+find_by_branch() {
+    source "$LIB_PATH" 2>/dev/null || { echo "ERROR: workflow-lib.sh not found" >&2; exit 1; }
+    local result
+    result=$(find_workflow_by_branch "$WORKFLOW_DIR")
+    if [[ -n "$result" ]]; then
+        basename "$result" .json
+    fi
+}
+
 # ヘルプ表示
 show_help() {
     cat <<EOF
@@ -387,6 +397,7 @@ Commands:
   add-slice <id> <slice_num> <name> [taskId]  Add slice to Phase 5
   update-slice <id> <slice_num> <status>      Update slice status (pending/in_progress/completed)
   slices <id>                                 List slices in Phase 5
+  find-by-branch             Find workflow by current branch name
   help                      Show this help
 
 Examples:
@@ -413,6 +424,7 @@ case "${1:-help}" in
     add-slice) add_slice "${2:-}" "${3:-}" "${4:-}" "${5:-}" ;;
     update-slice) update_slice "${2:-}" "${3:-}" "${4:-}" ;;
     slices) list_slices "${2:-}" ;;
+    find-by-branch) find_by_branch ;;
     help|--help|-h) show_help ;;
     *)
         echo "Unknown command: $1" >&2

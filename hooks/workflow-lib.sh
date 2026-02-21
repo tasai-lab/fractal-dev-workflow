@@ -19,6 +19,44 @@ get_workflow_dir() {
     fi
 }
 
+# ブランチ名からワークフローJSONを解決する
+# workflow/{workflowId} ブランチ → wf-*.json を逆引き
+find_workflow_by_branch() {
+    local workflow_dir="${1:-$(get_workflow_dir)}"
+    local current_branch
+    current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || return
+    if [[ "$current_branch" =~ ^workflow/(wf-[0-9]{8}-[0-9]{3})$ ]]; then
+        local wf_file="$workflow_dir/${BASH_REMATCH[1]}.json"
+        if [[ -f "$wf_file" ]]; then
+            echo "$wf_file"
+            return
+        fi
+    fi
+    echo ""
+}
+
+# ブランチベース優先でアクティブワークフローを解決する共通関数
+find_active_workflow() {
+    local workflow_dir="${1:-$(get_workflow_dir)}"
+    # 第1優先: ブランチベース解決
+    local branch_wf
+    branch_wf=$(find_workflow_by_branch "$workflow_dir")
+    if [[ -n "$branch_wf" ]]; then
+        if jq -e '.status == "active"' "$branch_wf" > /dev/null 2>&1; then
+            echo "$branch_wf"
+            return
+        fi
+    fi
+    # 第2優先: 従来方式（jqで正確にフィルタ、最新優先）
+    while IFS= read -r f; do
+        if jq -e '.status == "active"' "$f" > /dev/null 2>&1; then
+            echo "$f"
+            return
+        fi
+    done < <(find "$workflow_dir" -name "wf-*.json" 2>/dev/null | sort -r | head -10)
+    echo ""
+}
+
 # フック共通ログ関数
 HOOK_LOG_FILE="/tmp/fractal-hooks.log"
 

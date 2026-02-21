@@ -19,7 +19,7 @@ fi
 # ワークフロー外のgit commitでは不要
 WORKFLOW_DIR=$(get_workflow_dir 2>/dev/null || echo "")
 if [[ -n "$WORKFLOW_DIR" ]]; then
-    active_wf=$(find "$WORKFLOW_DIR" -name "wf-*.json" -exec grep -l '"status": "active"' {} \; 2>/dev/null | head -1)
+    active_wf=$(find_active_workflow "$WORKFLOW_DIR")
     if [[ -z "$active_wf" ]]; then
         exit 0
     fi

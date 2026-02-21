@@ -18,11 +18,7 @@ fi
 WORKFLOW_DIR=$(get_workflow_dir)
 
 # アクティブなワークフローを探す
-find_active_workflow() {
-    find "$WORKFLOW_DIR" -name "wf-*.json" -exec grep -l '"status": "active"' {} \; 2>/dev/null | head -1
-}
-
-active_wf=$(find_active_workflow)
+active_wf=$(find_active_workflow "$WORKFLOW_DIR")
 
 # アクティブなワークフローがない場合は許可
 if [[ -z "$active_wf" ]]; then
