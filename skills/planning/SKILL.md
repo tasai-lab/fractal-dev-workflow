@@ -180,6 +180,25 @@ Final plan must include:
 - [ ] **Test strategy includes mock methods for external APIs**
 - [ ] **User approval received**
 
+---
+
+## Plan Mode との統合
+
+opusplan（model: "opusplan"）で実行中の場合、planningスキルの成果物はplan fileのPhase 3に統合される。
+
+### 変更点
+- planningスキルの成果物（Implementation Plan）は **plan fileのPhase 3セクション** に記述する
+- designスキルのPhase 3D（タスク分解）と一体化して実行する
+- Plan File Template（dev-workflow/SKILL.md参照）に従ってフォーマットする
+
+### Opus Plan Agentについて
+`Task(subagent_type="Plan")` は既にplan modeで動作するエージェント。
+opuplanセッションのplan modeと相性が良く、read-only制約に自然に適合する。
+
+### 変わらない点
+- Step 3（Investigation照合）は通常通り実行
+- Step 4（Plan Structure）はplan fileのPhase 3として記述
+
 ## Related Skills
 
 - `testing` - Detailed test type selection and creation guidance

@@ -360,3 +360,35 @@ Task(subagent_type="fractal-dev-workflow:chrome-debugger", model="sonnet"):
 - `path:line` 形式のコード参照
 - 実際に実行したコマンド（Glob/Grep/Read）
 - コマンドの出力結果の要約
+
+---
+
+## Plan Mode での調査
+
+opusplan（model: "opusplan"）で実行中の場合:
+
+### investigatorサブエージェントについて
+investigatorエージェントは `permission: plan`（Read-only）のため、plan modeでも制約なく動作する。
+通常通り `Task(subagent_type="fractal-dev-workflow:investigator")` で起動できる。
+
+### 成果物の記録先
+調査結果は **plan fileのPhase 2セクション**に統合する:
+
+```markdown
+## Phase 2: 調査結果
+
+### Implementation Inventory
+| File | Key Exports | Status | Summary |
+|------|-------------|--------|---------|
+
+### 用語統一
+...（以下通常のinvestigation成果物）
+```
+
+### ファイルへの直接書き込みについて
+plan modeではdocs/investigation/*.mdへの直接書き込みは不可。
+これらのファイルはExitPlanMode後の**Bootstrap**で展開される。
+
+Bootstrap時の展開先:
+- docs/investigation/{wfId}-inventory.md ← Inventoryセクション
+- docs/investigation/{wfId}-domain.md ← ドメイン整理セクション

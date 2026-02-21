@@ -149,3 +149,26 @@ All must be satisfied before proceeding:
 | "Standard approach, no need to ask" | User's "standard" may differ |
 | "Code will tell me" | User intent isn't in the code |
 | "Too many questions" | Precise requirements are most efficient |
+
+---
+
+## Plan Mode での質問フェーズ
+
+opusplan（model: "opusplan"）で実行中の場合、以下の点が通常モードと異なる:
+
+### 変更点
+- 質問と回答は **plan file** に記録する（workflow stateへの書き込みはBootstrapで実行）
+- mode判定結果（new-creation / existing-modification）はplan fileのMetaセクションに記録
+- chromeInvestigation判定もplan fileのMetaセクションに記録
+
+### 変わらない点
+- AskUserQuestion はplan modeでも通常通り利用可能
+- TaskCreate/TaskUpdate はplan modeでも利用可能
+
+### plan fileへの記録形式
+```markdown
+## Meta
+- Mode: {new-creation | existing-modification}
+- ChromeInvestigation: {true | false}
+- Created: {timestamp}
+```

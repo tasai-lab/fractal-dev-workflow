@@ -719,6 +719,37 @@ git worktree remove ../fractal-worktrees/project-feature-ui
 
 ## Completion Criteria（モード別）
 
+---
+
+## Plan Mode での設計
+
+opusplan（model: "opusplan"）で実行中の場合:
+
+### 成果物の記述先
+全設計成果物を **plan fileのPhase 3セクション** に記述する:
+
+| 設計成果物 | plan file内のセクション | Bootstrap後の展開先 |
+|-----------|----------------------|-------------------|
+| アーキテクチャ設計 | Phase 3A | docs/design/{wfId}-architecture.md |
+| API仕様 | Phase 3B | docs/api_spec.yaml |
+| DBスキーマ | Phase 3B | docs/design/{wfId}-schema.sql |
+| テスト設計 | Phase 3C | docs/design/{wfId}-test-design.md |
+| タスク分解 | Phase 3D | docs/design/{wfId}-tasks.md |
+| HTMLモック (new-creation) | Phase 3F | docs/mocks/{feature}-{screen}.html |
+| 整合性チェック (existing-modification) | Phase 3G | docs/design/{wfId}-consistency.md |
+
+### Slice登録の二段階化
+1. **Plan Mode中（即座）**: TaskCreate/TaskUpdateでUIタスクパネルに登録
+2. **Bootstrap後（Bash）**: `workflow-manager.sh add-slice` でワークフロー状態に登録
+
+### 承認ゲート（Plan Mode）
+Phase 3設計完了後、ExitPlanModeを呼び出す。
+これが **Phase 3のユーザー承認ゲート** として機能する（通常モードのAskUserQuestion承認と等価）。
+
+**ExitPlanMode呼び出し前の確認事項:**
+- [ ] plan fileにPhase 1-3の全成果物が記述されている
+- [ ] plan fileのBootstrap Instructionsセクションが完成している
+
 ### new-creation モード
 
 - [ ] アーキテクチャ設計完了
@@ -750,6 +781,8 @@ git worktree remove ../fractal-worktrees/project-feature-ui
   - [ ] マージ順序が依存関係を反映
   - [ ] クリーンアップ手順記載
 
+**Plan Mode の場合:** 上記完了条件はplan fileに記述する。ExitPlanModeを呼び出して承認を取得する。
+
 **承認:** ★ユーザー承認必須 → `bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase {workflow_id} {next_phase}`
 
 ---
@@ -772,6 +805,8 @@ git worktree remove ../fractal-worktrees/project-feature-ui
   - [ ] TaskCreate で全タスク登録
   - [ ] Slice登録完了（TaskCreate + workflow-manager.sh add-slice）
   - [ ] Slice間依存関係設定済み（TaskUpdate addBlockedBy）
+
+**Plan Mode の場合:** 上記完了条件はplan fileに記述する。ExitPlanModeを呼び出して承認を取得する。
 
 **承認:** ★ユーザー承認必須 → `bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase {workflow_id} {next_phase}`
 
