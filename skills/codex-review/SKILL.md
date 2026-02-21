@@ -67,7 +67,7 @@ digraph review {
     "Plan/Code ready" -> "Check Codex availability";
     "Check Codex availability" -> "Codex available?" [shape=diamond];
     "Codex available?" -> "Review 1: Existing Implementation" [label="yes"];
-    "Codex available?" -> "Run qa agent (fallback)" [label="no"];
+    "Codex available?" -> "Opus + qa 並行実行 (fallback)" [label="no"];
     "Review 1: Existing Implementation" -> "Issues found?" [shape=diamond];
     "Issues found?" -> "Fix issues" [label="yes"];
     "Fix issues" -> "Review 1: Existing Implementation";
@@ -75,8 +75,9 @@ digraph review {
     "Review 2: Requirements Coverage" -> "More issues?" [shape=diamond];
     "More issues?" -> "Fix requirements issues" [label="yes"];
     "Fix requirements issues" -> "Review 2: Requirements Coverage";
-    "More issues?" -> "Review complete" [label="no"];
-    "Run qa agent (fallback)" -> "Review complete";
+    "More issues?" -> "Auto-transition (Review complete)" [label="no"];
+    "Opus + qa 並行実行 (fallback)" -> "ユーザー承認";
+    "ユーザー承認" -> "Review complete";
 }
 ```
 
@@ -252,7 +253,7 @@ The Opus + qa fallback provides:
 - 指摘内容を記録し、可能な範囲で自動修正
 - **dev-workflow:** 自動遷移（指摘内容を記録）
 
-### NEEDS CHANGES（`has_critical_issues=true`）
+### NEEDS_CHANGES（`has_critical_issues=true`）
 - セキュリティ脆弱性（重大）
 - アーキテクチャ上の問題
 - 要件との不一致
@@ -266,7 +267,7 @@ The Opus + qa fallback provides:
 
 ```json
 {
-  "verdict": "APPROVED" | "NEEDS CHANGES",
+  "verdict": "APPROVED" | "NEEDS_CHANGES",
   "critical_issues_count": number,
   "has_critical_issues": boolean,
   "minor_issues_count": number
@@ -279,14 +280,14 @@ The Opus + qa fallback provides:
 |---------|---------------------|----------------------|------------------|
 | APPROVED | false | 0 | 自動遷移（Phase 5 or 8） |
 | APPROVED | true | > 0 | 自動遷移（指摘内容を記録） |
-| NEEDS CHANGES | true | > 0 | 自動修正 → 再レビュー → 自動遷移 |
+| NEEDS_CHANGES | true | > 0 | 自動修正 → 再レビュー → 自動遷移 |
 
 **注意:** Codex利用可能時はユーザー承認不要（自動遷移）。Codex利用不可時はOpusレビュー + qa補助後にユーザー承認が必要。
 Critical Issuesがある場合は自動修正を試み、修正後に再レビューを実行する。
 最大3回の再レビュー後、自動遷移する（Codex利用可能時のみ）。
 
 **変数仕様:**
-- `verdict`: 総合判定（"APPROVED" | "NEEDS CHANGES"）
+- `verdict`: 総合判定（"APPROVED" | "NEEDS_CHANGES"）
 - `critical_issues_count`: 重大な指摘の数
 - `has_critical_issues`: 重大な指摘があるか（= critical_issues_count > 0）
 - `minor_issues_count`: 軽微な指摘の数
@@ -294,7 +295,7 @@ Critical Issuesがある場合は自動修正を試み、修正後に再レビ�
 dev-workflowは `has_critical_issues` を遷移条件に使用する。
 
 ### Summary
-- Verdict: [APPROVED | NEEDS CHANGES]
+- Verdict: [APPROVED | NEEDS_CHANGES]
 - Critical Issues: [数]
 - Minor Issues: [数]
 

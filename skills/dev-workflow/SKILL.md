@@ -122,7 +122,7 @@ Phase 1 は**常に Normal Mode**で実行する。これによりworktree作成
 ```
 Phase 1 (Normal Mode)  →  要件定義・worktree作成・workflow初期化 → EnterPlanMode
 Plan Mode              →  Phase 2-3 (調査・設計)
-ExitPlanMode           →  Phase 3承認ゲート（唯一のユーザー承認点）
+ExitPlanMode           →  Phase 3承認ゲート（Normal Mode時の必須承認点）
 Mini-Bootstrap         →  設計成果物展開（worktree・workflow作成済み）
 acceptEdits Mode       →  Phase 4-9 (レビュー・実装・検証)
 ```
@@ -1248,7 +1248,7 @@ Phase 4またはPhase 7でCodexが`NEEDS_CHANGES`を返した場合:
    - NEEDS_CHANGES（再び） → Step 1に戻る
 
 最大3回の再レビューまで。それ以上は修正内容を報告して自動遷移。
-ユーザー承認は不要。
+Codex可能時はユーザー承認不要（自動遷移）。Codex不可時はユーザー承認必須。
 
 ---
 
@@ -1297,7 +1297,7 @@ chrome-debugスキルに従い、ブラウザで実機検証を実行する。
 ### Phase 6 → Phase 7 遷移（コードレビュー）
 
 Phase 6（Chromeデバッグ）完了後、**必ず** codex-delegate を起動してPhase 7を開始。
-**スキップ不可。ユーザー承認不要。**
+**スキップ不可。Codex可能時はユーザー承認不要（自動遷移）。Codex不可時はユーザー承認必須。**
 
 ```
 # Phase 6 完了後 → 必ず実行
@@ -1334,10 +1334,10 @@ Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
 [Normal Mode] Phase 1 完了 → Phase 2 開始（自動）
 [Normal Mode] Phase 2 完了 → Phase 3 開始（自動）
 [Normal Mode] Phase 3 完了 → ★ユーザー承認 → Phase 4 開始（codex-delegate 起動必須）
-Phase 4 完了 → Phase 5 開始（自動）
+Phase 4 完了 → Codex可: Phase 5 開始（自動） / Codex不可: Opusレビュー+ユーザー承認後に遷移
 Phase 5 完了 → Phase 6 開始（自動: Chromeデバッグ）
 Phase 6 完了 → Phase 7 開始（自動: codex-delegate 起動必須）
-Phase 7 完了 → Phase 8 開始（自動）
+Phase 7 完了 → Codex可: Phase 8 開始（自動） / Codex不可: Opusレビュー+ユーザー承認後に遷移
 Phase 8 完了 → Phase 9 開始（自動）
 
 [Plan Mode セッション]

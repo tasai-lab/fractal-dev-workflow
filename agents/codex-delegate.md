@@ -124,7 +124,7 @@ $WRAPPER review-requirements "$PROJECT_DIR" "$(cat plan.md)" "$(cat requirements
 [Codex review-requirements output]
 
 ### Overall Verdict
-[APPROVED / NEEDS CHANGES]
+[APPROVED / NEEDS_CHANGES]
 ```
 
 ### On Fallback
