@@ -26,6 +26,9 @@
 - `hooks/check-commit-context.sh`: ワークフロー検索ロジックを共通関数に置換
 - `NEEDS CHANGES`（スペース区切り）表記を `NEEDS_CHANGES`（アンダースコア）に統一
 
+### Chore
+- `.claude-plugin/plugin.json` バージョンを 0.15.0 に更新
+
 ## [0.11.1] - 2026-02-20
 
 ### Fixed
