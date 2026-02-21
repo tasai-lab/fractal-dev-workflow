@@ -58,8 +58,11 @@ description: 開発タスクを受けた時、機能実装・バグ修正・リ�
 **ワークフロー作成後、Phase 1バナー表示前に必ず実行（スキップ不可）:**
 
 ```bash
-git worktree add /Users/t.asai/code/fractal-worktrees/workflow-{workflowId} -b workflow/{workflowId}
-cd /Users/t.asai/code/fractal-worktrees/workflow-{workflowId}
+# リポジトリ名を取得してworktreeパスを決定（リポジトリ間の衝突を防ぐため必須）
+REPO_NAME=$(basename $(git rev-parse --show-toplevel))
+WORKTREE_PATH="/Users/t.asai/code/fractal-worktrees/${REPO_NAME}-{workflowId}"
+git worktree add "$WORKTREE_PATH" -b workflow/{workflowId}
+# 以降はWORKTREE_PATH内で作業する
 ```
 
 以降の全Phase（1-9）をworktreeで作業する。worktree作成前にPhaseの作業を開始してはいけない。
@@ -209,8 +212,12 @@ Task(subagent_type="fractal-dev-workflow:investigator")
 
 ### 全Phaseでworktree必須
 ワークフロー開始直後にworktreeを作成し、全Phase（1-9）をworktreeで作業する。
-git worktree add /Users/t.asai/code/fractal-worktrees/workflow-{workflowId} -b workflow/{workflowId}
+```bash
+REPO_NAME=$(basename $(git rev-parse --show-toplevel))
+git worktree add /Users/t.asai/code/fractal-worktrees/${REPO_NAME}-{workflowId} -b workflow/{workflowId}
+```
 理由: メインリポジトリのブロック防止、変更の分離、安全なロールバック
+**注意: パスに${REPO_NAME}を含めること。複数リポジトリが同じfractal-worktreesディレクトリを使うため、リポジトリ名なしだと衝突する。**
 
 ## Subagent Configuration
 
@@ -1108,7 +1115,7 @@ worktree作成・ワークフロー初期化はPhase 1（Normal Mode）で完了
 設計成果物の展開とワークフロー状態の更新のみを行う。
 
 ### 前提条件（Phase 1で完了済み）
-- worktreeが `/Users/t.asai/code/fractal-worktrees/{workflowId}` に作成済み
+- worktreeが `/Users/t.asai/code/fractal-worktrees/{repoName}-{workflowId}` に作成済み
 - ワークフローJSONが作成済み（`workflow-manager.sh create` 実行済み）
 - docs/prd.md が作成済み（Phase 1の要件定義）
 - ブランチ `workflow/{workflowId}` が存在
@@ -1486,7 +1493,7 @@ bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh ap
   "taskDescription": "タスクの説明",
   "status": "active",
   "mode": "new-creation | existing-modification",
-  "worktreePath": "/Users/t.asai/code/fractal-worktrees/workflow-{workflowId}",
+  "worktreePath": "/Users/t.asai/code/fractal-worktrees/{repoName}-{workflowId}",
   "worktreeBranch": "workflow/{workflowId}",
   "chromeInvestigation": false,
   "currentPhase": 3,
