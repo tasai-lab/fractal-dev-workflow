@@ -273,7 +273,7 @@ Phase 1はNormal Modeのため制約なし。Phase 2-3がPlan Mode（read-only�
 │  ─────────────────────────────────────────────────────────  │
 │  既存実装照合 → 要件カバレッジ → 契約の整合性                 │
 └─────────────────────────────────────────────────────────────┘
-                              ↓ 自動遷移（Codexレビュー必須）
+                              ↓ Codex可: 自動遷移 / Codex不可: Opusレビュー+ユーザー承認後に遷移
 ┌─────────────────────────────────────────────────────────────┐
 │  Phase 5: 縦切りで実装（薄く通して太くする）                  │
 │  ─────────────────────────────────────────────────────────  │
@@ -294,7 +294,7 @@ Phase 1はNormal Modeのため制約なし。Phase 2-3がPlan Mode（read-only�
 │  ─────────────────────────────────────────────────────────  │
 │  実装コードの批判的レビュー + 承認                            │
 └─────────────────────────────────────────────────────────────┘
-                              ↓ 自動遷移（Codexレビュー必須）
+                              ↓ Codex可: 自動遷移 / Codex不可: Opusレビュー+ユーザー承認後に遷移
 ┌─────────────────────────────────────────────────────────────┐
 │  Phase 8: 検証（テストピラミッド）                           │
 │  ─────────────────────────────────────────────────────────  │
@@ -315,10 +315,10 @@ Phase 1はNormal Modeのため制約なし。Phase 2-3がPlan Mode（read-only�
 | 1 | 質問 + 要件定義 | questioning → requirements | Auto | MVP境界、受け入れ条件、「やらない」リスト |
 | 2 | 調査+ドメイン | investigation | Auto | 用語統一、ビジネスルール、境界責務、Chrome挙動ベースライン（オプション） |
 | 3 | 契約設計 | design | **Required** | API仕様、DBスキーマ、エラー形式 |
-| 4 | Codex計画レビュー | codex-review | **Auto（Codex必須）** | レビュー結果（Codex 5.3 + xhigh） |
+| 4 | Codex計画レビュー | codex-review | **Auto（Codex可時）/ Opus+ユーザー承認（Codex不可時）** | レビュー結果（Codex 5.3 + xhigh） |
 | 5 | 実装 | implementation | **Required** | 動作するコード + テスト + コンポーネント |
 | 6 | Chromeデバッグ | chrome-debug | Auto | UI/挙動検証結果 |
-| 7 | Codexコードレビュー | codex-review | **Auto（Codex必須）** | コードレビュー結果 + 承認 |
+| 7 | Codexコードレビュー | codex-review | **Auto（Codex可時）/ Opus+ユーザー承認（Codex不可時）** | コードレビュー結果 + 承認 |
 | 8 | 検証 | verification | Auto | テストピラミッド結果、検証レポート |
 | 9 | 運用設計 | completion | Auto | ロールバック手順、監視、Feature Flag |
 
@@ -1174,11 +1174,19 @@ Step 4: Phase 4 開始 (codex-delegate)
 
 #### Phase 4 → Phase 5
 
-**条件:** 常に自動遷移
+**条件（Codex利用可能時）:** 自動遷移
 - Codexレビュー完了 → Critical Issuesがあれば自動修正 → 自動遷移
-- Codex利用不可 → qaエージェントでフォールバック → 自動遷移
 - ユーザー承認不要
 - **レビュー完了後（APPROVED/NEEDS_CHANGES問わず）必ず実行:**
+  ```bash
+  bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh approve {workflow-id} 4 codex
+  bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase {workflow-id} 5
+  ```
+
+**条件（Codex利用不可時）:** ユーザー承認必須
+- Codex不可 → Opus(claude-opus-4-6)でレビュー + qaエージェントで補助チェック（並行）
+- 両レビュー結果をユーザーに提示（Verdictが異なる場合は厳しい方を採用）
+- **ユーザー承認後に必ず実行:**
   ```bash
   bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh approve {workflow-id} 4 codex
   bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase {workflow-id} 5
@@ -1192,18 +1200,30 @@ Step 4: Phase 4 開始 (codex-delegate)
 
 #### Phase 6 → Phase 7
 
-**条件:** 常に自動遷移（codex-delegate 起動必須）
+**条件（Codex利用可能時）:** 自動遷移（codex-delegate 起動必須）
 - Chromeデバッグ完了 → codex-delegate を起動して Phase 7 開始
-- Codex利用不可 → qaエージェントでフォールバック → 自動遷移
 - ユーザー承認不要
+
+**条件（Codex利用不可時）:** ユーザー承認必須
+- Codex不可 → Opus(claude-opus-4-6)でレビュー + qaエージェントで補助チェック（並行）
+- 両レビュー結果をユーザーに提示（Verdictが異なる場合は厳しい方を採用）
+- ユーザー承認後に遷移
 
 #### Phase 7 → Phase 8
 
-**条件:** 常に自動遷移
+**条件（Codex利用可能時）:** 自動遷移
 - Codexコードレビュー完了 → Critical Issuesがあれば自動修正 → 自動遷移
-- Codex利用不可 → qaエージェントでフォールバック → 自動遷移
 - ユーザー承認不要
 - **レビュー完了後（APPROVED/NEEDS_CHANGES問わず）必ず実行:**
+  ```bash
+  bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh approve {workflow-id} 7 codex
+  bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase {workflow-id} 8
+  ```
+
+**条件（Codex利用不可時）:** ユーザー承認必須
+- Codex不可 → Opus(claude-opus-4-6)でレビュー + qaエージェントで補助チェック（並行）
+- 両レビュー結果をユーザーに提示（Verdictが異なる場合は厳しい方を採用）
+- **ユーザー承認後に必ず実行:**
   ```bash
   bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh approve {workflow-id} 7 codex
   bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase {workflow-id} 8
@@ -1251,16 +1271,21 @@ Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
   3. 利用不可の場合: 以下のフォールバックを実行
 
   ★Codex利用不可時のフォールバック（必須）:
-  Task(subagent_type="fractal-dev-workflow:qa"):
-    ## QA Review (Codex Fallback)
+  以下を並行実行:
+  Task(model="opus"):
+    ## Opus Review (Codex Fallback - Phase 4)
     計画ファイルを読み、既存実装との整合性と要件カバレッジをレビュー
+    Verdict: [APPROVED / NEEDS_CHANGES] を明示すること
 
-  結果を以下の形式で報告:
-  - Review 1 (既存実装照合): [結果]
-  - Review 2 (要件カバレッジ): [結果]
-  - Verdict: [APPROVED / NEEDS CHANGES]
+  Task(subagent_type="fractal-dev-workflow:qa"):
+    ## QA Review (Codex Fallback - Phase 4 補助)
+    計画ファイルを読み、既存実装との整合性と要件カバレッジをレビュー
+    Verdict: [APPROVED / NEEDS_CHANGES] を明示すること
 
-  レビュー完了後（Verdict問わず）、必ず以下を実行:
+  両レビュー結果をユーザーに提示し、承認を要求する。
+  Verdictが異なる場合は厳しい方（NEEDS_CHANGES）を採用して提示すること。
+
+  **ユーザー承認後に必ず実行:**
   bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh approve {workflow-id} 4 codex
 ```
 
@@ -1285,11 +1310,21 @@ Task(subagent_type="fractal-dev-workflow:codex-delegate", model="haiku"):
   コード品質・テストカバレッジ・セキュリティを評価してください。
 
   ★Codex利用不可時のフォールバック（必須）:
-  Task(subagent_type="fractal-dev-workflow:qa"):
-    ## QA Code Review (Codex Fallback)
+  以下を並行実行:
+  Task(model="opus"):
+    ## Opus Code Review (Codex Fallback - Phase 7)
     実装コードの品質・テストカバレッジ・セキュリティをレビュー
+    Verdict: [APPROVED / NEEDS_CHANGES] を明示すること
 
-  レビュー完了後（Verdict問わず）、必ず以下を実行:
+  Task(subagent_type="fractal-dev-workflow:qa"):
+    ## QA Code Review (Codex Fallback - Phase 7 補助)
+    実装コードの品質・テストカバレッジ・セキュリティをレビュー
+    Verdict: [APPROVED / NEEDS_CHANGES] を明示すること
+
+  両レビュー結果をユーザーに提示し、承認を要求する。
+  Verdictが異なる場合は厳しい方（NEEDS_CHANGES）を採用して提示すること。
+
+  **ユーザー承認後に必ず実行:**
   bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh approve {workflow-id} 7 codex
 ```
 
