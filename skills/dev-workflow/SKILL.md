@@ -316,7 +316,7 @@ Phase 1はNormal Modeのため制約なし。Phase 2-3がPlan Mode（read-only�
 | 2 | 調査+ドメイン | investigation | Auto | 用語統一、ビジネスルール、境界責務、Chrome挙動ベースライン（オプション） |
 | 3 | 契約設計 | design | **Required** | API仕様、DBスキーマ、エラー形式 |
 | 4 | Codex計画レビュー | codex-review | **Auto（Codex可時）/ Opus+ユーザー承認（Codex不可時）** | レビュー結果（Codex 5.3 + xhigh） |
-| 5 | 実装 | implementation | **Required** | 動作するコード + テスト + コンポーネント |
+| 5 | 実装 | implementation | Auto | 動作するコード + テスト + コンポーネント |
 | 6 | Chromeデバッグ | chrome-debug | Auto | UI/挙動検証結果 |
 | 7 | Codexコードレビュー | codex-review | **Auto（Codex可時）/ Opus+ユーザー承認（Codex不可時）** | コードレビュー結果 + 承認 |
 | 8 | 検証 | verification | Auto | テストピラミッド結果、検証レポート |
@@ -1228,6 +1228,12 @@ Step 4: Phase 4 開始 (codex-delegate)
   bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh approve {workflow-id} 7 codex
   bash ~/.claude/plugins/local/fractal-dev-workflow/scripts/workflow-manager.sh set-phase {workflow-id} 8
   ```
+
+#### Phase 8 → Phase 9
+
+**条件:** 常に自動遷移
+- 検証完了 → 運用設計フェーズへ自動遷移
+- ユーザー承認不要
 
 ---
 
