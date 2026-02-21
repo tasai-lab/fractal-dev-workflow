@@ -1,17 +1,19 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-20（77f2ff6）
+最終更新: 2026-02-21（bd0da52）
 
 ## 現在の状態
 
-- **Phase**: 実装完了（エージェントチーム実行時のプラグイン干渉修正完了）
-- **進行中タスク**: なし（PRレビュー待ち）
+- **Phase**: 実装完了（opusplan mode対応追加完了）
+- **進行中タスク**: なし
 - **バージョン**: 0.13.0（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| bd0da52 | 2026-02-21 | feat(workflow): opusplan mode対応を追加（Plan Mode最適化） | skills/dev-workflow/SKILL.md, skills/design/SKILL.md, skills/investigation/SKILL.md, skills/planning/SKILL.md, skills/questioning/SKILL.md |
+| e1dcb75 | 2026-02-20 | docs(context): コンテキストドキュメント更新 - エージェントチーム干渉修正（v0.13.0） | docs/context/CONTEXT.md |
 | 77f2ff6 | 2026-02-20 | fix(hooks): エージェントチーム実行時のプラグイン干渉を修正 | hooks/check-approval.sh, hooks/check-commit-context.sh, hooks/reinstall-plugin.sh, hooks/workflow-lib.sh, scripts/workflow-manager.sh |
 | 543868e | 2026-02-20 | chore: bump version to 0.13.0 | .claude-plugin/plugin.json |
 | a50bcdb | 2026-02-20 | feat(workflow): Slice管理をworkflow-manager.shとtask listに統合 | scripts/workflow-manager.sh, skills/design/SKILL.md, skills/dev-workflow/SKILL.md, skills/implementation/SKILL.md |
@@ -103,6 +105,53 @@
 | f289b42 | - | chore: バージョン0.4.0にアップデート | - |
 
 ## 重要な決定事項
+
+### opusplan mode対応（Plan Mode最適化）（2026-02-21）
+
+#### 追加の動機
+opusplan（model: "opusplan"）でセッションを開始した時に、既存の9Phaseワークフローと自然に統合できるよう5つのSKILL.mdを最適化した。
+
+#### Execution Mode Detection（dev-workflow/SKILL.md）
+- **判定ロジック**: system-reminderに"Plan mode is active"が含まれる場合はPlan Mode、それ以外はNormal Mode
+- **Plan Modeの動作原理**:
+  - Phase 1-3: 全成果物をplan fileに記述（ファイル書き込み不可）
+  - ExitPlanMode: Phase 3承認ゲートとしてマッピング（ユーザー承認と等価）
+  - Bootstrap: ExitPlanMode承認後にworktree作成・成果物展開・状態初期化
+  - Phase 4-9: 通常フローに合流（変更なし）
+- **自然な対応関係**:
+  - Plan Mode (read-only) → Phase 1-3（要件定義・調査・設計）
+  - ExitPlanMode → Phase 3承認ゲート（唯一のユーザー承認点）
+  - acceptEdits Mode → Phase 4-9（レビュー・実装・検証）
+- **設計原則**: hooks/scripts/agentsは一切変更しない（追加のみ）。check-approval.sh「ワークフローなし→許可」をBootstrapで活用
+
+#### Plan File Template（dev-workflow/SKILL.md）
+- Phase 1-3の全成果物を記録するMarkdownテンプレートを追加
+- Meta情報（モード、Chrome調査有無、作成日時、WorkflowId）から始まり、Phase 1（要件定義）・Phase 2（調査結果）・Phase 3（契約設計）のセクションを含む
+- ExitPlanMode後のBootstrapで実際のファイルに展開される
+
+#### Post-ExitPlanMode Bootstrap Procedure（dev-workflow/SKILL.md）
+- Worktree作成・成果物展開・状態初期化の手順を追加
+- Plan Mode中はworktree作成をスキップし、Bootstrap時に実行する
+
+#### Phase Banner Protocol（Plan Mode用）
+- workflowIdがBootstrap前は未確定なため、専用バナー形式を追加
+  ```
+  Phase {N}: {Phase名称}
+  Workflow: (plan mode - bootstrap後に確定)
+  Mode: plan
+  ```
+
+#### Subagent Configuration（Plan Mode用）
+- Phase 1: 不要（親エージェント）— AskUserQuestion中心、書き込み不要
+- Phase 2: investigator (sonnet) — Read-onlyのため制約なし
+- Phase 3: 不要（親エージェント）— plan file編集は親エージェントのみ可能
+- Bootstrap後: 通常通り（acceptEditsモードで全サブエージェント利用可能）
+
+#### 各スキルへの Plan Mode注記追加
+- **design/SKILL.md**: Plan Mode設計セクション追加。Plan Mode中はTaskCreate、Bootstrap後にworkflow-manager.sh登録の2段階化。完了条件にPlan Mode分岐（ExitPlanMode呼び出し）を追加
+- **questioning/SKILL.md**: 質問/回答のplan file記録、workflow state書き込みの遅延に関する注記を追加
+- **investigation/SKILL.md**: investigator(read-only)は通常通り動作し、成果物はBootstrapで展開する旨を追加
+- **planning/SKILL.md**: 成果物をplan fileのPhase 3に統合する手順を追加
 
 ### エージェントチーム実行時のプラグイン干渉修正（2026-02-20）
 
@@ -535,6 +584,7 @@
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-21 | opusplan（model: "opusplan"）でセッション開始時に既存の9Phaseワークフローと自然に統合できるよう5つのSKILL.mdを最適化。Execution Mode Detection（Plan Mode vs Normal Mode）の判定ロジック、Plan File Template（Phase 1-3の全成果物記録用テンプレート）、Post-ExitPlanMode Bootstrap Procedure（worktree作成・成果物展開・状態初期化）を追加。ExitPlanModeをPhase 3承認ゲートとして自然にマッピング。hooks/scripts/agentsは一切変更せず、追加のみで実装 |
 | 2026-02-20 | エージェントチーム（TeamCreate）実行時にプラグインフックが干渉する問題を修正。workflow-lib.sh に is_team_member() 関数を追加し、check-approval.sh・check-commit-context.sh でチームメンバーをバイパス。check-commit-context.sh に30秒デバウンス機構とアクティブWF存在チェックを追加。reinstall-plugin.sh に並列セッション終了時の排他制御ロックを追加。workflow-manager.sh を mktemp+mv のアトミック書き込みとワークフロー作成ロックで並列安全化 |
 | 2026-02-20 | Slice管理を workflow-manager.sh と task list に統合。add-slice/update-slice/slices コマンドを workflow-manager.sh に追加し、Phase 5 のスキーマに currentSlice/slices フィールドを追加。design/SKILL.md の Slice 登録手順を Slice 先行登録 → タスク登録の2段階方式に変更。dev-workflow/SKILL.md に Phase 5 開始時の Slice 確認手順を追加 |
 | 2026-02-20 | reinstall-plugin.sh が他プロジェクトの SessionEnd でも実行されていた問題を修正。check-docs.sh と同様の CURRENT_REPO チェックを実装し、fractal-dev-workflow リポジトリ内でのみ動作するよう制限 |
