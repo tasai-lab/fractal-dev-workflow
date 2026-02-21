@@ -2,6 +2,30 @@
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-02-21
+
+### Changed
+- Codex不可時のフォールバック動作を変更: qa自動承認 → Opus+qaレビュー＋ユーザー承認必須
+  - Phase 4（Codex計画レビュー）と Phase 7（Codexコードレビュー）が対象
+  - `agents/codex-delegate.md` に Opus+qa 並列レビュー＋ユーザー承認フローを追加
+  - `skills/codex-review/SKILL.md` の Iron Law と Fallback セクションを更新
+  - `skills/dev-workflow/SKILL.md` の Phase 遷移ルールを Codex可/不可で条件分岐
+- Plan Mode→Normal Mode移行時のワークフロー参照を修正
+  - `hooks/workflow-lib.sh` に `find_workflow_by_branch()` と `find_active_workflow()` 共通関数を追加
+  - 複数 active ワークフロー存在時の非決定的な参照を解消
+  - Phase 1 を Normal Mode で実行し、末尾で `EnterPlanMode` を呼び出す設計に変更
+- worktree パス命名規則を修正: `workflow-{workflowId}` → `{repoName}-{workflowId}`
+  - 複数リポジトリ間での worktree パス衝突を防止
+  - `skills/dev-workflow/SKILL.md` および `skills/chrome-debug/SKILL.md` を更新
+- Phase Summary テーブルの Phase 5 Approval 列を `**Required**` → `Auto` に修正
+- Phase Transition Rules に Phase 8 → Phase 9 遷移ルールを追加
+
+### Fixed
+- `hooks/check-approval.sh`: ローカル `find_active_workflow()` を削除し共通関数を使用
+- `hooks/session-init.sh`: ワークフロー検索ロジックを共通関数に置換
+- `hooks/check-commit-context.sh`: ワークフロー検索ロジックを共通関数に置換
+- `NEEDS CHANGES`（スペース区切り）表記を `NEEDS_CHANGES`（アンダースコア）に統一
+
 ## [0.11.1] - 2026-02-20
 
 ### Fixed
