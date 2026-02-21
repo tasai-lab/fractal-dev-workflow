@@ -154,21 +154,18 @@ All must be satisfied before proceeding:
 
 ## Plan Mode での質問フェーズ
 
-opusplan（model: "opusplan"）で実行中の場合、以下の点が通常モードと異なる:
+opusplan（model: "opusplan"）で実行中の場合、Phase 1は**常にNormal Mode**で実行するため、通常フローと差異はない。
 
-### 変更点
-- 質問と回答は **plan file** に記録する（workflow stateへの書き込みはBootstrapで実行）
-- mode判定結果（new-creation / existing-modification）はplan fileのMetaセクションに記録
-- chromeInvestigation判定もplan fileのMetaセクションに記録
+### 変わらない点（Phase 1はNormal Mode）
+- AskUserQuestion は通常通り利用可能
+- TaskCreate/TaskUpdate は通常通り利用可能
+- ワークフロー状態への書き込みは通常通り実行可能（workflow-manager.sh使用可）
 
-### 変わらない点
-- AskUserQuestion はplan modeでも通常通り利用可能
-- TaskCreate/TaskUpdate はplan modeでも利用可能
+### Phase 1完了後の流れ
+Phase 1完了後、docs/prd.md に要件定義を保存し、EnterPlanModeを呼び出す。
+mode判定結果とchromeInvestigation判定は直接workflow stateに保存する。
 
-### plan fileへの記録形式
-```markdown
-## Meta
-- Mode: {new-creation | existing-modification}
-- ChromeInvestigation: {true | false}
-- Created: {timestamp}
+```bash
+# Phase 1完了時にmode判定を保存（例）
+# workflow-manager.sh でワークフロー状態を更新
 ```

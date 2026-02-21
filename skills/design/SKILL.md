@@ -728,7 +728,7 @@ opusplan（model: "opusplan"）で実行中の場合:
 ### 成果物の記述先
 全設計成果物を **plan fileのPhase 3セクション** に記述する:
 
-| 設計成果物 | plan file内のセクション | Bootstrap後の展開先 |
+| 設計成果物 | plan file内のセクション | Mini-Bootstrap後の展開先 |
 |-----------|----------------------|-------------------|
 | アーキテクチャ設計 | Phase 3A | docs/design/{wfId}-architecture.md |
 | API仕様 | Phase 3B | docs/api_spec.yaml |
@@ -739,16 +739,16 @@ opusplan（model: "opusplan"）で実行中の場合:
 | 整合性チェック (existing-modification) | Phase 3G | docs/design/{wfId}-consistency.md |
 
 ### Slice登録の二段階化
-1. **Plan Mode中（即座）**: TaskCreate/TaskUpdateでUIタスクパネルに登録
-2. **Bootstrap後（Bash）**: `workflow-manager.sh add-slice` でワークフロー状態に登録
+1. **Phase 1中（Normal Mode）**: TaskCreate/TaskUpdateでUIタスクパネルに登録
+2. **Mini-Bootstrap後（Bash）**: `workflow-manager.sh add-slice` でワークフロー状態に登録
 
 ### 承認ゲート（Plan Mode）
 Phase 3設計完了後、ExitPlanModeを呼び出す。
 これが **Phase 3のユーザー承認ゲート** として機能する（通常モードのAskUserQuestion承認と等価）。
 
 **ExitPlanMode呼び出し前の確認事項:**
-- [ ] plan fileにPhase 1-3の全成果物が記述されている
-- [ ] plan fileのBootstrap Instructionsセクションが完成している
+- [ ] plan fileにPhase 2-3の全成果物が記述されている（Phase 1はdocs/prd.mdに保存済み）
+- [ ] plan fileのMini-Bootstrap Instructionsセクションが完成している
 
 ### new-creation モード
 

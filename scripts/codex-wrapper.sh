@@ -187,7 +187,7 @@ $plan_content
 1. [問題]: [理由] → [推奨修正]
 
 ### Verdict
-[APPROVED / NEEDS CHANGES]"
+[APPROVED / NEEDS_CHANGES]"
 
     codex_exec "$project_dir" "$prompt"
 }
@@ -229,7 +229,7 @@ $plan_content
 1. [requirement]: [why ambiguous]
 
 ### Verdict
-[APPROVED / NEEDS CHANGES]"
+[APPROVED / NEEDS_CHANGES]"
 
     codex_exec "$project_dir" "$prompt"
 }

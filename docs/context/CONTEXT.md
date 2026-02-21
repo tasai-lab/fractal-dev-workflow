@@ -1,17 +1,22 @@
 # コンテキストドキュメント
 
-最終更新: 2026-02-21（bd0da52）
+最終更新: 2026-02-21（0e42ad9）
 
 ## 現在の状態
 
-- **Phase**: 実装完了（opusplan mode対応追加完了）
+- **Phase**: 修正完了（Codexレビュー指摘事項修正完了）
 - **進行中タスク**: なし
-- **バージョン**: 0.13.0（push時にconventional commitsで自動バンプ）
+- **バージョン**: 0.14.0（push時にconventional commitsで自動バンプ）
 
 ## 実装経緯テーブル
 
 | コミットハッシュ | 日付 | 内容 | 影響範囲 |
 |---|---|---|---|
+| 0e42ad9 | 2026-02-21 | fix(workflow): Codexレビュー指摘事項修正（NEEDS_CHANGES対応） | skills/dev-workflow/SKILL.md, skills/codex-review/SKILL.md, agents/codex-delegate.md, scripts/codex-wrapper.sh |
+| 213a446 | 2026-02-21 | fix(workflow): Codex不可時フォールバックをOpusレビュー+ユーザー承認に変更 | skills/dev-workflow/SKILL.md |
+| 0436261 | 2026-02-21 | fix(workflow): worktreeパスにリポジトリ名を含めて衝突を防止 | scripts/workflow-manager.sh |
+| 1f376eb | 2026-02-21 | fix(workflow): Plan Mode→実装モード移行時のワークフロー参照修正 | skills/dev-workflow/SKILL.md |
+| 9177b70 | 2026-02-21 | chore: bump version to 0.14.0 | .claude-plugin/plugin.json |
 | bd0da52 | 2026-02-21 | feat(workflow): opusplan mode対応を追加（Plan Mode最適化） | skills/dev-workflow/SKILL.md, skills/design/SKILL.md, skills/investigation/SKILL.md, skills/planning/SKILL.md, skills/questioning/SKILL.md |
 | e1dcb75 | 2026-02-20 | docs(context): コンテキストドキュメント更新 - エージェントチーム干渉修正（v0.13.0） | docs/context/CONTEXT.md |
 | 77f2ff6 | 2026-02-20 | fix(hooks): エージェントチーム実行時のプラグイン干渉を修正 | hooks/check-approval.sh, hooks/check-commit-context.sh, hooks/reinstall-plugin.sh, hooks/workflow-lib.sh, scripts/workflow-manager.sh |
@@ -105,6 +110,24 @@
 | f289b42 | - | chore: バージョン0.4.0にアップデート | - |
 
 ## 重要な決定事項
+
+### Codexレビュー指摘事項修正（2026-02-21）
+
+#### 承認ゲート記述の修正
+- **変更前**: 「Phase 3承認ゲート（唯一のユーザー承認点）」という表記がNormal Mode以外でのCodex不可時承認を無視していた
+- **変更後**: 「Phase 3承認ゲート（Normal Mode時の必須承認点）」に修正。Codex不可時はPhase 4/7でもユーザー承認が必要なことを明記
+
+#### 遷移フローチャートの条件分岐追加
+- **Phase 4完了後**: 「自動」→「Codex可: 自動 / Codex不可: Opusレビュー+ユーザー承認後に遷移」
+- **Phase 7完了後**: 「自動」→「Codex可: 自動 / Codex不可: Opusレビュー+ユーザー承認後に遷移」
+
+#### NEEDS_CHANGES表記の統一
+- 全ファイルで「NEEDS CHANGES」（スペースあり）を「NEEDS_CHANGES」（アンダースコア）に統一
+- 対象: `skills/codex-review/SKILL.md`（5箇所）、`agents/codex-delegate.md`（1箇所）、`scripts/codex-wrapper.sh`（2箇所）
+
+#### codex-review/SKILL.md プロセス図の更新
+- 「Run qa agent (fallback)」→「Opus + qa 並行実行 (fallback)」に変更
+- フォールバック後に「ユーザー承認」→「Review complete」の遷移を追加
 
 ### opusplan mode対応（Plan Mode最適化）（2026-02-21）
 
@@ -584,6 +607,7 @@ opusplan（model: "opusplan"）でセッションを開始した時に、既存�
 
 | 日付 | 重要な指示・決定 |
 |---|---|
+| 2026-02-21 | Codexレビュー指摘事項（NEEDS_CHANGES）の修正を実施。承認ゲート記述を条件分岐表記（Normal Mode vs Codex不可時）に修正。遷移フローチャートにCodex可/不可の条件を追加。codex-review/SKILL.mdのプロセス図をOpus+qa並行実行→ユーザー承認フローに更新。NEEDS_CHANGES表記をアンダースコアに統一（4ファイル計8箇所） |
 | 2026-02-21 | opusplan（model: "opusplan"）でセッション開始時に既存の9Phaseワークフローと自然に統合できるよう5つのSKILL.mdを最適化。Execution Mode Detection（Plan Mode vs Normal Mode）の判定ロジック、Plan File Template（Phase 1-3の全成果物記録用テンプレート）、Post-ExitPlanMode Bootstrap Procedure（worktree作成・成果物展開・状態初期化）を追加。ExitPlanModeをPhase 3承認ゲートとして自然にマッピング。hooks/scripts/agentsは一切変更せず、追加のみで実装 |
 | 2026-02-20 | エージェントチーム（TeamCreate）実行時にプラグインフックが干渉する問題を修正。workflow-lib.sh に is_team_member() 関数を追加し、check-approval.sh・check-commit-context.sh でチームメンバーをバイパス。check-commit-context.sh に30秒デバウンス機構とアクティブWF存在チェックを追加。reinstall-plugin.sh に並列セッション終了時の排他制御ロックを追加。workflow-manager.sh を mktemp+mv のアトミック書き込みとワークフロー作成ロックで並列安全化 |
 | 2026-02-20 | Slice管理を workflow-manager.sh と task list に統合。add-slice/update-slice/slices コマンドを workflow-manager.sh に追加し、Phase 5 のスキーマに currentSlice/slices フィールドを追加。design/SKILL.md の Slice 登録手順を Slice 先行登録 → タスク登録の2段階方式に変更。dev-workflow/SKILL.md に Phase 5 開始時の Slice 確認手順を追加 |

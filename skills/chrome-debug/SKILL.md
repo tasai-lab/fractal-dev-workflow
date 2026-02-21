@@ -79,8 +79,9 @@ Task(subagent_type="fractal-dev-workflow:chrome-debugger", model="sonnet"):
 - **作業完了後は必ずサーバーを停止**
 
 ```bash
-# 1. worktreeディレクトリに移動（Phase 1で作成済み: /Users/t.asai/code/fractal-worktrees/workflow-{workflowId}）
-cd /Users/t.asai/code/fractal-worktrees/workflow-{workflowId}
+# 1. worktreeディレクトリに移動（Phase 1で作成済み: /Users/t.asai/code/fractal-worktrees/{repoName}-{workflowId}）
+REPO_NAME=$(basename $(git rev-parse --show-toplevel))
+cd /Users/t.asai/code/fractal-worktrees/${REPO_NAME}-{workflowId}
 
 # 2. ポート使用状況確認
 if lsof -i :3100 > /dev/null 2>&1; then

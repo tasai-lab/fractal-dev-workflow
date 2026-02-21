@@ -96,16 +96,19 @@ $WRAPPER review-requirements "$PROJECT_DIR" "$(cat plan.md)" "$(cat requirements
 
    **重要:** フォールバック報告だけでなく、呼び出し元に以下のアクションを明示すること:
    ```
-   ## Codex Unavailable - QA Fallback Required
+   ## Codex Unavailable - Opus + QA Fallback Required
 
    Codex CLI is not installed or not accessible.
 
-   **必須アクション:** 以下のフォールバックを実行してください:
-   Task(subagent_type="fractal-dev-workflow:qa"):
-     ## QA Review (Codex Fallback)
-     [レビュー対象の内容をここに記載]
+   **必須アクション:** 以下のフォールバックを並行実行してください:
+   Task(model="opus"):
+     Opusモデルでレビューを実施し、Verdict: [APPROVED / NEEDS_CHANGES] を明示すること
 
-   レビュー自体のスキップは不可。
+   Task(subagent_type="fractal-dev-workflow:qa"):
+     qaエージェントで補助品質チェックを実施し、Verdict: [APPROVED / NEEDS_CHANGES] を明示すること
+
+   両レビュー結果を呼び出し元に返す。Verdictが異なる場合は厳しい方（NEEDS_CHANGES）を優先する。
+   呼び出し元はレビュー結果をユーザーに提示し、ユーザー承認後に `approve ... codex` を実行すること。
    ```
 
 ## Report Format
@@ -121,21 +124,24 @@ $WRAPPER review-requirements "$PROJECT_DIR" "$(cat plan.md)" "$(cat requirements
 [Codex review-requirements output]
 
 ### Overall Verdict
-[APPROVED / NEEDS CHANGES]
+[APPROVED / NEEDS_CHANGES]
 ```
 
 ### On Fallback
 ```
-## Codex Unavailable - QA Fallback Required
+## Codex Unavailable - Opus + QA Fallback Required
 
 Codex CLI is not installed or not accessible.
 
-**必須:** 以下のqaエージェントフォールバックを実行してください:
-Task(subagent_type="fractal-dev-workflow:qa"):
-  ## QA Review (Codex Fallback)
-  [レビュー対象の内容]
+**必須:** 以下を並行実行してください:
+Task(model="opus"):
+  Opusモデルでレビューを実施し、Verdict: [APPROVED / NEEDS_CHANGES] を明示すること
 
-レビューのスキップは不可。qaエージェントによるレビューは必須です。
+Task(subagent_type="fractal-dev-workflow:qa"):
+  qaエージェントで補助品質チェックを実施し、Verdict: [APPROVED / NEEDS_CHANGES] を明示すること
+
+両レビュー結果を呼び出し元に返す。Verdictが異なる場合は厳しい方（NEEDS_CHANGES）を優先する。
+呼び出し元はレビュー結果をユーザーに提示し、ユーザー承認後に `approve ... codex` を実行すること。
 ```
 
 ## Custom Model/Reasoning
@@ -157,5 +163,6 @@ CODEX_REASONING_EFFORT=xhigh codex exec "prompt"
 - Run BOTH review perspectives for plans
 - Don't pass sensitive data directly
 - Report timeout/failures clearly
-- **Codex利用不可時はqaエージェントフォールバックが必須（スキップ不可）**
-- **レビュー結果に関わらずユーザー承認は不要（常に自動遷移）**
+- **Codex利用不可時はOpus + qaエージェントフォールバックが必須（スキップ不可）**
+- **Codex利用可能時:** レビュー結果に関わらずユーザー承認不要（自動遷移）
+- **Codex利用不可時:** Opus + qa補助レビュー後にユーザー承認必須（自動遷移しない）

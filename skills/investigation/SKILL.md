@@ -365,14 +365,15 @@ Task(subagent_type="fractal-dev-workflow:chrome-debugger", model="sonnet"):
 
 ## Plan Mode での調査
 
-opusplan（model: "opusplan"）で実行中の場合:
+opusplan（model: "opusplan"）で実行中の場合、Phase 2はPlan Modeで実行される。
+worktreeとワークフローIDはPhase 1（Normal Mode）で確定済み。
 
 ### investigatorサブエージェントについて
 investigatorエージェントは `permission: plan`（Read-only）のため、plan modeでも制約なく動作する。
 通常通り `Task(subagent_type="fractal-dev-workflow:investigator")` で起動できる。
 
 ### 成果物の記録先
-調査結果は **plan fileのPhase 2セクション**に統合する:
+調査結果は **plan fileのPhase 2セクション**に統合する（ワークフローIDは既知）:
 
 ```markdown
 ## Phase 2: 調査結果
@@ -387,8 +388,8 @@ investigatorエージェントは `permission: plan`（Read-only）のため、p
 
 ### ファイルへの直接書き込みについて
 plan modeではdocs/investigation/*.mdへの直接書き込みは不可。
-これらのファイルはExitPlanMode後の**Bootstrap**で展開される。
+これらのファイルはExitPlanMode後の**Mini-Bootstrap**で展開される。
 
-Bootstrap時の展開先:
+Mini-Bootstrap時の展開先:
 - docs/investigation/{wfId}-inventory.md ← Inventoryセクション
 - docs/investigation/{wfId}-domain.md ← ドメイン整理セクション
